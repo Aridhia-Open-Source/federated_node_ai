@@ -1,0 +1,6 @@
+.venv
+.vscode
+artifacts/*.xml
+
+*.pyc
+__pycache__/
