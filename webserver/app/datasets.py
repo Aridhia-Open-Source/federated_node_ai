@@ -1,12 +1,24 @@
+"""
+datasets-related endpoints:
+- GET /datasets
+- POST /datasets
+- GET /datasets/id
+- GET /datasets/id/catalogues
+- GET /datasets/id/dictionaries
+- GET /datasets/id/dictionaries/table_name
+"""
+
 import sqlalchemy
 from flask import Blueprint, request
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from .exceptions import DBError, DBRecordNotFoundError
+from .exceptions import DBError, DBRecordNotFoundError, InvalidRequest
 from .helpers.db import engine
-from .models.datasets import Datasets
+from .models.datasets import Datasets, Catalogues, Dictionaries
 
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
 session = Session(engine)
+
 
 @bp.route('/', methods=['GET'])
 def get_datasets():
@@ -16,13 +28,30 @@ def get_datasets():
 
 @bp.route('/', methods=['POST'])
 def post_datasets():
-    body = Datasets.validate(request.json)
-    dataset = Datasets(body["name"], body["url"])
     try:
+        body = Datasets.validate(request.json)
+        dataset = Datasets(body["name"], body["host"])
+        cata_data = Catalogues.validate(request.json["catalogue"])
+        catalogue = Catalogues(dataset=dataset, **cata_data)
         session.add(dataset)
+        session.add(catalogue)
+
+        # Dictionaries should be a list of dict. If not raise an error and revert changes
+        if not isinstance(request.json["dictionaries"], list):
+            session.rollback()
+            raise InvalidRequest("dictionaries should be a list.")
+
+        for d in request.json["dictionaries"]:
+            dict_data = Dictionaries.validate(d)
+            dictionary = Dictionaries(dataset=dataset, **dict_data)
+            session.add(dictionary)
         session.commit()
     except sqlalchemy.exc.IntegrityError:
+        session.rollback()
         raise DBError("Record already exists")
+    except KeyError:
+        session.rollback()
+        raise InvalidRequest("Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there")
 
     return "ok", 201
 
@@ -35,19 +64,34 @@ def get_datasets_by_id(dataset_id):
 
 @bp.route('/<dataset_id>/catalogue', methods=['GET'])
 def get_datasets_catalogue_by_id(dataset_id):
-    dataset = Datasets.query.get(dataset_id)
-    return {
-        "datasets": []
-    }
+    cata = select(Catalogues).where(Catalogues.dataset_id == dataset_id).limit(1)
+    res = session.execute(cata).all()
+    if res:
+        res = res[0][0].sanitized_dict()
+        return res
+    else:
+        raise DBRecordNotFoundError(f"Dataset {dataset_id} has no catalogue.")
 
 @bp.route('/<dataset_id>/dictionaries', methods=['GET'])
 def get_datasets_dictionaries_by_id(dataset_id):
-    return {
-        "datasets": []
-    }
+    dictionary = select(Dictionaries).where(Dictionaries.dataset_id == dataset_id)
+    res = session.execute(dictionary).all()
+    if res:
+        res = [r[0].sanitized_dict() for r in res]
+        return res
+    else:
+        raise DBRecordNotFoundError(f"Dataset {dataset_id} has no dictionaries.")
 
-@bp.route('/<dataset_id>/dictionaries/<table_id>', methods=['GET'])
-def get_datasets_dictionaries_table_by_id(dataset_id, table_id):
-    return {
-        "datasets": []
-    }
+@bp.route('/<dataset_id>/dictionaries/<table_name>', methods=['GET'])
+def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
+    dictionary = select(Dictionaries).where(
+        Dictionaries.dataset_id == dataset_id,
+        Dictionaries.table_name == table_name
+    )
+    res = session.execute(dictionary).all()
+    if res:
+        res = [r[0].sanitized_dict() for r in res]
+        return res
+    else:
+        raise DBRecordNotFoundError(f"Dataset {dataset_id} has no dictionaries with table {table_name}.")
+

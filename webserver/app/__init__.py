@@ -1,7 +1,10 @@
 from flask import Flask
 
 from .helpers.db import init_db, db_session
-from .exceptions import InvalidDBEntry, DBError, DBRecordNotFoundError, handle_500
+from .exceptions import (
+    InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,
+    handle_500
+)
 
 
 def create_app(test_config=None):
@@ -19,6 +22,7 @@ def create_app(test_config=None):
     app.register_error_handler(InvalidDBEntry, handle_500)
     app.register_error_handler(DBError, handle_500)
     app.register_error_handler(DBRecordNotFoundError, handle_500)
+    app.register_error_handler(InvalidRequest, handle_500)
     init_db()
 
     @app.teardown_appcontext
