@@ -7,6 +7,7 @@ name = "pypi"
 flask = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
+alembic = "*"
 
 [dev-packages]
 pylint=">=3.0.3"

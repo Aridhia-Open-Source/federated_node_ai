@@ -1,19 +1,17 @@
-import os
 import re
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import scoped_session, sessionmaker, declarative_base, Relationship
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker, Relationship, declarative_base
 
 from app.exceptions import InvalidDBEntry
+from app.helpers.const import build_sql_uri
 
-
-def build_sql_uri():
-    return f"postgresql://{os.getenv('PGUSER')}:{os.getenv('PGPASSWORD')}@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
 
 engine = create_engine(build_sql_uri())
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
 Base = declarative_base()
+Base.query = db_session.query_property()
 
 # Another helper class for common methods
 class BaseModel():
@@ -21,6 +19,11 @@ class BaseModel():
         jsonized = self.__dict__
         jsonized.pop('_sa_instance_state', None)
         return jsonized
+
+    def add(self, commit=True):
+        db_session.add(self)
+        if commit:
+            db_session.commit()
 
     @classmethod
     def get_all(cls):
@@ -62,13 +65,3 @@ class BaseModel():
             if req_field not in list(valid.keys()):
                 raise InvalidDBEntry(f"Field \"{req_field}\" missing")
         return valid
-
-Base.query = db_session.query_property()
-metadata_obj = MetaData()
-
-def init_db():
-    # import all modules here that might define models so that
-    # they will be registered properly on the metadata.  Otherwise
-    # you will have to import them first before calling init_db()
-    import app.models.datasets
-    Base.metadata.create_all(bind=engine)

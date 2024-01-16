@@ -55,8 +55,7 @@ class TestDatasets(AbstractTest):
         /datasets GET returns a valid list
         """
         dataset = Datasets(name="TestDs", host="example.com")
-        self.db_session.add(dataset)
-        self.db_session.commit()
+        dataset.add()
 
         response = self.client.get("/datasets/")
 
@@ -75,8 +74,7 @@ class TestDatasets(AbstractTest):
         /datasets/{id} GET returns a valid list
         """
         dataset = Datasets(name="TestDs", host="example.com")
-        self.db_session.add(dataset)
-        self.db_session.commit()
+        dataset.add()
 
         ds_select = select(Datasets).where(Datasets.name == "TestDs").limit(1)
         ds = self.run_query(ds_select)[0][0]

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-configmap
+data:
+  FLASK_APP: "."
+  PGHOST: "db"
+  PGDATABASE: "test_app"
+  PGPORT: "5432"
+  PGUSER: "admin"
+  PGPASSWORD: "test_app"

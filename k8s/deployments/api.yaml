@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  labels:
+    app: flask
+spec:
+  selector:
+    matchLabels:
+      app: flask
+  template:
+    metadata:
+      labels:
+        app: flask
+    spec:
+      containers:
+        - image: federated_node_run:0.0.1
+          name: flask-app
+          imagePullPolicy: Never
+          resources:
+            limits:
+              memory: 200Mi
+              cpu: 100m
+          readinessProbe:
+            exec:
+              command:
+                - curl
+                - http://127.0.0.1:5000/health_check
+            initialDelaySeconds: 30
+            periodSeconds: 180
+            timeoutSeconds: 30
+          livenessProbe:
+            exec:
+              command:
+                - curl
+                - http://127.0.0.1:5000/health_check
+            initialDelaySeconds: 10
+            periodSeconds: 180
+            timeoutSeconds: 30
+          envFrom:
+            - configMapRef:
+                name: backend-configmap

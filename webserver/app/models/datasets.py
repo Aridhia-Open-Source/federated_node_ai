@@ -10,8 +10,6 @@ class Datasets(Base, BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False)
     host = Column(String(120), nullable=False)
-    # catalogue_id = Column(Integer, ForeignKey("catalogues.id", ondelete="CASCADE"))
-    # dictionary_id = Column(Integer, ForeignKey("dictionaries.id", ondelete="CASCADE"))
 
     def __init__(self, name:str=None, host:str=None):
         self.name = name

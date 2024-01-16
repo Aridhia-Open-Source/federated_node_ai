@@ -20,4 +20,4 @@ RUN apt-get update \
 
 EXPOSE 5000
 
-ENTRYPOINT [ "flask", "run", "--host=0.0.0.0" ]
+ENTRYPOINT [ "flask", "run", "--host=0.0.0.0", "--port", "5000" ]

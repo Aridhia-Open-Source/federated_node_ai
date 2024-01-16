@@ -15,26 +15,28 @@ from sqlalchemy.orm import Session
 from .exceptions import DBError, DBRecordNotFoundError, InvalidRequest
 from .helpers.db import engine
 from .models.datasets import Datasets, Catalogues, Dictionaries
+from .helpers.audit import audit
 
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
 session = Session(engine)
 
-
 @bp.route('/', methods=['GET'])
+@audit
 def get_datasets():
     return {
         "datasets": Datasets.get_all()
-    }
+    }, 201
 
 @bp.route('/', methods=['POST'])
+@audit
 def post_datasets():
     try:
         body = Datasets.validate(request.json)
         dataset = Datasets(body["name"], body["host"])
         cata_data = Catalogues.validate(request.json["catalogue"])
         catalogue = Catalogues(dataset=dataset, **cata_data)
-        session.add(dataset)
-        session.add(catalogue)
+        dataset.add(commit=False)
+        catalogue.add(commit=False)
 
         # Dictionaries should be a list of dict. If not raise an error and revert changes
         if not isinstance(request.json["dictionaries"], list):
@@ -44,7 +46,7 @@ def post_datasets():
         for d in request.json["dictionaries"]:
             dict_data = Dictionaries.validate(d)
             dictionary = Dictionaries(dataset=dataset, **dict_data)
-            session.add(dictionary)
+            dictionary.add(commit=False)
         session.commit()
     except sqlalchemy.exc.IntegrityError:
         session.rollback()
@@ -56,6 +58,7 @@ def post_datasets():
     return "ok", 201
 
 @bp.route('/<dataset_id>', methods=['GET'])
+@audit
 def get_datasets_by_id(dataset_id):
     ds = session.get(Datasets, dataset_id)
     if ds is None:
@@ -63,6 +66,7 @@ def get_datasets_by_id(dataset_id):
     return Datasets.sanitized_dict(ds)
 
 @bp.route('/<dataset_id>/catalogue', methods=['GET'])
+@audit
 def get_datasets_catalogue_by_id(dataset_id):
     cata = select(Catalogues).where(Catalogues.dataset_id == dataset_id).limit(1)
     res = session.execute(cata).all()
@@ -73,6 +77,7 @@ def get_datasets_catalogue_by_id(dataset_id):
         raise DBRecordNotFoundError(f"Dataset {dataset_id} has no catalogue.")
 
 @bp.route('/<dataset_id>/dictionaries', methods=['GET'])
+@audit
 def get_datasets_dictionaries_by_id(dataset_id):
     dictionary = select(Dictionaries).where(Dictionaries.dataset_id == dataset_id)
     res = session.execute(dictionary).all()
@@ -83,6 +88,7 @@ def get_datasets_dictionaries_by_id(dataset_id):
         raise DBRecordNotFoundError(f"Dataset {dataset_id} has no dictionaries.")
 
 @bp.route('/<dataset_id>/dictionaries/<table_name>', methods=['GET'])
+@audit
 def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
     dictionary = select(Dictionaries).where(
         Dictionaries.dataset_id == dataset_id,
