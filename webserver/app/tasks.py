@@ -1,29 +1,45 @@
+"""
+tasks-related endpoints:
+- GET /tasks/service-info
+- GET /tasks
+- POST /tasks
+- POST /tasks/validate
+- GET /tasks/id
+- POST /tasks/id/cancel
+"""
+
 from flask import Blueprint
+from .helpers.audit import audit
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 
 
 @bp.route('/service-info', methods=['GET'])
+@audit
 def get_service_info():
-    return []
+    return "WIP", 200
 
 @bp.route('/', methods=['GET'])
+@audit
 def get_tasks():
-    return []
+    return "WIP", 200
 
 @bp.route('/<task_id>', methods=['GET'])
+@audit
 def get_task_id(task_id):
-    task = { "time": "123456", "event": "created", "id": task_id }
-    return task
+    return "WIP", 200
 
 @bp.route('/<task_id>/cancel', methods=['POST'])
+@audit
 def cancel_tasks(task_id):
-    return "ok", 202
+    return "WIP", 200
 
 @bp.route('/', methods=['POST'])
+@audit
 def post_tasks():
-    return "Created", 201
+    return "WIP", 200
 
 @bp.route('/validate', methods=['POST'])
+@audit
 def post_tasks_validate():
-    return "Valid", 200
+    return "WIP", 200

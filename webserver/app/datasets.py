@@ -25,7 +25,7 @@ session = Session(engine)
 def get_datasets():
     return {
         "datasets": Datasets.get_all()
-    }, 201
+    }, 200
 
 @bp.route('/', methods=['POST'])
 @audit
