@@ -31,5 +31,6 @@ services:
       PGPORT: 5432
       PGUSER: admin
       PGPASSWORD: test_app
+      PYTHONPATH: /app
 volumes:
   data:

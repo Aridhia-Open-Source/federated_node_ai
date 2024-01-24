@@ -1,5 +1,5 @@
 import re
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import scoped_session, sessionmaker, Relationship, declarative_base
 
 from app.exceptions import InvalidDBEntry
@@ -16,21 +16,22 @@ Base.query = db_session.query_property()
 # Another helper class for common methods
 class BaseModel():
     def sanitized_dict(self):
-        jsonized = self.__dict__
+        jsonized = self.__dict__.copy()
         jsonized.pop('_sa_instance_state', None)
         return jsonized
 
     def add(self, commit=True):
         db_session.add(self)
+        db_session.flush()
         if commit:
             db_session.commit()
 
     @classmethod
     def get_all(cls):
-        ds = cls.query.all()
+        ds = db_session.execute(select(cls)).all()
         jsonized = []
         for d in ds:
-            jsonized.append(d.sanitized_dict())
+            jsonized.append(d[0].sanitized_dict())
         return jsonized
 
     @classmethod
@@ -55,10 +56,11 @@ class BaseModel():
             raise InvalidDBEntry(f"No usable data foundfor table {cls.__tablename__}")
         valid = data.copy()
         for k, v in data.items():
-            if isinstance(v, dict) or isinstance(v, list):
+            field = getattr(cls, k, None)
+            if field is None or isinstance(v, dict) or isinstance(v, list) or isinstance(field.property, Relationship):
                 continue
             if getattr(cls, k).nullable:
-                 valid[k] = None
+                valid[k] = v
             elif v is None:
                 raise InvalidDBEntry(f"Field {k} has invalid value")
         for req_field in cls._get_required_fields():

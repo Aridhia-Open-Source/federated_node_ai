@@ -3,14 +3,28 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
+namespace: default
 
 image:
-  repository: federated_node
+  repository: federated_node_run
+  tag: 0.0.2
   pullPolicy: IfNotPresent
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+autoscaling:
+  enabled: false
+
+db:
+  user: admin
+  password: asdfASpjpi!asd12
+  name: federated_node_db
+
+federatedNode:
+  port: 5000
+  acr_url: someacr.azurecr.io
+  acr_access_token: MTIzLTEyMy0xMjMK
+
+imagePullSecrets:
+    - name: regcred
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -30,17 +44,9 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
-service:
-  type: ClusterIP
-  port: 80
-
+# populate it with cat ~/.docker/config.json | base64
+dockerjsonconfig: ewogICJhdXRocyI6IHsKICAgICJhY3JhdXNlYXN0YXRkZXYuYXp1cmVjci5pbyI6IHt9LAogICAgImFjcmNhbmNlbnRyYWxhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYWNycnNhbm9ydGhhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYWNydWtzb3V0aGF0ZGV2LmF6dXJlY3IuaW8iOiB7fSwKICAgICJhY3J1a3NvdXRoaHdzYW5hbHl0aXhhZ2lsaXR5LmF6dXJlY3IuaW8iOiB7fSwKICAgICJhY3J1c3dlc3RhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYXJpZGhpYXNjYW5yZXBvLmF6dXJlY3IuaW8iOiB7fSwKICAgICJkb2NrZXItZGV2LmFyaWRoaWEubmV0Ijoge30sCiAgICAiZG9ja2VyLmFyaWRoaWEubmV0Ijoge30sCiAgICAiZW1wdHlxY2Fjci5henVyZWNyLmlvIjoge30sCiAgICAibG9jYWxob3N0OjUwMDAiOiB7fQogIH0sCiAgImNyZWRzU3RvcmUiOiAiZGVza3RvcC5leGUiCn0K
 # ingress:
 #   enabled: false
 #   className: ""
@@ -58,29 +64,6 @@ service:
 #   #      - chart-example.local
 
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
-
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
 
 nodeSelector: {}
 

@@ -7,14 +7,19 @@ admin endpoints:
 """
 
 from flask import Blueprint, request
-from sqlalchemy.orm import Session
-from .helpers.db import engine
-from .models.audit import Audit
-from .helpers.query_filters import parse_query_params
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+from .exceptions import DBRecordNotFoundError
 from .helpers.audit import audit
+from .helpers.db import engine
+from .helpers.query_filters import parse_query_params
+from .helpers.query_validator import validate
+from .models.audit import Audit
+from .models.datasets import Datasets
 
 bp = Blueprint('admin', __name__, url_prefix='/')
-session = Session(engine)
+session_factory = sessionmaker(bind=engine)
+session = scoped_session(session_factory)
 
 @bp.route('/audit', methods=['GET'])
 def get_audit_logs():
@@ -37,4 +42,17 @@ def post_workspace_transfer_token():
 @bp.route('/selection/beacon', methods=['POST'])
 @audit
 def select_beacon():
-    return "WIP", 200
+    body = request.json.copy()
+    dataset = session.get(Datasets, body['dataset_id'])
+    if dataset is None:
+        raise DBRecordNotFoundError(f"Dataset with id {body['dataset_id']} does not exist")
+    # Some method to perform sql validation against the DS
+    if validate(body['query'], dataset):
+        return {
+            "query": body['query'],
+            "result": "Ok"
+        }, 200
+    return {
+        "query": body['query'],
+        "result": "Invalid"
+    }, 500

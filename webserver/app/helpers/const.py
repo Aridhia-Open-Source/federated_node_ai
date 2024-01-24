@@ -1,4 +1,10 @@
 import os
 
-def build_sql_uri():
-    return f"postgresql://{os.getenv('PGUSER')}:{os.getenv('PGPASSWORD')}@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
+def build_sql_uri(
+        username=os.getenv('PGUSER'),
+        password=os.getenv('PGPASSWORD'),
+        host=os.getenv('PGHOST'),
+        port=os.getenv('PGPORT'),
+        database=os.getenv('PGDATABASE')
+        ):
+    return f"postgresql://{username}:{password}@{host}:{port}/{database}"

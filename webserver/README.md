@@ -37,3 +37,9 @@ pylint should guarantee a minimum threshold of code quality/standards. It can be
 ```sh
 make run
 ```
+### Tests (dev mode)
+```sh
+make run_tests
+# Once the container bash is available
+python -m unittest
+```

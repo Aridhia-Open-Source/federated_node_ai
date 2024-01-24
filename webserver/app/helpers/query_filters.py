@@ -12,10 +12,15 @@ FILTERS = [
 ]
 
 
-def parse_query_params(model: Base, query_params: list):
+def parse_query_params(model: Base, query_params: dict):
     """
     We aim to convert query strings in models fields
-    to be used as filters
+    to be used as filters.
+
+    Parameters
+    ----------
+    :param model: The Table model to look against the query args
+    :param query_params: the request args => request.args.copy()
     """
     current_query = select(model)
     for qp_f, qp_v in query_params.items():

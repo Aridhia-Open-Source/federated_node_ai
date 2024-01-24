@@ -20,6 +20,8 @@ if config.config_file_name is not None:
 from app.helpers.db import Base
 import app.models.datasets
 import app.models.audit
+import app.models.requests
+import app.models.tasks
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 

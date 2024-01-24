@@ -8,6 +8,9 @@ flask = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
 alembic = "*"
+kubernetes = "*"
+docker = "*"
+pytest-mock = "*"
 
 [dev-packages]
 pylint=">=3.0.3"

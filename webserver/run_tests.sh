@@ -1,3 +1,6 @@
 #!/bin/bash
 
-python -m unittest discover -s tests -p 'test_*.py'
+echo "Applying migrations..."
+alembic upgrade head
+
+python -m pytest -v "$1"

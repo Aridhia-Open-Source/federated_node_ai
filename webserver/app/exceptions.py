@@ -1,7 +1,7 @@
 from werkzeug.exceptions import HTTPException
 
 def handle_500(e:HTTPException):
-    return e.description,getattr(e, 'code', 500)
+    return {"error": e.description}, getattr(e, 'code', 500)
 
 
 class InvalidDBEntry(HTTPException):

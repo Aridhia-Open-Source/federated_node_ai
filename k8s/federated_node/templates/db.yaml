@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-internal
+  namespace: {{ .Values.namespace | default "default" }}
+  labels:
+    app: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - image: postgres:13-alpine
+          name: db-internal
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.db.name | default "fndb" | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.db.user | default "admin" | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.db.password | default "password123" | quote }}
