@@ -10,11 +10,12 @@ psycopg2 = "*"
 alembic = "*"
 kubernetes = "*"
 docker = "*"
-pytest-mock = "*"
+flask-sqlalchemy = "*"
 
 [dev-packages]
 pylint=">=3.0.3"
 pytest = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.12"

@@ -8,7 +8,7 @@ def test_request_is_successful(client, k8s_client, k8s_config):
     """
     /requests POST
     """
-    dataset = Datasets(name="TestDs", host="example.com", password='pass', username='user')
+    dataset = Datasets(name="DSRequest", host="example.com", password='pass', username='user')
     dataset.add()
     response = client.post(
         "/requests/",
@@ -23,4 +23,4 @@ def test_request_is_successful(client, k8s_client, k8s_config):
         }),
         headers={"Content-Type": "application/json"}
     )
-    assert response.status_code == 201
+    assert response.status_code == 201, response.data.decode()

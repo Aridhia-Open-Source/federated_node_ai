@@ -1,9 +1,9 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, DateTime, String
 from sqlalchemy.sql import func
-from app.helpers.db import BaseModel, Base
+from app.helpers.db import BaseModel, db
 
-class Audit(Base, BaseModel):
+class Audit(db.Model, BaseModel):
     __tablename__ = 'audit'
     id = Column(Integer, primary_key=True, autoincrement=True)
     ip_address = Column(String(15), nullable=False)

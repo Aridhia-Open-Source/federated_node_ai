@@ -1,47 +1,40 @@
 import pytest
-from app import create_app
 from unittest.mock import Mock
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-from app.helpers.db import Base, build_sql_uri
+from app import create_app
+from app.helpers.db import db
 
-# class BasePyTest:
-#     def setup_class():
-#         engine = create_engine(build_sql_uri())
-#         Base.metadata.create_all(engine)
-#         session = Session()
+sample_ds_body = {
+    "name": "TestDs",
+    "host": "db",
+    "port": 5432,
+    "username": "Username",
+    "password": "pass",
+    "catalogue": {
+        "title": "test",
+        "description": "test description"
+    },
+    "dictionaries": [{
+        "table_name": "test",
+        "description": "test description"
+    }]
+}
 
-#     def teardown_class():
-#         session.rollback()
-#         session.close()
 
-@pytest.fixture(scope='session')
-def app():
+@pytest.fixture
+def app_ctx(app):
+    with app.app_context():
+        yield
+
+@pytest.fixture
+def client():
     app = create_app()
-    app.config.update({
-        "TESTING": True
-    })
-    ctx = app.app_context()
-    ctx.push()
-    engine = create_engine(build_sql_uri())
-    Base.metadata.create_all(engine)
-    session = Session()
-    yield app
-    # clean up / reset resources here
-    ctx.pop()
-    session.rollback()
-    session.close()
-    Base.metadata.drop_all(engine)
-
-
-@pytest.fixture()
-def client(app):
-    return app.test_client()
-
-
-@pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
+    app.testing = True
+    with app.test_client() as tclient:
+        with app.app_context():
+            db.create_all()
+            yield tclient
+            db.session.close_all()
+            db.drop_all()
 
 @pytest.fixture()
 def k8s_config(mocker):
@@ -59,3 +52,7 @@ def k8s_client(mocker):
         )
     )
     return mock
+
+@pytest.fixture(scope='function')
+def dataset_post_body():
+    return sample_ds_body

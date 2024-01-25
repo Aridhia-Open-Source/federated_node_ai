@@ -4,11 +4,11 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.helpers.db import BaseModel, Base
+from app.helpers.db import BaseModel, db
 from kubernetes import client, config
 
 
-class Datasets(Base, BaseModel):
+class Datasets(db.Model, BaseModel):
     __tablename__ = 'datasets'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False)
@@ -48,7 +48,7 @@ class Datasets(Base, BaseModel):
         return f'<Dataset {self.name!r}>'
 
 
-class Catalogues(Base, BaseModel):
+class Catalogues( db.Model, BaseModel):
     __tablename__ = 'catalogues'
     __table_args__ = (
         UniqueConstraint('title', 'dataset_id'),
@@ -78,7 +78,7 @@ class Catalogues(Base, BaseModel):
         self.updated_at = datetime.now()
 
 
-class Dictionaries(Base, BaseModel):
+class Dictionaries( db.Model, BaseModel):
     __tablename__ = 'dictionaries'
     __table_args__ = (
         UniqueConstraint('table_name', 'dataset_id', 'field_name'),

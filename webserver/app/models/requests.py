@@ -2,10 +2,10 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.helpers.db import BaseModel, Base
+from app.helpers.db import BaseModel, db
 from app.models.datasets import Datasets
 
-class Requests(Base, BaseModel):
+class Requests(db.Model, BaseModel):
     __tablename__ = 'requests'
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(256), nullable=False)

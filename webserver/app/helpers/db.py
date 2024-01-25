@@ -1,17 +1,18 @@
 import re
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import scoped_session, sessionmaker, Relationship, declarative_base
-
+from flask_sqlalchemy import SQLAlchemy
 from app.exceptions import InvalidDBEntry
 from app.helpers.const import build_sql_uri
 
 
 engine = create_engine(build_sql_uri())
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=False,
-                                         bind=engine))
+# db_session = scoped_session(sessionmaker(autocommit=False,
+#                                          autoflush=False,
+#                                          bind=engine))
 Base = declarative_base()
-Base.query = db_session.query_property()
+# Base.query = db.session.query_property()
+db = SQLAlchemy(model_class=Base)
 
 # Another helper class for common methods
 class BaseModel():
@@ -21,14 +22,14 @@ class BaseModel():
         return jsonized
 
     def add(self, commit=True):
-        db_session.add(self)
-        db_session.flush()
+        db.session.add(self)
+        db.session.flush()
         if commit:
-            db_session.commit()
+            db.session.commit()
 
     @classmethod
     def get_all(cls):
-        ds = db_session.execute(select(cls)).all()
+        ds = db.session.execute(select(cls)).all()
         jsonized = []
         for d in ds:
             jsonized.append(d[0].sanitized_dict())

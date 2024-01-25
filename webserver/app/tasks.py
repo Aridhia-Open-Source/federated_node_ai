@@ -11,19 +11,17 @@ from datetime import datetime
 import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import update
-from sqlalchemy.orm import scoped_session, sessionmaker
 
 from .exceptions import DBRecordNotFoundError, DBError, InvalidRequest
 from .helpers.audit import audit
-from .helpers.db import engine
+from .helpers.db import db
 from .helpers.query_filters import parse_query_params
 from .helpers.query_validator import validate as validate_query
 from .models.datasets import Datasets
 from .models.tasks import Tasks
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
-session_factory = sessionmaker(bind=engine)
-session = scoped_session(session_factory)
+session = db.session
 
 @bp.route('/service-info', methods=['GET'])
 @audit

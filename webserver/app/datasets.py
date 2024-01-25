@@ -11,15 +11,13 @@ datasets-related endpoints:
 import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import select
-from sqlalchemy.orm import scoped_session, sessionmaker
 from .exceptions import DBError, DBRecordNotFoundError, InvalidRequest
-from .helpers.db import engine
+from .helpers.db import db
 from .models.datasets import Datasets, Catalogues, Dictionaries
 from .helpers.audit import audit
 
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
-session_factory = sessionmaker(bind=engine)
-session = scoped_session(session_factory)
+session = db.session
 
 @bp.route('/', methods=['GET'])
 @audit
@@ -49,7 +47,9 @@ def post_datasets():
         for d in dict_body:
             dict_data = Dictionaries.validate(d)
             dictionary = Dictionaries(dataset=dataset, **dict_data)
+            print("here")
             dictionary.add(commit=False)
+            print("here d")
         session.commit()
         return { "dataset_id": dataset.id }, 201
 
