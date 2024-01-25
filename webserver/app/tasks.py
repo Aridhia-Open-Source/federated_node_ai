@@ -68,18 +68,23 @@ def cancel_tasks(task_id):
 def post_tasks():
     try:
         body = Tasks.validate(request.json)
-        body["dataset"] = session.get(Datasets, body.pop("dataset_id"))
+        ds_id = body.pop("dataset_id")
+        body["dataset"] = session.get(Datasets, ds_id)
         if body["dataset"] is None:
-            raise DBRecordNotFoundError("Dataset not found")
-        if not validate_query(body.pop('use_query'), body["dataset"]):
+            raise DBRecordNotFoundError(f"Dataset {ds_id} not found")
+
+        query = body.pop('use_query')
+        if not validate_query(query, body["dataset"]):
             raise InvalidRequest("Query missing or misformed")
+
         task = Tasks(**body)
         if not task.can_image_be_found():
             return {
                 "error": f"Image {task.docker_image} cannot be found in the registry"
             }, 400
+
         task.add()
-        return {"task_id": task.id}, 200
+        return {"task_id": task.id}, 201
     except sqlalchemy.exc.IntegrityError:
         session.rollback()
         raise DBError("Record already exists")

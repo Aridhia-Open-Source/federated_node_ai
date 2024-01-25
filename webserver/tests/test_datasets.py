@@ -23,7 +23,7 @@ def post_dataset(client, data_body=sample_ds_body, code=201):
         data=json.dumps(data_body),
         headers={"Content-Type": "application/json"}
     )
-    assert(response.status_code == code, response.data.decode())
+    assert response.status_code == code, response.data.decode()
     return response.json
 
 def test_get_all_datasets(client, k8s_client, k8s_config):

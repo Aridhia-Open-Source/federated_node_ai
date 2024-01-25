@@ -30,7 +30,11 @@ def get_requests():
 def post_requests():
     try:
         body = request.json
-        body["dataset"] = session.get(Datasets, body.pop("dataset_id"))
+        ds_id = body.pop("dataset_id")
+        body["dataset"] = session.get(Datasets, ds_id)
+        if body["dataset"] is None:
+            raise DBRecordNotFoundError(f"Dataset {ds_id} not found")
+
         req_attributes = Requests.validate(body)
         req = Requests(**req_attributes)
         req.add()

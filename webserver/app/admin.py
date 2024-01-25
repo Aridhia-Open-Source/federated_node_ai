@@ -46,7 +46,7 @@ def select_beacon():
     dataset = session.get(Datasets, body['dataset_id'])
     if dataset is None:
         raise DBRecordNotFoundError(f"Dataset with id {body['dataset_id']} does not exist")
-    # Some method to perform sql validation against the DS
+
     if validate(body['query'], dataset):
         return {
             "query": body['query'],
