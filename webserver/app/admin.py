@@ -25,7 +25,6 @@ session = scoped_session(session_factory)
 def get_audit_logs():
     query = parse_query_params(Audit, request.args.copy())
     res = session.execute(query).all()
-    print(res)
     if res:
         res = [r[0].sanitized_dict() for r in res]
     return res, 200

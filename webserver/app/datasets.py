@@ -47,9 +47,7 @@ def post_datasets():
         for d in dict_body:
             dict_data = Dictionaries.validate(d)
             dictionary = Dictionaries(dataset=dataset, **dict_data)
-            print("here")
             dictionary.add(commit=False)
-            print("here d")
         session.commit()
         return { "dataset_id": dataset.id }, 201
 
