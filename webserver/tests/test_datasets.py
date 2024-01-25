@@ -24,7 +24,6 @@ def post_dataset(client, data_body=sample_ds_body, code=201):
         headers={"Content-Type": "application/json"}
     )
     assert(response.status_code == code, response.data.decode())
-    print(f"Adding {data_body['name']} => {response.json}")
     return response.json
 
 def test_get_all_datasets(client, k8s_client, k8s_config):
@@ -59,7 +58,6 @@ def test_get_dataset_by_id_200(client, k8s_config, k8s_client):
         "port": 5432
     }
     response = client.get(f"/datasets/{dataset.id}")
-    print(response)
     assert response.status_code == 200
     assert response.json == expected_ds_entry
 
@@ -121,10 +119,8 @@ def test_post_datasets_with_same_dictionaries_succeeds(client, k8s_client, k8s_c
     data_body['name'] = 'TestDs23'
     post_dataset(client, data_body)
 
-    print(data_body["dictionaries"])
     # Make sure db entries are created
     query = run_query(select(Datasets).where(Datasets.name == data_body['name']))
-    print(Datasets.get_all())
     assert len(query) == 1
     query = run_query(select(Catalogues).where(Catalogues.title == data_body["catalogue"]["title"]))
     assert len(query) == 1
