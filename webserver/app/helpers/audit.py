@@ -20,7 +20,7 @@ def audit(func):
         else:
             source_ip = request.environ['REMOTE_ADDR']
 
-        token = decode_token(request.headers["Authorization"].replace("Bearer ", ""))
+        token = decode_token(request.headers.get("Authorization", '').replace("Bearer ", ""))
         http_method = request.method
         http_endpoint = request.path
         api_function = func.__name__

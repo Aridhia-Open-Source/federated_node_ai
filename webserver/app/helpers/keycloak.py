@@ -49,7 +49,7 @@ def auth(scope='public'):
         @wraps(func)
         def _auth(*args, **kwargs):
             try:
-                token = request.headers["Authorization"].replace("Bearer ", "")
+                token = request.headers.get("Authorization", "").replace("Bearer ", "")
             except KeyError:
                 raise AuthenticationError("Token not provided")
 

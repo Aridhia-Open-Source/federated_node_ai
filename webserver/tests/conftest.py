@@ -26,7 +26,27 @@ def app_ctx(app):
         yield
 
 @pytest.fixture
-def client():
+def user_uuid():
+    return '1234-a213a2-785cde2'
+
+@pytest.fixture
+def good_tokens(user_uuid, mocker):
+    mocker.patch(
+        'app.helpers.keycloak.is_token_valid',
+        return_value = True,
+        autospec=True
+    )
+    mocker.patch(
+        'app.helpers.keycloak.decode_token',
+        return_value = {
+            'sub': user_uuid
+        },
+        autospec=True
+    )
+
+
+@pytest.fixture
+def client(good_tokens, query_validator):
     app = create_app()
     app.testing = True
     with app.test_client() as tclient:
@@ -55,12 +75,19 @@ def k8s_client(mocker):
 
 @pytest.fixture(scope="function", autouse=False)
 def query_validator(mocker):
-    return mocker.patch('app.helpers.query_validator.validate', return_value = True)
-
+    mocker.patch(
+        'app.helpers.query_validator.validate',
+        return_value = True,
+        autospec=True
+    )
 
 @pytest.fixture(scope="function", autouse=False)
 def query_invalidator(mocker, query_validator):
-    return mocker.patch('app.helpers.query_validator.validate', return_value = False)
+    mocker.patch(
+        'app.helpers.query_validator.validate',
+        return_value = False,
+        autospec=True
+    )
 
 @pytest.fixture(scope='function')
 def dataset_post_body():

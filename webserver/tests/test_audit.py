@@ -1,9 +1,11 @@
+import pytest
 from datetime import datetime
 from sqlalchemy import select
 from app.helpers.db import db
 from app.models.audit import Audit
+from tests.conftest import good_tokens, query_validator
 
-def test_get_audit_events(client):
+def test_get_audit_events(client, user_uuid):
     """
     Test that after a simple GET call we have an audit entry
     """
@@ -18,11 +20,11 @@ def test_get_audit_events(client):
     # We do not check the entire dict due to the datetime and id
     assert response.json[0].items() >= {
         'api_function': 'get_datasets',
-        'details': None,
+        'details': f'Requested by {user_uuid} - ',
         'endpoint': '/datasets/',
+        'requested_by': user_uuid,
         'http_method': 'GET',
-        'ip_address':
-        '127.0.0.1',
+        'ip_address': '127.0.0.1',
         'status_code': 200
     }.items()
 
