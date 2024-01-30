@@ -17,7 +17,7 @@ def task_body():
         "use_query": "SELECT * FROM patients LIMIT 10;"
     }
 
-def test_create_task(query_validator, client, task_body, k8s_client, k8s_config):
+def test_create_task(good_tokens, query_validator, client, task_body, k8s_client, k8s_config):
     """
     Tests task creation returns 201
     """
@@ -35,7 +35,7 @@ def test_create_task(query_validator, client, task_body, k8s_client, k8s_config)
 
 # This for some reason still persists the mocking of app.helpers.query_validator.validate
 @pytest.mark.skip("This for some reason still persists the mocking of app.helpers.query_validator.validate")
-def test_create_task_with_invalid_query(query_invalidator, client, task_body, k8s_client, k8s_config):
+def test_create_task_with_invalid_query(good_tokens, query_invalidator, client, task_body, k8s_client, k8s_config):
     """
     Tests task creation returns 201
     """

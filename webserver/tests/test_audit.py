@@ -5,7 +5,7 @@ from app.helpers.db import db
 from app.models.audit import Audit
 from tests.conftest import good_tokens, query_validator
 
-def test_get_audit_events(client, user_uuid):
+def test_get_audit_events(good_tokens, query_validator, client, user_uuid):
     """
     Test that after a simple GET call we have an audit entry
     """
@@ -28,7 +28,7 @@ def test_get_audit_events(client, user_uuid):
         'status_code': 200
     }.items()
 
-def test_get_filtered_audit_events(client):
+def test_get_filtered_audit_events(good_tokens, query_validator, client):
     """
     Test that after a simple GET call we have an audit entry
     """

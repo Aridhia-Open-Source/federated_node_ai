@@ -4,7 +4,7 @@ from app.models.datasets import Datasets
 from app.models.requests import Requests
 
 
-def test_request_is_successful(client, k8s_client, k8s_config):
+def test_request_is_successful(good_tokens, client, k8s_client, k8s_config):
     """
     /requests POST
     """
@@ -26,7 +26,7 @@ def test_request_is_successful(client, k8s_client, k8s_config):
     assert response.status_code == 201, response.data.decode()
     assert list(response.json.keys()) == ['request_id']
 
-def test_request_for_invalid_dataset_fails(client, k8s_client, k8s_config):
+def test_request_for_invalid_dataset_fails(good_tokens, client, k8s_client, k8s_config):
     """
     /requests POST with non-existent dataset would return a 404
     """

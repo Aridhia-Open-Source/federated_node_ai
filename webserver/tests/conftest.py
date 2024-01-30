@@ -46,7 +46,7 @@ def good_tokens(user_uuid, mocker):
 
 
 @pytest.fixture
-def client(good_tokens, query_validator):
+def client():
     app = create_app()
     app.testing = True
     with app.test_client() as tclient:
@@ -82,7 +82,7 @@ def query_validator(mocker):
     )
 
 @pytest.fixture(scope="function", autouse=False)
-def query_invalidator(mocker, query_validator):
+def query_invalidator(mocker):
     mocker.patch(
         'app.helpers.query_validator.validate',
         return_value = False,
