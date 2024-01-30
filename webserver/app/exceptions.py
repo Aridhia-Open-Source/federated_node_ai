@@ -1,6 +1,6 @@
 from werkzeug.exceptions import HTTPException
 
-def handle_500(e:HTTPException):
+def exception_handler(e:HTTPException):
     return {"error": e.description}, getattr(e, 'code', 500)
 
 
@@ -15,3 +15,6 @@ class DBRecordNotFoundError(HTTPException):
 
 class InvalidRequest(HTTPException):
     code = 500
+
+class AuthenticationError(HTTPException):
+    code = 401

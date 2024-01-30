@@ -11,6 +11,8 @@ alembic = "*"
 kubernetes = "*"
 docker = "*"
 flask-sqlalchemy = "*"
+joserfc = "*"
+pyjwt = "*"
 
 [dev-packages]
 pylint=">=3.0.3"

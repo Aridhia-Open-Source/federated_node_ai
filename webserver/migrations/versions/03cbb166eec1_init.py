@@ -1,7 +1,7 @@
 """init
 
 Revision ID: 03cbb166eec1
-Revises: 
+Revises:
 Create Date: 2024-01-23 13:30:31.456451
 
 """
@@ -25,6 +25,7 @@ def upgrade() -> None:
     sa.Column('ip_address', sa.String(length=15), nullable=False),
     sa.Column('http_method', sa.String(length=10), nullable=False),
     sa.Column('endpoint', sa.String(length=50), nullable=False),
+    sa.Column('requested_by', sa.String(length=50), nullable=False),
     sa.Column('status_code', sa.Integer(), nullable=True),
     sa.Column('api_function', sa.String(length=50), nullable=True),
     sa.Column('details', sa.String(length=256), nullable=True),

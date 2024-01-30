@@ -2,6 +2,7 @@ from functools import wraps
 from flask import request
 
 from app.models.audit import Audit
+from app.helpers.keycloak import decode_token
 from sqlalchemy.orm import Session
 from .db import engine
 
@@ -19,11 +20,13 @@ def audit(func):
         else:
             source_ip = request.environ['REMOTE_ADDR']
 
+        token = decode_token(request.headers["Authorization"].replace("Bearer ", ""))
         http_method = request.method
         http_endpoint = request.path
         api_function = func.__name__
-        details = None
-        to_save = Audit(source_ip, http_method, http_endpoint, http_status, api_function, details)
+        requested_by = token.get('sub')
+        details = f"Requested by {token.get('sub')} - {token.get("email", '')}"
+        to_save = Audit(source_ip, http_method, http_endpoint, requested_by, http_status, api_function, details)
         to_save.add()
         return response_object, http_status
     return _audit

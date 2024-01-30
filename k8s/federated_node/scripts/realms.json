@@ -1,0 +1,274 @@
+{
+  "realm": "FederatedNode",
+  "enabled": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "groups": [
+    {
+      "name": "Administrator",
+      "path": "/Administrator"
+    },
+    {
+      "name": "Super Administrator",
+      "path": "/Super Administrator"
+    },
+    {
+      "name": "Users",
+      "path": "/Users"
+    }
+  ],
+  "requiredCredentials": [
+    "password"
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "Administrators",
+        "description": "Administrators with limited, non-realm, related permissions",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "Users"
+          ],
+          "client": {
+            "realm-management": [
+              "view-users",
+              "view-clients",
+              "manage-users",
+              "view-authorization",
+              "query-groups",
+              "query-users",
+              "manage-clients",
+              "view-realm",
+              "manage-authorization",
+              "query-clients",
+              "view-events"
+            ],
+            "account": [
+              "view-groups",
+              "delete-account",
+              "manage-account",
+              "view-applications",
+              "view-profile",
+              "view-consent"
+            ]
+          }
+        },
+        "clientRole": false,
+        "attributes": {}
+      },
+      {
+        "name": "Super Administrator",
+        "description": "Super administrators with extensive permissions set",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "Administrators",
+            "Users"
+          ],
+          "client": {
+            "realm-management": [
+              "view-users",
+              "view-clients",
+              "manage-identity-providers",
+              "view-authorization",
+              "query-groups",
+              "query-users",
+              "view-realm",
+              "manage-authorization",
+              "query-clients",
+              "realm-admin",
+              "manage-users",
+              "manage-events",
+              "create-client",
+              "query-realms",
+              "view-identity-providers",
+              "impersonation",
+              "manage-realm",
+              "manage-clients",
+              "view-events"
+            ],
+            "broker": [
+              "read-token"
+            ],
+            "account": [
+              "manage-consent",
+              "delete-account",
+              "view-applications",
+              "view-consent",
+              "view-groups",
+              "manage-account",
+              "view-profile",
+              "manage-account-links"
+            ]
+          }
+        },
+        "clientRole": false,
+        "attributes": {}
+      },
+      {
+        "name": "Users",
+        "description": "Basic Users",
+        "composite": true,
+        "composites": {
+          "client": {
+            "account": [
+              "view-profile",
+              "manage-account"
+            ]
+          }
+        },
+        "clientRole": false,
+        "attributes": {}
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "global",
+      "name": "Global",
+      "description": "General access definition for endpoints",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "/",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KEYCLOAK_SECRET}",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": ["+"],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "resources": [
+          {
+            "name": "endpoints",
+            "ownerManagedAccess": false,
+            "displayName": "",
+            "attributes": {},
+            "uris": [],
+            "scopes": [
+              {
+                "name": "public"
+              },
+              {
+                "name": "admin"
+              },
+              {
+                "name": "superadmin"
+              }
+            ],
+            "icon_uri": ""
+          }
+        ],
+        "policies": [
+          {
+            "name": "admin-policy",
+            "description": "",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"Administrators\",\"required\":false},{\"id\":\"Super Administrator\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "superadmin-policy",
+            "description": "",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"Super Administrator\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "all-users-policy",
+            "description": "",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"Administrators\",\"required\":false},{\"id\":\"Users\",\"required\":false},{\"id\":\"Super Administrator\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "admin-permission",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"admin\",\"superadmin\"]",
+              "applyPolicies": "[\"admin-policy\"]"
+            }
+          },
+          {
+            "name": "superadmin-permisssion",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"superadmin\"]",
+              "applyPolicies": "[\"superadmin-policy\"]"
+            }
+          },
+          {
+            "name": "all-users-permissions",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"public\",\"admin\",\"superadmin\"]",
+              "applyPolicies": "[\"all-users-policy\",\"superadmin-policy\",\"admin-policy\"]"
+            }
+          }
+        ],
+        "scopes": [
+          {
+            "name": "admin",
+            "iconUri": ""
+          },
+          {
+            "name": "public",
+            "iconUri": ""
+          },
+          {
+            "name": "superadmin",
+            "iconUri": ""
+          }
+        ],
+        "decisionStrategy": "UNANIMOUS"
+      }
+    }
+  ]
+}

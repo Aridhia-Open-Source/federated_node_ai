@@ -2,7 +2,7 @@ from flask import Flask
 from .helpers.db import build_sql_uri, db
 from .exceptions import (
     InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,
-    handle_500
+    AuthenticationError, exception_handler
 )
 
 
@@ -19,10 +19,11 @@ def create_app(test_config=None):
     app.register_blueprint(tasks.bp)
     app.register_blueprint(admin.bp)
 
-    app.register_error_handler(InvalidDBEntry, handle_500)
-    app.register_error_handler(DBError, handle_500)
-    app.register_error_handler(DBRecordNotFoundError, handle_500)
-    app.register_error_handler(InvalidRequest, handle_500)
+    app.register_error_handler(InvalidDBEntry, exception_handler)
+    app.register_error_handler(DBError, exception_handler)
+    app.register_error_handler(DBRecordNotFoundError, exception_handler)
+    app.register_error_handler(InvalidRequest, exception_handler)
+    app.register_error_handler(AuthenticationError, exception_handler)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

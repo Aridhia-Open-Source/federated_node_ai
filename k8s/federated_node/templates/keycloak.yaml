@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: keycloak
+  labels:
+    app: keycloak
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - image: quay.io/keycloak/keycloak:23.0.4
+          args: [
+            "start-dev",
+            "--import-realm"
+          ]
+          name: keycloak
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+          env:
+            - name: KEYCLOAK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: kc-secrets
+                  key: KEYCLOAK_GLOBAL_CLIENT_SECRET
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kc-secrets
+                  key: KEYCLOAK_ADMIN_PASSWORD
+          envFrom:
+          - configMapRef:
+              name: keycloak-config
+          volumeMounts:
+            - name: config
+              mountPath: /opt/keycloak/data/import/
+      volumes:
+        - name: config
+          configMap:
+            name: keycloak-start-config
+            items:
+            - key: config.json
+              path: config.json
+      imagePullSecrets:
+          - name: regcred

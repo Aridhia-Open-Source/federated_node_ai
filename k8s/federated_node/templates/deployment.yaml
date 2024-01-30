@@ -59,5 +59,18 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-configmap
+            - configMapRef:
+                name: keycloak-config
+          env:
+          - name: KEYCLOAK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: kc-secrets
+                key: KEYCLOAK_GLOBAL_CLIENT_SECRET
+          - name: KEYCLOAK_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kc-secrets
+                key: KEYCLOAK_ADMIN_PASSWORD
       imagePullSecrets:
         - name: regcred
