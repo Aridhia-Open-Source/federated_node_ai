@@ -10,9 +10,8 @@ from flask import Blueprint, request
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from .exceptions import DBRecordNotFoundError
-from .helpers.audit import audit
+from .helpers.wrappers import audit, auth
 from .helpers.db import engine
-from .helpers.keycloak import auth
 from .helpers.query_filters import parse_query_params
 from .helpers.query_validator import validate
 from .models.audit import Audit
@@ -23,7 +22,7 @@ session_factory = sessionmaker(bind=engine)
 session = scoped_session(session_factory)
 
 @bp.route('/audit', methods=['GET'])
-@auth(scope='admin')
+@auth(scope='can_do_admin')
 def get_audit_logs():
     query = parse_query_params(Audit, request.args.copy())
     res = session.execute(query).all()
@@ -33,19 +32,19 @@ def get_audit_logs():
 
 @bp.route('/token_transfer', methods=['POST'])
 @audit
-@auth(scope='admin')
+@auth(scope='can_transfer_token')
 def post_transfer_token():
     return "WIP", 200
 
 @bp.route('/workspace/token', methods=['POST'])
 @audit
-@auth(scope='admin')
+@auth(scope='can_transfer_token')
 def post_workspace_transfer_token():
     return "WIP", 200
 
 @bp.route('/selection/beacon', methods=['POST'])
 @audit
-@auth(scope='admin')
+@auth(scope='can_access_dataset')
 def select_beacon():
     body = request.json.copy()
     dataset = session.get(Datasets, body['dataset_id'])

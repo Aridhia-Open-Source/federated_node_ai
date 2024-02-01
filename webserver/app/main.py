@@ -1,5 +1,5 @@
 from flask import Blueprint, redirect, url_for, request
-from app.helpers.keycloak import get_token
+from app.helpers.keycloak import Keycloak
 
 bp = Blueprint('main', __name__, url_prefix='/')
 
@@ -17,5 +17,5 @@ def health_check():
 def login():
     credentials = request.form.to_dict()
     return {
-        "token": get_token(**credentials)
+        "token": Keycloak().get_token(**credentials)
     }, 200

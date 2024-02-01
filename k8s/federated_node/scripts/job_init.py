@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import time
 
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://keycloak.keycloak.svc.cluster.local:8080")
 REALM = 'master'
@@ -8,6 +9,21 @@ KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "FederatedNode")
 KEYCLOAK_CLIENT = os.getenv("KEYCLOAK_CLIENT", "global")
 KEYCLOAK_USER = os.getenv("KEYCLOAK_ADMIN")
 KEYCLOAK_PASS = os.getenv("KEYCLOAK_ADMIN_PASSWORD")
+
+print("Health check on keycloak pod before starting")
+for i in range(1, 5):
+    print(f"Health check {i}/5")
+    try:
+      hc_resp = requests.get(f"{KEYCLOAK_URL}/realms/master")
+      if hc_resp.ok:
+          break
+    except requests.exceptions.ConnectionError:
+        pass
+    print("Health check failed...retrying in 10 seconds")
+    time.sleep(10)
+if i == 5:
+    print("Keycloak cannot be reached")
+    exit(1)
 
 print(f"Accessing to keycloak {REALM} realm")
 

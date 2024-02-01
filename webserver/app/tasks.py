@@ -13,8 +13,9 @@ from flask import Blueprint, request
 from sqlalchemy import update
 
 from .exceptions import DBRecordNotFoundError, DBError, InvalidRequest
-from .helpers.audit import audit
+from .helpers.wrappers import audit
 from .helpers.db import db
+from .helpers.wrappers import auth
 from .helpers.query_filters import parse_query_params
 from .helpers.query_validator import validate as validate_query
 from .models.datasets import Datasets
@@ -25,11 +26,13 @@ session = db.session
 
 @bp.route('/service-info', methods=['GET'])
 @audit
+@auth(scope='can_do_admin')
 def get_service_info():
     return "WIP", 200
 
 @bp.route('/', methods=['GET'])
 @audit
+@auth(scope='can_admin_task')
 def get_tasks():
     query = parse_query_params(Tasks, request.args.copy())
     res = session.execute(query).all()
@@ -39,6 +42,7 @@ def get_tasks():
 
 @bp.route('/<task_id>', methods=['GET'])
 @audit
+@auth(scope='can_admin_task')
 def get_task_id(task_id):
     task = session.get(Tasks, task_id)
     if task is None:
@@ -47,6 +51,7 @@ def get_task_id(task_id):
 
 @bp.route('/<task_id>/cancel', methods=['POST'])
 @audit
+@auth(scope='can_admin_task')
 def cancel_tasks(task_id):
     task = session.get(Tasks, task_id)
     if task is None:
@@ -60,11 +65,12 @@ def cancel_tasks(task_id):
         session.execute(query)
         session.commit()
         return Tasks.sanitized_dict(task), 201
-    except:
-        raise DBError(f"An error occurred while updating")
+    except Exception as exc:
+        raise DBError("An error occurred while updating") from exc
 
 @bp.route('/', methods=['POST'])
 @audit
+@auth(scope='can_exec_task')
 def post_tasks():
     try:
         body = Tasks.validate(request.json)
@@ -85,17 +91,20 @@ def post_tasks():
 
         task.add()
         return {"task_id": task.id}, 201
-    except sqlalchemy.exc.IntegrityError:
+    except sqlalchemy.exc.IntegrityError as exc:
         session.rollback()
-        raise DBError("Record already exists")
-    except KeyError:
+        raise DBError("Record already exists") from exc
+    except KeyError as kexc:
         session.rollback()
-        raise InvalidRequest("Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there")
+        raise InvalidRequest(
+            "Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there"
+        ) from kexc
     except:
         session.rollback()
         raise
 
 @bp.route('/validate', methods=['POST'])
 @audit
+@auth(scope='can_exec_task')
 def post_tasks_validate():
     return "WIP", 200

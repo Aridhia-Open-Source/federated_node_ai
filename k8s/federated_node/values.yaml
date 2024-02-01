@@ -7,7 +7,7 @@ namespace: default
 
 image:
   repository: federated_node_run
-  tag: 0.0.3
+  tag: 0.0.1
   pullPolicy: IfNotPresent
 
 autoscaling:

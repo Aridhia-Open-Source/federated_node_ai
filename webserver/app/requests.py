@@ -7,8 +7,9 @@ request-related endpoints:
 import sqlalchemy
 from flask import Blueprint, request
 from .exceptions import DBRecordNotFoundError, DBError, InvalidRequest
-from .helpers.audit import audit
+from .helpers.wrappers import audit
 from .helpers.db import db
+from .helpers.wrappers import auth
 from .models.datasets import Datasets
 from .models.requests import Requests
 from .helpers.query_filters import parse_query_params
@@ -18,6 +19,7 @@ session = db.session
 
 @bp.route('/', methods=['GET'])
 @audit
+@auth(scope='can_admin_request')
 def get_requests():
     query = parse_query_params(Requests, request.args.copy())
     res = session.execute(query).all()
@@ -27,6 +29,7 @@ def get_requests():
 
 @bp.route('/', methods=['POST'])
 @audit
+@auth(scope='can_send_request')
 def post_requests():
     try:
         body = request.json
@@ -39,18 +42,21 @@ def post_requests():
         req = Requests(**req_attributes)
         req.add()
         return {"request_id": req.id}, 201
-    except sqlalchemy.exc.IntegrityError:
+    except sqlalchemy.exc.IntegrityError as exc:
         session.rollback()
-        raise DBError("Record already exists")
-    except KeyError:
+        raise DBError("Record already exists") from exc
+    except KeyError as kexc:
         session.rollback()
-        raise InvalidRequest("Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there")
+        raise InvalidRequest(
+            "Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there"
+        ) from kexc
     except:
         session.rollback()
         raise
 
 @bp.route('/<code>/approve', methods=['POST'])
 @audit
+@auth(scope='can_admin_request')
 def post_approve_requests(code):
     dar = session.get(Requests, code)
     if dar is None:

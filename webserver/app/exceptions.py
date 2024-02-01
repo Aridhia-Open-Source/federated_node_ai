@@ -18,3 +18,6 @@ class InvalidRequest(HTTPException):
 
 class AuthenticationError(HTTPException):
     code = 401
+
+class KeycloakError(HTTPException):
+    code = 500

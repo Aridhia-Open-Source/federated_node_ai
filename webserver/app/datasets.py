@@ -13,14 +13,16 @@ from flask import Blueprint, request
 from sqlalchemy import select
 from .exceptions import DBError, DBRecordNotFoundError, InvalidRequest
 from .helpers.db import db
+from .helpers.keycloak import Keycloak
+from .helpers.wrappers import auth, audit
 from .models.datasets import Datasets, Catalogues, Dictionaries
-from .helpers.audit import audit
 
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
 session = db.session
 
 @bp.route('/', methods=['GET'])
 @audit
+@auth(scope='can_access_dataset')
 def get_datasets():
     return {
         "datasets": Datasets.get_all()
@@ -28,6 +30,7 @@ def get_datasets():
 
 @bp.route('/', methods=['POST'])
 @audit
+@auth(scope='can_admin_dataset')
 def post_datasets():
     try:
         body = Datasets.validate(request.json)
@@ -36,7 +39,10 @@ def post_datasets():
         dataset = Datasets(**body)
         cata_data = Catalogues.validate(cata_body)
         catalogue = Catalogues(dataset=dataset, **cata_data)
-        dataset.add(commit=False)
+
+        kc_client = Keycloak()
+        token_info = kc_client.decode_token(kc_client.get_token_from_headers(request.headers))
+        dataset.add(commit=False, user_id=token_info['sub'])
         catalogue.add(commit=False)
 
         # Dictionaries should be a list of dict. If not raise an error and revert changes
@@ -51,18 +57,21 @@ def post_datasets():
         session.commit()
         return { "dataset_id": dataset.id }, 201
 
-    except sqlalchemy.exc.IntegrityError:
+    except sqlalchemy.exc.IntegrityError as exc:
         session.rollback()
-        raise DBError("Record already exists")
-    except KeyError:
+        raise DBError("Record already exists") from exc
+    except KeyError as kexc:
         session.rollback()
-        raise InvalidRequest("Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there")
+        raise InvalidRequest(
+            "Missing field. Make sure \"catalogue\" and \"dictionaries\" entries are there"
+        ) from kexc
     except:
         session.rollback()
         raise
 
 @bp.route('/<dataset_id>', methods=['GET'])
 @audit
+@auth(scope='can_access_dataset')
 def get_datasets_by_id(dataset_id):
     ds = session.get(Datasets, dataset_id)
     if ds is None:
@@ -71,28 +80,32 @@ def get_datasets_by_id(dataset_id):
 
 @bp.route('/<dataset_id>/catalogue', methods=['GET'])
 @audit
+@auth(scope='can_access_dataset')
 def get_datasets_catalogue_by_id(dataset_id):
     cata = select(Catalogues).where(Catalogues.dataset_id == dataset_id).limit(1)
     res = session.execute(cata).all()
     if res:
         res = res[0][0].sanitized_dict()
-        return res
-    else:
-        raise DBRecordNotFoundError(f"Dataset {dataset_id} has no catalogue.")
+        return res, 200
+    raise DBRecordNotFoundError(f"Dataset {dataset_id} has no catalogue.")
 
 @bp.route('/<dataset_id>/dictionaries', methods=['GET'])
 @audit
+@auth(scope='can_access_dataset')
 def get_datasets_dictionaries_by_id(dataset_id):
     dictionary = select(Dictionaries).where(Dictionaries.dataset_id == dataset_id)
     res = session.execute(dictionary).all()
     if res:
         res = [r[0].sanitized_dict() for r in res]
-        return res
-    else:
-        raise DBRecordNotFoundError(f"Dataset {dataset_id} has no dictionaries.")
+        return res, 200
+
+    raise DBRecordNotFoundError(
+        f"Dataset {dataset_id} has no dictionaries."
+    )
 
 @bp.route('/<dataset_id>/dictionaries/<table_name>', methods=['GET'])
 @audit
+@auth(scope='can_access_dataset')
 def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
     dictionary = select(Dictionaries).where(
         Dictionaries.dataset_id == dataset_id,
@@ -101,7 +114,8 @@ def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
     res = session.execute(dictionary).all()
     if res:
         res = [r[0].sanitized_dict() for r in res]
-        return res
-    else:
-        raise DBRecordNotFoundError(f"Dataset {dataset_id} has no dictionaries with table {table_name}.")
+        return res, 200
 
+    raise DBRecordNotFoundError(
+        f"Dataset {dataset_id} has no dictionaries with table {table_name}."
+    )

@@ -122,6 +122,21 @@
         },
         "clientRole": false,
         "attributes": {}
+      },
+      {
+        "name": "System",
+        "description": "Users for integrations",
+        "composite": true,
+        "composites": {
+          "client": {
+            "account": [
+              "view-profile",
+              "manage-account"
+            ]
+          }
+        },
+        "clientRole": false,
+        "attributes": {}
       }
     ]
   },
@@ -176,13 +191,28 @@
             "uris": [],
             "scopes": [
               {
-                "name": "public"
+                "name": "can_admin_dataset"
               },
               {
-                "name": "admin"
+                "name": "can_exec_task"
               },
               {
-                "name": "superadmin"
+                "name": "can_admin_task"
+              },
+              {
+                "name": "can_access_dataset"
+              },
+              {
+                "name": "can_transfer_token"
+              },
+              {
+                "name": "can_do_admin"
+              },
+              {
+                "name": "can_send_request"
+              },
+              {
+                "name": "can_admin_request"
               }
             ],
             "icon_uri": ""
@@ -220,51 +250,128 @@
             }
           },
           {
-            "name": "admin-permission",
+            "name": "system-policy",
+            "description": "",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"System\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "can admin dataset permission",
             "description": "",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "AFFIRMATIVE",
             "config": {
-              "scopes": "[\"admin\",\"superadmin\"]",
+              "scopes": "[\"can_admin_dataset\"]",
+              "applyPolicies": "[\"admin-policy\", \"system-policy\"]"
+            }
+          },
+          {
+            "name": "can admin task permission",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"can_admin_task\"]",
               "applyPolicies": "[\"admin-policy\"]"
             }
           },
           {
-            "name": "superadmin-permisssion",
+            "name": "can admin request permission",
             "description": "",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "AFFIRMATIVE",
             "config": {
-              "scopes": "[\"superadmin\"]",
-              "applyPolicies": "[\"superadmin-policy\"]"
+              "scopes": "[\"can_admin_request\"]",
+              "applyPolicies": "[\"admin-policy\", \"system-policy\"]"
             }
           },
           {
-            "name": "all-users-permissions",
+            "name": "can exec task permission",
             "description": "",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "AFFIRMATIVE",
             "config": {
-              "scopes": "[\"public\",\"admin\",\"superadmin\"]",
-              "applyPolicies": "[\"all-users-policy\",\"superadmin-policy\",\"admin-policy\"]"
+              "scopes": "[\"can_exec_task\"]",
+              "applyPolicies": "[\"all-users-policy\", \"system-policy\"]"
+            }
+          },
+          {
+            "name": "can access dataset permission",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"can_access_dataset\"]",
+              "applyPolicies": "[\"all-users-policy\", \"system-policy\"]"
+            }
+          },
+          {
+            "name": "can transfer token permission",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"can_transfer_token\"]",
+              "applyPolicies": "[\"admin-policy\", \"system-policy\"]"
+            }
+          },
+          {
+            "name": "can do admin permission",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"can_do_admin\"]",
+              "applyPolicies": "[\"all-users-policy\"]"
+            }
+          },
+          {
+            "name": "can send request permission",
+            "description": "",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "scopes": "[\"can_send_request\"]",
+              "applyPolicies": "[\"all-users-policy\", \"system-policy\"]"
             }
           }
         ],
         "scopes": [
           {
-            "name": "admin",
-            "iconUri": ""
+            "name": "can_admin_dataset"
           },
           {
-            "name": "public",
-            "iconUri": ""
+            "name": "can_exec_task"
           },
           {
-            "name": "superadmin",
-            "iconUri": ""
+            "name": "can_admin_task"
+          },
+          {
+            "name": "can_access_dataset"
+          },
+          {
+            "name": "can_transfer_token"
+          },
+          {
+            "name": "can_do_admin"
+          },
+          {
+            "name": "can_send_request"
+          },
+          {
+            "name": "can_admin_request"
           }
         ],
         "decisionStrategy": "UNANIMOUS"
