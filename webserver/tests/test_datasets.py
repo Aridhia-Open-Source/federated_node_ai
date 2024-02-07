@@ -2,7 +2,9 @@ import json
 from sqlalchemy import select
 
 from app.helpers.db import db
-from app.models.datasets import Datasets, Catalogues, Dictionaries
+from app.models.datasets import Datasets
+from app.models.catalogues import Catalogues
+from app.models.dictionaries import Dictionaries
 from tests.conftest import sample_ds_body
 
 missing_dict_cata_message = {"error": "Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there"}

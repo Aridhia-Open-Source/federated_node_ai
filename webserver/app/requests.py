@@ -61,7 +61,5 @@ def post_approve_requests(code):
     dar = session.get(Requests, code)
     if dar is None:
         raise DBRecordNotFoundError(f"Data Access Request {code} not found")
-    query = sqlalchemy.update(Requests).where(Requests.id == code).values(status='approved')
-    session.execute(query)
-    session.commit()
+    dar.approve()
     return "ok", 201

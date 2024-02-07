@@ -15,7 +15,10 @@ from .exceptions import DBError, DBRecordNotFoundError, InvalidRequest
 from .helpers.db import db
 from .helpers.keycloak import Keycloak
 from .helpers.wrappers import auth, audit
-from .models.datasets import Datasets, Catalogues, Dictionaries
+from .models.datasets import Datasets
+from .models.catalogues import Catalogues
+from .models.dictionaries import Dictionaries
+
 
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
 session = db.session

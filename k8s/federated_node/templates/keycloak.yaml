@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: keycloak
   namespace: keycloak
@@ -18,7 +18,11 @@ spec:
         - image: quay.io/keycloak/keycloak:23.0.4
           args: [
             "start-dev",
-            "--import-realm"
+            "--import-realm",
+            "--features=preview",
+            "--http-enabled=true",
+            "--hostname-strict=false",
+            "--hostname-strict-https=false"
           ]
           name: keycloak
           ports:
@@ -29,6 +33,11 @@ spec:
             httpGet:
               path: /realms/master
               port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          envFrom:
+          - configMapRef:
+              name: keycloak-config
           env:
             - name: KEYCLOAK_SECRET
               valueFrom:
@@ -53,5 +62,3 @@ spec:
             items:
             - key: config.json
               path: config.json
-      imagePullSecrets:
-          - name: regcred

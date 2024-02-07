@@ -25,7 +25,7 @@ def create_app():
     app.register_error_handler(KeycloakError, exception_handler)
 
     @app.teardown_appcontext
-    def shutdown_session():
+    def shutdown_session(exception=None):
         db.session.remove()
 
     return app

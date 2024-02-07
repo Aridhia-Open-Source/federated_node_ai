@@ -8,7 +8,7 @@ from app.exceptions import AuthenticationError
 from app.models.audit import Audit
 
 
-def auth(scope='public'):
+def auth(scope='public', client='global'):
     def auth_wrapper(func):
         @wraps(func)
         def _auth(*args, **kwargs):
@@ -20,18 +20,33 @@ def auth(scope='public'):
             session = db.session
             resource = 'endpoints'
             ds_id = None
+            is_ds_related = None
             path = request.path.split('/')
-            is_ds_related = path.index('datasets')
+            try:
+                is_ds_related = path.index('datasets')
+            except ValueError:
+                # not in list
+                pass
+
             if is_ds_related:
                 ds_id = path[is_ds_related + 1]
-            else:
-                ds_id = request.data.get("dataset_id")
+            elif request.headers.get('Content-Type'):
+                ds_id = request.json.get("dataset_id")
+
             if ds_id:
                 q = session.execute(text("SELECT * FROM datasets WHERE id=:ds_id"), dict(ds_id=ds_id)).all()
                 ds = q[0]._mapping
                 if ds is not None:
                     resource = f"{ds["id"]}-{ds["name"]}"
-            if Keycloak().is_token_valid(token, scope, resource):
+            requested_project = request.headers.get("project-name")
+            client = 'global'
+            token_type = 'refresh_token'
+            if requested_project:
+                client = requested_project
+                token = Keycloak(client).exchange_global_token(token)
+                token_type = 'access_token'
+
+            if Keycloak(client).is_token_valid(token, scope, resource, token_type):
                 return func(*args, **kwargs)
             else:
                 raise AuthenticationError("Token is not valid, or the user has not enough permissions.")

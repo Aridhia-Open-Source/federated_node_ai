@@ -5,7 +5,7 @@ metadata:
   namespace: keycloak
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    # "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": hook-succeeded
     "helm.sh/hook-weight": "3"
 spec:
   template:
@@ -36,17 +36,3 @@ spec:
             items:
             - key: setup_realm.py
               path: setup_realm.py
-# ---
-# apiVersion: batch/v1
-# kind: Job
-# metadata:
-#   name: test-curl
-#   namespace: keycloak
-# spec:
-#   template:
-#     spec:
-#       restartPolicy: Never
-#       containers:
-#         - name: test-job
-#           image: "python:3.12.1-slim-bullseye"
-#           command: ["/bin/sh", "-c", "sleep 1000" ]
