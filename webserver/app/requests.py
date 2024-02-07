@@ -4,6 +4,7 @@ request-related endpoints:
 - POST /requests
 - GET /code/approve
 """
+import json
 import sqlalchemy
 from flask import Blueprint, request
 from .exceptions import DBRecordNotFoundError, DBError, InvalidRequest
@@ -33,6 +34,10 @@ def get_requests():
 def post_requests():
     try:
         body = request.json
+        if 'email' not in body["requested_by"].keys():
+            raise InvalidRequest("Missing email from requested_by field")
+
+        body["requested_by"] = json.dumps(body["requested_by"])
         ds_id = body.pop("dataset_id")
         body["dataset"] = session.get(Datasets, ds_id)
         if body["dataset"] is None:
@@ -61,5 +66,12 @@ def post_approve_requests(code):
     dar = session.get(Requests, code)
     if dar is None:
         raise DBRecordNotFoundError(f"Data Access Request {code} not found")
-    dar.approve()
-    return "ok", 201
+
+    if dar.status == dar.STATUSES["approved"]:
+        return {"message": "Request alread approved"}, 200
+
+    if dar.status == dar.STATUSES["rejected"]:
+        raise InvalidRequest("Request was rejected already")
+
+    user_info = dar.approve()
+    return user_info, 201

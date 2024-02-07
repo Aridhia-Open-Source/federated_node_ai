@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, update
 from sqlalchemy.orm import relationship
@@ -26,6 +27,11 @@ class Requests(db.Model, BaseModel):
 
     dataset_id = Column(Integer, ForeignKey(Datasets.id, ondelete='CASCADE'))
     dataset = relationship("Datasets")
+    STATUSES = {
+        'approved': 'approved',
+        'pending': 'pending',
+        'rejected': 'rejected'
+    }
 
     def __init__(self,
                  title:str,
@@ -69,12 +75,14 @@ class Requests(db.Model, BaseModel):
         ds = session.get(Datasets, self.dataset_id)
 
         resource = kc_client.create_resource({
-            "name": f"{ds["id"]}-{ds["name"]}",
+            "name": f"{ds.id}-{ds.name}",
             "owner": {"id": kc_client.client_id, "name": self.project_name},
             "displayName": f"{ds.id} {ds.name}",
             "scopes": created_scopes,
             "uris": []
         })
+
+        user = kc_client.create_user(**json.loads(self.requested_by))
 
         policies = []
         # Create admin policy
@@ -93,13 +101,21 @@ class Requests(db.Model, BaseModel):
         }, "/role"))
         # Create the requester's policy
         user_policy = kc_client.create_policy({
-            "name": f"{ds.id} - {ds.name} User {self.requested_by} Policy",
+            "name": f"{ds.id} - {ds.name} User {user["id"]} Policy",
             "description": f"User specific permission to perform actions on the {ds.name} dataset",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "type": "user",
-            "users": [self.requested_by]
+            "users": [user["id"]]
         }, "/user")
+        # Create project date policy
+        date_range_policy = kc_client.create_policy({
+            "name": f"{user["id"]} Date access policy",
+            "description": "Date range to allow the user to access a dataset within this project",
+            "logic": "POSITIVE",
+            "notBefore": self.proj_start.strftime("%Y-%m-%d %H:%M:%S"),
+            "notOnOrAfter": self.proj_end.strftime("%Y-%m-%d %H:%M:%S")
+        }, "/time")
         # Admin permission
         kc_client.create_permission({
             "name": f"{ds.id}-{ds.name} Administation Permission",
@@ -113,20 +129,27 @@ class Requests(db.Model, BaseModel):
         })
         # User permission
         kc_client.create_permission({
-            "name": f"{ds.id}-{ds.name} User {self.requested_by} Permission",
+            "name": f"{ds.id}-{ds.name} User {user["id"]} Permission",
             "description": "List of policies that will allow certain users or roles to administrate the dataset",
             "type": "resource",
             "logic": "POSITIVE",
-            "decisionStrategy": "AFFIRMATIVE",
-            "policies": [user_policy["id"]],
+            "decisionStrategy": "UNANIMOUS",
+            "policies": [user_policy["id"], date_range_policy["id"]],
             "resources": [resource["_id"]],
             "scopes": [scope["id"] for scope in created_scopes]
         })
 
         try:
-            query = update(Requests).where(Requests.id == self.id).values(status='approved')
+            query = update(Requests).\
+                where(Requests.id == self.id).\
+                values(status=self.STATUSES["approved"], requested_by=user["id"])
             session.execute(query)
             session.commit()
         except IntegrityError as exc:
             session.rollback()
             raise DBError(f"Failed to approve request {self.id}") from exc
+
+        ret_response = {"username": user["username"]}
+        if user.get("password"):
+            ret_response["password"] = user["password"]
+        return ret_response

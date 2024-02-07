@@ -1,5 +1,7 @@
 import os
+import random
 import requests
+import string
 from base64 import b64encode
 from flask import current_app
 from app.exceptions import AuthenticationError, KeycloakError
@@ -23,9 +25,10 @@ URLS = {
     "scopes": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/scope",
     "resource": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/resource",
     "permission": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/permission/scope",
-    "permissions_check": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/policy/evaluate"
+    "permissions_check": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/policy/evaluate",
+    "user": f"{KEYCLOAK_URL}/admin/realms/{REALM}/users"
 }
-
+PASS_GENERATOR_SET = string.ascii_letters + string.digits + "!$@#.-_"
 
 class Keycloak:
     def __init__(self, client='global') -> None:
@@ -38,6 +41,12 @@ class Keycloak:
     @classmethod
     def get_token_from_headers(cls, header):
         return header['Authorization'].replace('Bearer ', '')
+
+    def _post_json_headers(self):
+        return {
+            "Authorization": f"Bearer {self.admin_token}",
+            "Content-Type": "application/json"
+        }
 
     def exchange_global_token(self, token:str):
         acpayload = {
@@ -312,10 +321,7 @@ class Keycloak:
                     "client.offline.session.max.lifespan": 60 * 60 * 24 * 30 * 12
                 }
             },
-            headers={
-                "Authorization": f"Bearer {self.admin_token}",
-                "Content-Type": "application/json"
-            }
+            headers=self._post_json_headers()
         )
         if client_post_rest.status_code == 409:
             return self.get_client_id(client_name)
@@ -328,10 +334,7 @@ class Keycloak:
             json={
                 "decisionStrategy": "AFFIRMATIVE",
             },
-            headers={
-                "Authorization": f"Bearer {self.admin_token}",
-                "Content-Type": "application/json"
-            }
+            headers=self._post_json_headers()
         )
 
         return client_post_rest.json()
@@ -343,10 +346,7 @@ class Keycloak:
         scope_post_rest = requests.post(
             URLS["scopes"] % self.client_id,
             json={"name": scope_name},
-            headers={
-                "Authorization": f"Bearer {self.admin_token}",
-                "Content-Type": "application/json"
-            }
+            headers=self._post_json_headers()
         )
         if scope_post_rest.status_code == 409:
             return self.get_scope(scope_name)
@@ -360,14 +360,10 @@ class Keycloak:
         """
         Creates a custom policy for a resource
         """
-        headers={
-            'Authorization': f'Bearer {self.admin_token}',
-            'Content-Type': 'application/json'
-        }
         policy_response = requests.post(
             (URLS["policies"] % self.client_id) + policy_type,
             json=payload,
-            headers=headers
+            headers=self._post_json_headers()
         )
         if policy_response.status_code == 409:
             return self.get_policy(payload["name"])
@@ -378,18 +374,13 @@ class Keycloak:
         return policy_response.json()
 
     def create_resource(self, payload:dict, client_name='global'):
-        headers={
-            'Authorization': f'Bearer {self.admin_token}',
-            'Content-Type': 'application/json'
-        }
-
         payload["owner"] = {
             "id": self.client_id, "name": client_name
         }
         resource_response = requests.post(
             URLS["resource"] % self.client_id,
             json=payload,
-            headers=headers
+            headers=self._post_json_headers()
         )
         if resource_response.status_code == 409:
             return self.get_resource(payload["name"])
@@ -400,18 +391,63 @@ class Keycloak:
         return resource_response.json()
 
     def create_permission(self, payload:dict, client_name='global'):
-        headers={
-            'Authorization': f'Bearer {self.admin_token}',
-            'Content-Type': 'application/json'
-        }
-
         permission_response = requests.post(
             URLS["permission"] % self.client_id,
             json=payload,
-            headers=headers
+            headers=self._post_json_headers()
         )
         if not self.check_if_keycloak_resp_is_valid(permission_response):
             current_app.logger.warn(permission_response.content.decode())
             raise KeycloakError("Failed to create permissions for the dataset")
 
         return permission_response.json()
+
+    ### USERS' section
+    def create_user(self, **kwargs) -> dict:
+        """
+        Method that handles the user creation. Keycloak will need username as
+        mandatory field, but we would set a temporary password so the user
+        can reset it on the first login.
+        **kwargs are optional parameters i.e. email, firstName, lastName, etc.
+        """
+        random_password = ''.join(random.choice(PASS_GENERATOR_SET) for _ in range(12))
+        username = kwargs.get("username", kwargs.get("email"))
+        user_response = requests.post(
+            URLS["user"],
+            json={
+                "firstName": kwargs.get("firstName", ""),
+                "lastName": kwargs.get("lastName", ""),
+                "email": kwargs.get("email"),
+                "enabled": True,
+                "username": username,
+                "credentials": [{
+                    "type": "password",
+                    "temporary": False,
+                    "value": random_password
+                }],
+                "realmRoles": ["User"]
+            },
+            headers=self._post_json_headers()
+        )
+
+        if not user_response.ok and user_response.status_code != 409:
+            current_app.logger.warn(user_response.text)
+            raise KeycloakError("Failed to create the user")
+
+        user_info = self.get_user(username)
+        user_info["password"] = random_password
+
+        return user_info
+
+    def get_user(self, username:str) -> dict:
+        """
+        Method to return a dictionary representing a Keycloak user
+        """
+        user_response = requests.get(
+            f"{URLS["user"]}?username={username}",
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        if not user_response.ok:
+            raise KeycloakError("Failed to fetch the user")
+
+        return user_response.json()[0]
