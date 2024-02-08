@@ -33,7 +33,6 @@ if i == 5:
 
 print(f"Accessing to keycloak {REALM} realm")
 
-
 payload = {
     'client_id': 'admin-cli',
     'grant_type': 'password',
@@ -139,6 +138,7 @@ all_clients = all_clients.json()
 client_id = list(filter(lambda x: x["clientId"] == 'global', all_clients))[0]['id']
 rm_client_id = list(filter(lambda x: x["clientId"] == 'realm-management', all_clients))[0]['id']
 
+print("Enabling the Permissions on the global client")
 client_permission_resp = requests.put(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{client_id}/management/permissions",
   json={"enabled": True},
@@ -151,6 +151,7 @@ if not client_permission_resp.ok:
     print(client_permission_resp.text)
     exit(1)
 
+print("Fetching the token exchange scope")
 # Fetching the token exchange scope
 client_te_scope_resp = requests.get(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/scope?permission=false&name=token-exchange",
@@ -161,6 +162,7 @@ client_te_scope_resp = requests.get(
 is_response_good(client_te_scope_resp)
 token_exch_scope = client_te_scope_resp.json()[0]["id"]
 
+print("Fetching the global resource reference")
 # Fetching the global resource reference in the realm-management client
 resource_scope_resp = requests.get(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/resource?name=client.resource.{client_id}",
@@ -171,6 +173,7 @@ resource_scope_resp = requests.get(
 is_response_good(resource_scope_resp)
 resource_id = resource_scope_resp.json()[0]["_id"]
 
+print("Creating the client policy")
 # Creating the client policy
 global_client_policy_resp = requests.post(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/policy/client",
@@ -196,11 +199,26 @@ elif not global_client_policy_resp.ok:
     exit(1)
 global_policy_id = global_client_policy_resp.json()[0]["id"]
 
-# Creating the permission
+print("Updating permissions")
+# Getitng auto-created permission for token-exchange
+token_exch_name = f"token-exchange.permission.client.{client_id}"
+token_exch_permission_resp = requests.get(
+  f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/permission/scope?name={token_exch_name}",
+  headers = {
+    'Authorization': f'Bearer {admin_token}'
+  }
+)
+if not token_exch_permission_resp.ok:
+  print(token_exch_permission_resp.text)
+  exit(1)
+
+token_exch_permission_id = token_exch_permission_resp.json()[0]["id"]
+
+# Updating the permission
 client_permission_resp = requests.put(
-  f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/permission/scope/13bf9ef0-412c-4da4-a3cb-9e8694adc8f9",
+  f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/permission/scope/{token_exch_permission_id}",
   json={
-      "name": f"token-exchange.permission.client.{client_id}",
+      "name": token_exch_name,
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
       "resources": [resource_id],

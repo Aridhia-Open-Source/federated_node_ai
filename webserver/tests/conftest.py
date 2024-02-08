@@ -1,8 +1,10 @@
+import os
 import pytest
 from sqlalchemy.orm.session import close_all_sessions
 from unittest.mock import Mock
 from app import create_app
 from app.helpers.db import db
+from app.helpers.keycloak import Keycloak
 
 sample_ds_body = {
     "name": "TestDs",
@@ -27,23 +29,32 @@ def app_ctx(app):
 
 @pytest.fixture
 def user_uuid():
-    return '1234-a213a2-785cde2'
+    return Keycloak().get_user(os.getenv("KEYCLOAK_ADMIN"))["id"]
 
 @pytest.fixture
-def good_tokens(user_uuid, mocker):
-    mocker.patch(
-        'app.helpers.keycloak.is_token_valid',
-        return_value = True,
-        autospec=True
-    )
-    mocker.patch(
-        'app.helpers.keycloak.decode_token',
-        return_value = {
-            'sub': user_uuid
-        },
-        autospec=True
+def login_admin(client):
+    return Keycloak().get_token(
+        username=os.getenv("KEYCLOAK_ADMIN"),
+        password=os.getenv("KEYCLOAK_ADMIN_PASSWORD")
     )
 
+@pytest.fixture
+def simple_admin_header(login_admin):
+    return {"Authorization": f"Bearer {login_admin}"}
+
+@pytest.fixture
+def post_json_admin_header(login_admin):
+    return {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {login_admin}"
+    }
+
+@pytest.fixture
+def post_form_admin_header(login_admin):
+    return {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": f"Bearer {login_admin}"
+    }
 
 @pytest.fixture
 def client():
@@ -76,7 +87,7 @@ def k8s_client(mocker):
 @pytest.fixture(scope="function", autouse=False)
 def query_validator(mocker):
     mocker.patch(
-        'app.helpers.query_validator.validate',
+        'app.tasks.validate_query',
         return_value = True,
         autospec=True
     )
@@ -84,7 +95,7 @@ def query_validator(mocker):
 @pytest.fixture(scope="function", autouse=False)
 def query_invalidator(mocker):
     mocker.patch(
-        'app.helpers.query_validator.validate',
+        'app.tasks.validate_query',
         return_value = False,
         autospec=True
     )

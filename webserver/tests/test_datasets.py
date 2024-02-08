@@ -7,7 +7,7 @@ from app.models.catalogues import Catalogues
 from app.models.dictionaries import Dictionaries
 from tests.conftest import sample_ds_body
 
-missing_dict_cata_message = {"error": "Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there"}
+missing_dict_cata_message = {"error": "Missing field. Make sure \"catalogue\" and \"dictionaries\" entries are there"}
 
 def run_query(query):
     """
@@ -15,7 +15,7 @@ def run_query(query):
     """
     return db.session.execute(query).all()
 
-def post_dataset(client, data_body=sample_ds_body, code=201):
+def post_dataset(client, headers, data_body=sample_ds_body, code=201):
     """
     Helper method that created a given dataset, if none specified
     uses dataset_post_body
@@ -23,14 +23,14 @@ def post_dataset(client, data_body=sample_ds_body, code=201):
     response = client.post(
         "/datasets/",
         data=json.dumps(data_body),
-        headers={"Content-Type": "application/json"}
+        headers=headers
     )
     assert response.status_code == code, response.data.decode()
     return response.json
 
-def test_get_all_datasets(good_tokens, client, k8s_client, k8s_config):
+def test_get_all_datasets(simple_admin_header, user_uuid, client, k8s_client, k8s_config):
     dataset = Datasets(name="TestDs", host="db", password='pass', username='user')
-    dataset.add()
+    dataset.add(user_id=user_uuid)
     expected_ds_entry = {
         "id": dataset.id,
         "name": "TestDs",
@@ -38,7 +38,7 @@ def test_get_all_datasets(good_tokens, client, k8s_client, k8s_config):
         "port": 5432
     }
 
-    response = client.get("/datasets/")
+    response = client.get("/datasets/", headers=simple_admin_header)
 
     assert response.status_code == 200
     assert response.json == {
@@ -47,39 +47,39 @@ def test_get_all_datasets(good_tokens, client, k8s_client, k8s_config):
         ]
     }
 
-def test_get_dataset_by_id_200(good_tokens, client, k8s_config, k8s_client):
+def test_get_dataset_by_id_200(simple_admin_header, user_uuid, client, k8s_config, k8s_client):
     """
     /datasets/{id} GET returns a valid list
     """
     dataset = Datasets(name="TestDs2", host="db_host", password='pass', username='user')
-    dataset.add()
+    dataset.add(user_id=user_uuid)
     expected_ds_entry = {
         "id": dataset.id,
         "name": "TestDs2",
         "host": "db_host",
         "port": 5432
     }
-    response = client.get(f"/datasets/{dataset.id}")
+    response = client.get(f"/datasets/{dataset.id}", headers=simple_admin_header)
     assert response.status_code == 200
     assert response.json == expected_ds_entry
 
-def test_get_dataset_by_id_404(good_tokens, client):
+def test_get_dataset_by_id_404(simple_admin_header, client):
     """
     /datasets/{id} GET returns a valid list
     """
     invalid_id = 100
-    response = client.get(f"/datasets/{invalid_id}")
+    response = client.get(f"/datasets/{invalid_id}", headers=simple_admin_header)
 
     assert response.status_code == 404
     assert response.json == {"error": f"Dataset with id {invalid_id} does not exist"}
 
-def test_post_dataset_is_successful(good_tokens, client, k8s_client, k8s_config, dataset_post_body):
+def test_post_dataset_is_successful(post_json_admin_header, client, k8s_client, k8s_config, dataset_post_body):
     """
     /datasets POST is not successful
     """
     data_body = dataset_post_body.copy()
     data_body['name'] = 'TestDs78'
-    post_dataset(client, data_body)
+    post_dataset(client, post_json_admin_header, data_body)
 
     query = run_query(select(Datasets).where(Datasets.name == data_body["name"]))
     assert len(query) == 1
@@ -89,7 +89,7 @@ def test_post_dataset_is_successful(good_tokens, client, k8s_client, k8s_config,
         query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
         assert len(query)== 1
 
-def test_post_dataset_with_duplicate_dictionaries_fails(good_tokens, client, k8s_client, k8s_config,dataset_post_body):
+def test_post_dataset_with_duplicate_dictionaries_fails(post_json_admin_header, client, k8s_client, k8s_config,dataset_post_body):
     """
     /datasets POST is not successful
     """
@@ -101,7 +101,7 @@ def test_post_dataset_with_duplicate_dictionaries_fails(good_tokens, client, k8s
             "description": "test description"
         }
     )
-    response = post_dataset(client, data_body, 500)
+    response = post_dataset(client, post_json_admin_header, data_body, 500)
     assert response == {'error': 'Record already exists'}
 
     # Make sure any db entry is created
@@ -113,13 +113,13 @@ def test_post_dataset_with_duplicate_dictionaries_fails(good_tokens, client, k8s
         query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
         assert len(query) == 0
 
-def test_post_datasets_with_same_dictionaries_succeeds(good_tokens, client, k8s_client, k8s_config, dataset_post_body):
+def test_post_datasets_with_same_dictionaries_succeeds(post_json_admin_header, client, k8s_client, k8s_config, dataset_post_body):
     """
     /datasets POST is successful with same catalogues and dictionaries
     """
     data_body = dataset_post_body.copy()
     data_body['name'] = 'TestDs23'
-    post_dataset(client, data_body)
+    post_dataset(client, post_json_admin_header, data_body)
 
     # Make sure db entries are created
     query = run_query(select(Datasets).where(Datasets.name == data_body['name']))
@@ -132,7 +132,7 @@ def test_post_datasets_with_same_dictionaries_succeeds(good_tokens, client, k8s_
 
     # Creating second DS
     data_body["name"] = "Another DS"
-    ds_resp = post_dataset(client, data_body)
+    ds_resp = post_dataset(client, post_json_admin_header, data_body)
 
     # Make sure any db entry is created
     query = run_query(select(Datasets).where(Datasets.id == ds_resp["dataset_id"]))
@@ -143,20 +143,20 @@ def test_post_datasets_with_same_dictionaries_succeeds(good_tokens, client, k8s_
         query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
         assert len(query) == 2
 
-def test_post_dataset_with_catalogue(good_tokens, client, dataset_post_body):
+def test_post_dataset_with_catalogue(post_json_admin_header, client, dataset_post_body):
     """
     /datasets POST with catalogue but no dictionary is not successful
     """
     data_body = dataset_post_body.copy()
     data_body.pop("dictionaries")
-    response = post_dataset(client, data_body, 500)
+    response = post_dataset(client, post_json_admin_header, data_body, 500)
     assert response == missing_dict_cata_message
 
-def test_post_dataset_with_dictionaries(good_tokens, query_validator, client, dataset_post_body):
+def test_post_dataset_with_dictionaries(post_json_admin_header, query_validator, client, dataset_post_body):
     """
     /datasets POST with dictionary but no catalogue is not successful
     """
     data_body = dataset_post_body.copy()
     data_body.pop("catalogue")
-    response = post_dataset(client, data_body, 500)
+    response = post_dataset(client, post_json_admin_header, data_body, 500)
     assert response == missing_dict_cata_message

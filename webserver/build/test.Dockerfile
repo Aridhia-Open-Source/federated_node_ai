@@ -21,5 +21,5 @@ RUN apt-get update \
 WORKDIR /app
 
 EXPOSE 5000
-
-ENTRYPOINT [ "pytest" ]
+COPY --chmod=777 test-entrypoint.sh /app/
+ENTRYPOINT [ "./test-entrypoint.sh" ]

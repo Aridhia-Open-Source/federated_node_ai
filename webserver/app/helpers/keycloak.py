@@ -1,10 +1,10 @@
 import os
 import random
 import requests
-import string
 from base64 import b64encode
 from flask import current_app
 from app.exceptions import AuthenticationError, KeycloakError
+from app.helpers.const import PASS_GENERATOR_SET
 
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://keycloak")
 REALM = os.getenv("KEYCLOAK_REALM", "FederatedNode")
@@ -28,7 +28,6 @@ URLS = {
     "permissions_check": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/policy/evaluate",
     "user": f"{KEYCLOAK_URL}/admin/realms/{REALM}/users"
 }
-PASS_GENERATOR_SET = string.ascii_letters + string.digits + "!$@#.-_"
 
 class Keycloak:
     def __init__(self, client='global') -> None:
@@ -176,7 +175,6 @@ class Keycloak:
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             )
-
         return response_auth.ok and self.check_permissions(token, scope, resource, is_access_token)
 
     def decode_token(self, token:str) -> dict:

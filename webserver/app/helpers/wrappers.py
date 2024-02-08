@@ -4,11 +4,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.helpers.db import db, engine
 from app.helpers.keycloak import Keycloak
-from app.exceptions import AuthenticationError
+from app.exceptions import AuthenticationError, DBRecordNotFoundError
 from app.models.audit import Audit
 
 
-def auth(scope='public', client='global'):
+def auth(scope:str):
     def auth_wrapper(func):
         @wraps(func)
         def _auth(*args, **kwargs):
@@ -35,6 +35,8 @@ def auth(scope='public', client='global'):
 
             if ds_id:
                 q = session.execute(text("SELECT * FROM datasets WHERE id=:ds_id"), dict(ds_id=ds_id)).all()
+                if not q:
+                    raise DBRecordNotFoundError(f"Dataset with id {ds_id} does not exist")
                 ds = q[0]._mapping
                 if ds is not None:
                     resource = f"{ds["id"]}-{ds["name"]}"

@@ -3,16 +3,16 @@ from datetime import datetime
 from sqlalchemy import select
 from app.helpers.db import db
 from app.models.audit import Audit
-from tests.conftest import good_tokens, query_validator
 
-def test_get_audit_events(good_tokens, query_validator, client, user_uuid):
+def test_get_audit_events(simple_admin_header, client, user_uuid):
     """
     Test that after a simple GET call we have an audit entry
     """
-    client.get("/datasets/")
+    r = client.get("/datasets/", headers=simple_admin_header)
+    assert r.status_code == 200, r.text
     list_audit = db.session.execute(select(Audit)).all()
     assert len(list_audit) > 0
-    response = client.get("/audit")
+    response = client.get("/audit", headers=simple_admin_header)
 
     assert response.status_code == 200
 
@@ -28,13 +28,13 @@ def test_get_audit_events(good_tokens, query_validator, client, user_uuid):
         'status_code': 200
     }.items()
 
-def test_get_filtered_audit_events(good_tokens, query_validator, client):
+def test_get_filtered_audit_events(simple_admin_header, client):
     """
     Test that after a simple GET call we have an audit entry
     """
-    client.get("/datasets/")
+    client.get("/datasets/", headers=simple_admin_header)
     date_filter = datetime.now().date()
-    response = client.get(f"/audit?event_time__lte={date_filter}")
+    response = client.get(f"/audit?event_time__lte={date_filter}", headers=simple_admin_header)
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.json
     assert len(response.json) == 0

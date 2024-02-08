@@ -6,3 +6,4 @@ artifacts/*.xml
 __pycache__/
 
 .env
+*.env

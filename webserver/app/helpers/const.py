@@ -1,4 +1,5 @@
 import os
+import string
 
 def build_sql_uri(
         username=os.getenv('PGUSER'),
@@ -8,3 +9,5 @@ def build_sql_uri(
         database=os.getenv('PGDATABASE')
         ):
     return f"postgresql://{username}:{password}@{host}:{port}/{database}"
+
+PASS_GENERATOR_SET = string.ascii_letters + string.digits + "!$@#.-_"

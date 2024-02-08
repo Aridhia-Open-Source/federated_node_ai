@@ -1,6 +1,7 @@
 from flask import Flask
-from .helpers.db import build_sql_uri, db
-from .exceptions import (
+
+from app.helpers.db import build_sql_uri, db
+from app.exceptions import (
     InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,
     AuthenticationError, KeycloakError, exception_handler
 )
@@ -10,10 +11,10 @@ def create_app():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = build_sql_uri()
     db.init_app(app)
-    from . import main, datasets, requests, admin, tasks
+    from app import main, datasets, admin, tasks, requests_api
     app.register_blueprint(main.bp)
     app.register_blueprint(datasets.bp)
-    app.register_blueprint(requests.bp)
+    app.register_blueprint(requests_api.bp)
     app.register_blueprint(tasks.bp)
     app.register_blueprint(admin.bp)
 

@@ -19,6 +19,7 @@ pylint=">=3.0.3"
 pytest = "*"
 pytest-mock = "*"
 python-dotenv = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.12"

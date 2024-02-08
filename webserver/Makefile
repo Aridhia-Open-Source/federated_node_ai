@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
 env:
-	set -o allexport && source .env && set +o allexport
+	set -o allexport && source dev.env && set +o allexport
 
 run:
 	flask -A app/app run --host=0.0.0.0
@@ -13,10 +13,10 @@ pylint:
 	pylint app
 
 tests_local:
-	docker compose -f docker-compose-tests.yaml run --rm app
+	./run_tests.sh
 
-dev:
-	docker compose -f docker-compose.yaml up
+tests_ci:
+	./run_tests.sh --build
 
 migrate:
 	echo "Use 'python -m alembic revision --autogenerate -m'"

@@ -17,30 +17,29 @@ def task_body():
         "use_query": "SELECT * FROM patients LIMIT 10;"
     }
 
-def test_create_task(good_tokens, query_validator, client, task_body, k8s_client, k8s_config):
+def test_create_task(post_json_admin_header, user_uuid, query_validator, client, task_body, k8s_client, k8s_config):
     """
     Tests task creation returns 201
     """
     dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add()
+    dataset.add(user_id=user_uuid)
     data = task_body
     data["dataset_id"] = dataset.id
 
     response = client.post(
         '/tasks/',
         data=json.dumps(data),
-        headers={"Content-Type": "application/json"}
+        headers=post_json_admin_header
     )
     assert response.status_code == 201
 
 # This for some reason still persists the mocking of app.helpers.query_validator.validate
-@pytest.mark.skip("This for some reason still persists the mocking of app.helpers.query_validator.validate")
-def test_create_task_with_invalid_query(good_tokens, query_invalidator, client, task_body, k8s_client, k8s_config):
+def test_create_task_with_invalid_query(post_json_admin_header, user_uuid, query_invalidator, client, task_body, k8s_client, k8s_config):
     """
     Tests task creation returns 201
     """
     dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add()
+    dataset.add(user_id=user_uuid)
     data = task_body
     data["dataset_id"] = dataset.id
     data["use_query"] = "Not a real query"
@@ -48,6 +47,6 @@ def test_create_task_with_invalid_query(good_tokens, query_invalidator, client, 
     response = client.post(
         '/tasks/',
         data=json.dumps(data),
-        headers={"Content-Type": "application/json"}
+        headers=post_json_admin_header
     )
     assert response.status_code == 500
