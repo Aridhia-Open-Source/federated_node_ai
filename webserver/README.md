@@ -5,6 +5,8 @@ This folder holds the Flask app that serves the API backend for the Federated No
 Contains 2 folders:
 - `app` holds the actual python code and the `Pipfile`s for setting up environment and dependencies
 - `build` holds files involved to build/serve the app through a Docker container
+- `migrations` is an auto-generated folder from `alembic` which helps in keeping track of the database migrations, and offer a rollback functionality in case is needed.
+- `tests` holds unit test files
 
 ## Dev Setup
 ```sh
@@ -37,6 +39,12 @@ pylint should guarantee a minimum threshold of code quality/standards. It can be
 ```sh
 make run
 ```
+
+If you need to fetch the random generated secret for keycloak:
+```sh
+kubectl get secrets -n keycloak kc-secrets -o jsonpath='{.data}' | jq
+```
+
 ### Tests (dev mode)
 ```sh
 make run_tests

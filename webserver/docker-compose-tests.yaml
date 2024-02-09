@@ -62,9 +62,6 @@ services:
       dockerfile: build/test.Dockerfile
     links:
       - db
-    # entrypoint: ["/bin/bash"]
-    # command: ["/bin/sh", "-c", "pytest -v --cov-report xml:artifacts/coverage.xml --cov=app ."]
-    # command: ["/bin/sh", "-c", "pytest", "-v", "--cov-report xml:artifacts/coverage.xml", "--cov=app", "."]
     depends_on:
       kc_init:
         condition: service_completed_successfully

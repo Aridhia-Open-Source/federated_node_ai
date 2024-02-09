@@ -8,14 +8,15 @@ tasks-related endpoints:
 - POST /tasks/id/cancel
 """
 from datetime import datetime
+import re
 import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import update
 
 from .exceptions import DBRecordNotFoundError, DBError, InvalidRequest
-from .helpers.wrappers import audit
+from .helpers.wrappers import audit, auth
 from .helpers.db import db
-from .helpers.wrappers import auth
+from .helpers.keycloak import Keycloak
 from .helpers.query_filters import parse_query_params
 from .helpers.query_validator import validate as validate_query
 from .models.datasets import Datasets
@@ -73,7 +74,15 @@ def cancel_tasks(task_id):
 @auth(scope='can_exec_task')
 def post_tasks():
     try:
+        body = request.json
+        body["requested_by"] = Keycloak().decode_token(Keycloak.get_token_from_headers(request.headers)).get('sub')
         body = Tasks.validate(request.json)
+
+        if not re.match(r'(\d|\w|\_|\-|\/)+:(\d|\w|\_|\-)+', body["docker_image"]):
+            raise InvalidRequest(
+                f"{body["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
+            )
+
         ds_id = body.pop("dataset_id")
         body["dataset"] = session.get(Datasets, ds_id)
         if body["dataset"] is None:
@@ -84,10 +93,7 @@ def post_tasks():
             raise InvalidRequest("Query missing or misformed")
 
         task = Tasks(**body)
-        if not task.can_image_be_found():
-            return {
-                "error": f"Image {task.docker_image} cannot be found in the registry"
-            }, 400
+        task.can_image_be_found()
 
         task.add()
         return {"task_id": task.id}, 201

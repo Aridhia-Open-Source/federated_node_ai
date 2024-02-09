@@ -17,6 +17,7 @@ spec:
       labels:
         app: flask
     spec:
+      serviceAccountName: secret-backend-handler
       initContainers:
         - name: db-migrations
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -54,7 +55,7 @@ spec:
               path: /health_check
               port: http
             initialDelaySeconds: 10
-            periodSeconds: 180
+            periodSeconds: 60
             timeoutSeconds: 30
           envFrom:
             - configMapRef:
@@ -72,5 +73,15 @@ spec:
               secretKeyRef:
                 name: kc-secrets
                 key: KEYCLOAK_ADMIN_PASSWORD
+          - name: ACR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: ACR_PASSWORD
+          - name: ACR_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: ACR_USERNAME
       imagePullSecrets:
         - name: regcred

@@ -1,11 +1,11 @@
 from flask import Flask
-
+import logging
 from app.helpers.db import build_sql_uri, db
 from app.exceptions import (
     InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,
-    AuthenticationError, KeycloakError, exception_handler
+    AuthenticationError, KeycloakError, TaskImageException, exception_handler
 )
-
+logging.basicConfig(level=logging.WARN)
 
 def create_app():
     app = Flask(__name__)
@@ -24,6 +24,7 @@ def create_app():
     app.register_error_handler(InvalidRequest, exception_handler)
     app.register_error_handler(AuthenticationError, exception_handler)
     app.register_error_handler(KeycloakError, exception_handler)
+    app.register_error_handler(TaskImageException, exception_handler)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

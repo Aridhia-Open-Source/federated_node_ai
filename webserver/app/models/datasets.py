@@ -1,4 +1,5 @@
 import base64
+import os
 import re
 from sqlalchemy import Column, Integer, String
 from app.helpers.db import BaseModel, db
@@ -22,8 +23,14 @@ class Datasets(db.Model, BaseModel):
         self.name = name
         self.host = host
         self.port = port
+
         # Create secrets for credentials
-        config.load_kube_config()
+        if os.getenv('KUBERNETES_SERVICE_HOST'):
+            # Get configuration for an in-cluster setup
+            config.load_incluster_config()
+        else:
+            #  Get config from outside the cluster. Mostly DEV
+            config.load_kube_config()
         v1 = client.CoreV1Api()
         body = client.V1Secret()
         body.api_version = 'v1'
@@ -40,10 +47,10 @@ class Datasets(db.Model, BaseModel):
             if e.status == 409:
                 pass
             else:
-                raise InvalidRequest(e.message)
+                raise InvalidRequest(e)
 
     def get_creds_secret_name(self):
-        return f"{re.sub('http(s)*://', '', self.host)}-{self.name.lower()}-creds"
+        return f"{re.sub('http(s)*://', '', self.host)}-{self.name.lower().replace(' ', '-')}-creds"
 
     def get_credentials(self) -> tuple:
         config.load_kube_config()

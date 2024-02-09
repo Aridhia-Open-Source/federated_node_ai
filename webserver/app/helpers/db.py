@@ -1,17 +1,13 @@
 import re
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import scoped_session, sessionmaker, Relationship, declarative_base
+from sqlalchemy.orm import Relationship, declarative_base
 from flask_sqlalchemy import SQLAlchemy
 from app.exceptions import InvalidDBEntry
 from app.helpers.const import build_sql_uri
 
 
 engine = create_engine(build_sql_uri())
-# db_session = scoped_session(sessionmaker(autocommit=False,
-#                                          autoflush=False,
-#                                          bind=engine))
 Base = declarative_base()
-# Base.query = db.session.query_property()
 db = SQLAlchemy(model_class=Base)
 
 # Another helper class for common methods

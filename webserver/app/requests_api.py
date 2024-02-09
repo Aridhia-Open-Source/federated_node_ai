@@ -73,4 +73,5 @@ def post_approve_requests(code):
         raise InvalidRequest("Request was rejected already")
 
     user_info = dar.approve()
+    # Just token
     return user_info, 201

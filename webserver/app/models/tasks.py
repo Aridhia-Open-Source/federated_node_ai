@@ -1,12 +1,16 @@
-import os
 import docker
+import logging
+import os
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
-from .datasets import Datasets
+from app.models.datasets import Datasets
+from app.exceptions import TaskImageException
 
+logger = logging.getLogger('task_model')
+logger.setLevel(logging.INFO)
 
 class Tasks(db.Model, BaseModel):
     __tablename__ = 'tasks'
@@ -45,7 +49,23 @@ class Tasks(db.Model, BaseModel):
         Looks through the ACR if the image exists
         """
         acr_url = os.getenv('ACR_URL')
-        # client = docker.from_env()
-        # client.list()
-        return True
+        acr_username = os.getenv('ACR_USERNAME')
+        acr_password = os.getenv('ACR_PASSWORD')
+        auth_config = {
+            "username": acr_username,
+            "password": acr_password
+        }
+        try:
+            client = docker.from_env()
+            client.login(registry=acr_url, **auth_config)
+
+            client.images.get_registry_data(
+                f"{acr_url}/{self.docker_image}",
+                auth_config=auth_config
+            )
+        except docker.errors.NotFound:
+            raise TaskImageException(f"Image {self.docker_image} not found on our repository")
+        except docker.errors.APIError as dexc:
+            logger.info(dexc.explanation)
+            raise TaskImageException("Problem connecting to the Image Registry")
 

@@ -20,8 +20,9 @@ db:
 
 federatedNode:
   port: 5000
-  acr_url: someacr.azurecr.io
-  acr_access_token: MTIzLTEyMy0xMjMK
+  acr_url: 'acruksouthatdev.azurecr.io'
+  acr_username: 'phems-riccardo'
+  acr_password: 'n95YTU6DGgZ46NBRWyJLDnGTiGeMpxGh0aR/2CI7Ln+ACRAdGyOS'
 
 imagePullSecrets:
     - name: regcred

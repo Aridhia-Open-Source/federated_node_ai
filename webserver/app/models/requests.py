@@ -54,6 +54,9 @@ class Requests(db.Model, BaseModel):
         self.created_at = created_at
         self.updated_at = datetime.now()
 
+    def _get_client_name(self):
+        return f"Request {self.title} - {self.project_name}"
+
     def approve(self):
         """
         Method to orchestrate the Keycloak objects creation
@@ -63,9 +66,13 @@ class Requests(db.Model, BaseModel):
 
         admin_global_policy = global_kc_client.get_role('Administrator')
         system_global_policy = global_kc_client.get_role('System')
-        global_kc_client.create_client(self.project_name)
 
-        kc_client = Keycloak(self.project_name)
+        new_client_name = self._get_client_name()
+        token_lifetime = (self.proj_end - datetime.now()).seconds
+        global_kc_client.create_client(new_client_name, token_lifetime)
+
+        kc_client = Keycloak(new_client_name)
+        kc_client.enable_token_exchange()
 
         scopes = ["can_admin_dataset","can_exec_task", "can_admin_task", "can_access_dataset"]
         created_scopes = []
@@ -76,7 +83,7 @@ class Requests(db.Model, BaseModel):
 
         resource = kc_client.create_resource({
             "name": f"{ds.id}-{ds.name}",
-            "owner": {"id": kc_client.client_id, "name": self.project_name},
+            "owner": {"id": kc_client.client_id, "name": new_client_name},
             "displayName": f"{ds.id} {ds.name}",
             "scopes": created_scopes,
             "uris": []
@@ -139,6 +146,7 @@ class Requests(db.Model, BaseModel):
             "scopes": [scope["id"] for scope in created_scopes]
         })
 
+        ret_response = {"token": kc_client.get_impersonation_token(user["id"])}
         try:
             query = update(Requests).\
                 where(Requests.id == self.id).\
@@ -149,7 +157,4 @@ class Requests(db.Model, BaseModel):
             session.rollback()
             raise DBError(f"Failed to approve request {self.id}") from exc
 
-        ret_response = {"username": user["username"]}
-        if user.get("password"):
-            ret_response["password"] = user["password"]
         return ret_response

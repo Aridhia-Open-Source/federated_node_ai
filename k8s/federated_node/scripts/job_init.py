@@ -11,7 +11,7 @@ KEYCLOAK_CLIENT = os.getenv("KEYCLOAK_CLIENT", "global")
 KEYCLOAK_USER = os.getenv("KEYCLOAK_ADMIN")
 KEYCLOAK_PASS = os.getenv("KEYCLOAK_ADMIN_PASSWORD")
 
-def is_response_good(response:Response):
+def is_response_good(response:Response) -> None:
   if not response.ok and response.status_code != 409:
     print(f"{response.status_code} - {response.text}")
     exit(1)
