@@ -6,12 +6,12 @@ The development of the PHEMS ecosystem will entail the design and implementation
 
 _Will be updated with the `helm add repo` once a build is created_
 ```sh
-helm install federatednode ./federated_node
+helm install federatednode ./k8s/federated_node
 ```
 
 # Update
 ```sh
-helm upgrade federatednode ./federated_node
+helm upgrade federatednode ./k8s/federated_node
 ```
 
 # Run locally
