@@ -13,7 +13,7 @@ import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import update
 
-from .exceptions import DBRecordNotFoundError, DBError, InvalidRequest
+from .helpers.exceptions import DBRecordNotFoundError, DBError, InvalidRequest
 from .helpers.wrappers import audit, auth
 from .helpers.db import db
 from .helpers.keycloak import Keycloak

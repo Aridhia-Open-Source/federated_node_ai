@@ -2,7 +2,7 @@ import re
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Relationship, declarative_base
 from flask_sqlalchemy import SQLAlchemy
-from app.exceptions import InvalidDBEntry
+from app.helpers.exceptions import InvalidDBEntry
 from app.helpers.const import build_sql_uri
 
 

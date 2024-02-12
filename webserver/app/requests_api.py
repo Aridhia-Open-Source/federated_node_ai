@@ -7,7 +7,7 @@ request-related endpoints:
 import json
 import sqlalchemy
 from flask import Blueprint, request
-from app.exceptions import DBRecordNotFoundError, DBError, InvalidRequest
+from app.helpers.exceptions import DBRecordNotFoundError, DBError, InvalidRequest
 from app.helpers.wrappers import audit, auth
 from app.helpers.db import db
 from app.models.datasets import Datasets

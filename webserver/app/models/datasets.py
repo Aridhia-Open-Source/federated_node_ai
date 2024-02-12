@@ -3,7 +3,7 @@ import os
 import re
 from sqlalchemy import Column, Integer, String
 from app.helpers.db import BaseModel, db
-from app.exceptions import InvalidRequest
+from app.helpers.exceptions import InvalidRequest
 from app.helpers.keycloak import Keycloak
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException

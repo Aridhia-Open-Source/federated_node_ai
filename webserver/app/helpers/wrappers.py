@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.helpers.db import db, engine
 from app.helpers.keycloak import Keycloak
-from app.exceptions import AuthenticationError, DBRecordNotFoundError
+from app.helpers.exceptions import AuthenticationError, DBRecordNotFoundError
 from app.models.audit import Audit
 
 

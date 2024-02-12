@@ -9,7 +9,7 @@ admin endpoints:
 from flask import Blueprint, request
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from .exceptions import DBRecordNotFoundError
+from .helpers.exceptions import DBRecordNotFoundError
 from .helpers.wrappers import audit, auth
 from .helpers.db import engine
 from .helpers.query_filters import parse_query_params

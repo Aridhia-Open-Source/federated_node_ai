@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
 from app.models.datasets import Datasets
-from app.exceptions import TaskImageException
+from app.helpers.exceptions import TaskImageException
 
 logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)

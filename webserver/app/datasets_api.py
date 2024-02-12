@@ -11,7 +11,7 @@ datasets-related endpoints:
 import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import select
-from .exceptions import DBError, DBRecordNotFoundError, InvalidRequest
+from .helpers.exceptions import DBError, DBRecordNotFoundError, InvalidRequest
 from .helpers.db import db
 from .helpers.keycloak import Keycloak
 from .helpers.wrappers import auth, audit

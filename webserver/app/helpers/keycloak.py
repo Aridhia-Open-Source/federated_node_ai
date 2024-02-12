@@ -3,7 +3,7 @@ import os
 import random
 import requests
 from base64 import b64encode
-from app.exceptions import AuthenticationError, KeycloakError
+from app.helpers.exceptions import AuthenticationError, KeycloakError
 from app.helpers.const import PASS_GENERATOR_SET
 
 logger = logging.getLogger('keycloak_helper')

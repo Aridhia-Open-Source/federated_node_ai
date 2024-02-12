@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from app.helpers.db import BaseModel, db
 from app.models.datasets import Datasets
 from app.helpers.keycloak import Keycloak
-from app.exceptions import DBError
+from app.helpers.exceptions import DBError
 
 
 class Requests(db.Model, BaseModel):
