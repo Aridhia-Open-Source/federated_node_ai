@@ -25,7 +25,7 @@ session = scoped_session(session_factory)
 @auth(scope='can_do_admin')
 def get_audit_logs():
     """
-    GET /admin/audit endpoint.
+    GET /audit endpoint.
         Returns a list of audit entries
     """
     query = parse_query_params(Audit, request.args.copy())
@@ -39,7 +39,7 @@ def get_audit_logs():
 @auth(scope='can_transfer_token')
 def post_transfer_token():
     """
-    POST /admin/token_transfer endpoint.
+    POST /token_transfer endpoint.
         Returns a user's token based on an approved DAR
     """
     return "WIP", 200
@@ -49,7 +49,7 @@ def post_transfer_token():
 @auth(scope='can_transfer_token')
 def post_workspace_transfer_token():
     """
-    POST /admin/workspace/token endpoint.
+    POST /workspace/token endpoint.
         Sends a user's token based on an approved DAR to an approved third-party
     """
     return "WIP", 200
@@ -59,7 +59,7 @@ def post_workspace_transfer_token():
 @auth(scope='can_access_dataset')
 def select_beacon():
     """
-    POST /admin/selection/beacon endpoint.
+    POST /selection/beacon endpoint.
         Checks the validity of a query on a dataset
     """
     body = request.json.copy()

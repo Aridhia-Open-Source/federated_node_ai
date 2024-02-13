@@ -13,15 +13,6 @@ def task_body():
         "use_query": "SELECT * FROM patients LIMIT 10;"
     }
 
-def create_dataset(user_uuid):
-    """
-    Common function to create a dataset. no validations, just create one
-    straight on the DB
-    """
-    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
-    return dataset.id
-
 def test_get_list_tasks(
         client,
         simple_admin_header
@@ -51,18 +42,16 @@ def test_get_list_tasks_base_user(
 def test_create_task(
         docker_client,
         post_json_admin_header,
-        user_uuid,
         query_validator,
+        dataset,
         client,
-        task_body,
-        k8s_client,
-        k8s_config
+        task_body
     ):
     """
     Tests task creation returns 201
     """
     data = task_body
-    data["dataset_id"] = create_dataset(user_uuid)
+    data["dataset_id"] = dataset.id
 
     response = client.post(
         '/tasks/',
@@ -77,9 +66,7 @@ def test_create_task_with_non_existing_dataset(
         user_uuid,
         query_validator,
         client,
-        task_body,
-        k8s_client,
-        k8s_config
+        task_body
     ):
     """
     Tests task creation returns 404 when the requested dataset doesn't exist
@@ -98,18 +85,14 @@ def test_create_task_with_non_existing_dataset(
 def test_create_unauthorized_task(
         docker_client,
         post_json_user_header,
-        user_uuid,
+        dataset,
         query_validator,
         client,
-        task_body,
-        k8s_client,
-        k8s_config
+        task_body
     ):
     """
     Tests task creation returns 201
     """
-    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     data = task_body
     data["dataset_id"] = dataset.id
 
@@ -123,18 +106,14 @@ def test_create_unauthorized_task(
 def test_create_task_image_not_found(
         docker_client_404,
         post_json_admin_header,
-        user_uuid,
+        dataset,
         query_validator,
         client,
-        task_body,
-        k8s_client,
-        k8s_config
+        task_body
     ):
     """
     Tests task creation returns 500 with a requested docker image is not found
     """
-    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     data = task_body
     data["dataset_id"] = dataset.id
 
@@ -148,18 +127,14 @@ def test_create_task_image_not_found(
 
 def test_create_task_with_invalid_query(
         post_json_admin_header,
-        user_uuid,
+        dataset,
         query_invalidator,
         client,
-        task_body,
-        k8s_client,
-        k8s_config
+        task_body
     ):
     """
     Tests task creation return 500 with an invalid query
     """
-    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     data = task_body
     data["dataset_id"] = dataset.id
     data["use_query"] = "Not a real query"
@@ -174,19 +149,17 @@ def test_create_task_with_invalid_query(
 def test_cancel_task(
         client,
         docker_client,
-        user_uuid,
+        dataset,
         simple_admin_header,
         post_json_admin_header,
         task_body,
-        k8s_client,
-        k8s_config,
         query_validator
     ):
     """
     Test that an admin can cancel an existing task
     """
     data = task_body
-    data["dataset_id"] = create_dataset(user_uuid)
+    data["dataset_id"] = dataset.id
 
     response = client.post(
         '/tasks/',

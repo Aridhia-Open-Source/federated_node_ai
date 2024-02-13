@@ -199,3 +199,15 @@ def dataset_post_body():
             "description": "test description"
         }]
     }
+
+@pytest.fixture
+def dataset(client, user_uuid, k8s_client, k8s_config):
+    dataset = Datasets(name="TestDs", host="example.com", password='pass', username='user')
+    dataset.add(user_id=user_uuid)
+    return dataset
+
+@pytest.fixture
+def dataset2(client, user_uuid, k8s_client, k8s_config):
+    dataset = Datasets(name="AnotherDS", host="example.com", password='pass', username='user')
+    dataset.add(user_id=user_uuid)
+    return dataset

@@ -5,7 +5,11 @@ from app.models.audit import Audit
 from app.models.datasets import Datasets
 
 
-def test_get_audit_events(simple_admin_header, client, user_uuid):
+def test_get_audit_events(
+        simple_admin_header,
+        client,
+        user_uuid
+    ):
     """
     Test that after a simple GET call we have an audit entry
     """
@@ -39,7 +43,10 @@ def test_get_audit_events_not_by_standard_users(
     response = client.get("/audit", headers=simple_user_header)
     assert response.status_code == 401
 
-def test_get_filtered_audit_events(simple_admin_header, client):
+def test_get_filtered_audit_events(
+        simple_admin_header,
+        client
+    ):
     """
     Test that after a simple GET call we have an audit entry
     """
@@ -53,10 +60,8 @@ def test_get_filtered_audit_events(simple_admin_header, client):
 def test_beacon_available_to_admin(
         client,
         post_json_admin_header,
-        user_uuid,
         mocker,
-        k8s_client,
-        k8s_config
+        dataset
 ):
     """
     Test that the beacon endpoint is accessible to admin users
@@ -66,8 +71,6 @@ def test_beacon_available_to_admin(
         return_value=True,
         autospec=True
     )
-    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     response = client.post(
         "/selection/beacon",
         json={
@@ -82,10 +85,8 @@ def test_beacon_available_to_admin(
 def test_beacon_available_to_admin_invalid_query(
         client,
         post_json_admin_header,
-        user_uuid,
         mocker,
-        k8s_client,
-        k8s_config
+        dataset
 ):
     """
     Test that the beacon endpoint is accessible to admin users
@@ -95,8 +96,6 @@ def test_beacon_available_to_admin_invalid_query(
         return_value=False,
         autospec=True
     )
-    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     response = client.post(
         "/selection/beacon",
         json={

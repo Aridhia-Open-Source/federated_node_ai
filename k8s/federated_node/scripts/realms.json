@@ -333,7 +333,7 @@
             "decisionStrategy": "AFFIRMATIVE",
             "config": {
               "scopes": "[\"can_do_admin\"]",
-              "applyPolicies": "[\"all-users-policy\"]"
+              "applyPolicies": "[\"admin-policy\"]"
             }
           },
           {

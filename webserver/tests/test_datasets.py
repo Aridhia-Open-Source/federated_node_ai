@@ -35,20 +35,16 @@ def post_dataset(
 
 def test_get_all_datasets(
         simple_admin_header,
-        user_uuid,
         client,
-        k8s_client,
-        k8s_config
+        dataset
     ):
     """
     Get all dataset is possible only for admin users
     """
-    dataset = Datasets(name="TestDs", host="db", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     expected_ds_entry = {
         "id": dataset.id,
-        "name": "TestDs",
-        "host": "db",
+        "name": dataset.name,
+        "host": dataset.host,
         "port": 5432
     }
 
@@ -61,37 +57,38 @@ def test_get_all_datasets(
         ]
     }
 
+def test_get_all_datasets_no_token(
+        client
+    ):
+    """
+    Get all dataset fails if no token is provided
+    """
+    response = client.get("/datasets/")
+    assert response.status_code == 401
+
 def test_get_all_datasets_fail_for_non_admin(
         simple_user_header,
-        user_uuid,
         client,
-        k8s_client,
-        k8s_config
+        dataset
     ):
     """
     Get all dataset is possible for non-admin users
     """
-    dataset = Datasets(name="TestDs", host="db", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     response = client.get("/datasets/", headers=simple_user_header)
     assert response.status_code == 200
 
 def test_get_dataset_by_id_200(
         simple_admin_header,
-        user_uuid,
         client,
-        k8s_config,
-        k8s_client
+        dataset
     ):
     """
     /datasets/{id} GET returns a valid list for admin users
     """
-    dataset = Datasets(name="TestDs2", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     expected_ds_entry = {
         "id": dataset.id,
-        "name": "TestDs2",
-        "host": "db_host",
+        "name": dataset.name,
+        "host": dataset.host,
         "port": 5432
     }
     response = client.get(f"/datasets/{dataset.id}", headers=simple_admin_header)
@@ -100,16 +97,12 @@ def test_get_dataset_by_id_200(
 
 def test_get_dataset_by_id_401(
         simple_user_header,
-        user_uuid,
         client,
-        k8s_config,
-        k8s_client
+        dataset
     ):
     """
     /datasets/{id} GET returns a valid list for non-approved users
     """
-    dataset = Datasets(name="TestDs2", host="db_host", password='pass', username='user')
-    dataset.add(user_id=user_uuid)
     response = client.get(f"/datasets/{dataset.id}", headers=simple_user_header)
     assert response.status_code == 401
 
@@ -129,8 +122,7 @@ def test_get_dataset_by_id_404(
 def test_post_dataset_is_successful(
         post_json_admin_header,
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body
     ):
     """
@@ -151,8 +143,7 @@ def test_post_dataset_is_successful(
 def test_post_dataset_is_unsuccessful_non_admin(
         post_json_user_header,
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body
     ):
     """
@@ -173,8 +164,7 @@ def test_post_dataset_is_unsuccessful_non_admin(
 def test_post_dataset_with_duplicate_dictionaries_fails(
         post_json_admin_header,
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body
     ):
     """
@@ -203,8 +193,7 @@ def test_post_dataset_with_duplicate_dictionaries_fails(
 def test_post_datasets_with_same_dictionaries_succeeds(
         post_json_admin_header,
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body
     ):
     """
@@ -265,8 +254,7 @@ def test_post_dataset_with_dictionaries(
 
 def test_admin_get_dictionaries(
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body,
         post_json_admin_header,
         simple_admin_header
@@ -287,8 +275,7 @@ def test_admin_get_dictionaries(
 
 def test_admin_get_dictionaries_not_allowed_user(
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body,
         post_json_admin_header,
         simple_user_header
@@ -308,8 +295,7 @@ def test_admin_get_dictionaries_not_allowed_user(
 
 def test_admin_get_catalogue(
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body,
         post_json_admin_header,
         simple_admin_header
@@ -329,8 +315,7 @@ def test_admin_get_catalogue(
 
 def test_admin_get_catalogue_not_allowed_user(
         client,
-        k8s_client,
-        k8s_config,
+        dataset,
         dataset_post_body,
         post_json_admin_header,
         simple_user_header

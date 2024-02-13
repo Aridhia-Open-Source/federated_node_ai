@@ -107,13 +107,13 @@ class Keycloak:
         : user_id : The keycloak user's id to impersonate
         """
         payload = {
-            'client_secret': KEYCLOAK_SECRET,
-            'client_id': KEYCLOAK_CLIENT,
+            'client_secret': KEYCLOAK_SECRET, # Target client
+            'client_id': KEYCLOAK_CLIENT, #Target client
             'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
             'requested_token_type': 'urn:ietf:params:oauth:token-type:refresh_token',
-            'subject_token': self.admin_token,
+            'subject_token': self.get_admin_token_global(),
             'requested_subject': user_id,
-            'audience': self.client_name
+            'audience': KEYCLOAK_CLIENT
         }
         exchange_resp = requests.post(
             URLS["get_token"],
@@ -177,6 +177,19 @@ class Keycloak:
         return response_auth.json()[token_type]
 
 
+    def get_admin_token_global(self) -> str:
+        """
+        Get administrative level token
+        """
+        payload = {
+            'client_id': KEYCLOAK_CLIENT,
+            'client_secret': KEYCLOAK_SECRET,
+            'grant_type': 'password',
+            'username': KEYCLOAK_ADMIN,
+            'password': KEYCLOAK_ADMIN_PASSWORD
+        }
+        return self.get_token(token_type='access_token', payload=payload)
+
     def get_admin_token(self) -> str:
         """
         Get administrative level token
@@ -226,7 +239,7 @@ class Keycloak:
         Simple token decode, mostly to fetch user general info or exp date
         """
         b64_auth = b64encode(f"{self.client_name}:{self.client_secret}".encode()).decode()
-        response_cert = requests.post(
+        response_validate = requests.post(
             URLS["validate"],
             data=f"token={token}",
             headers={
@@ -234,7 +247,9 @@ class Keycloak:
                 'Authorization': f'Basic {b64_auth}'
             }
         )
-        return response_cert.json()
+        if response_validate.json().get('active'):
+            return response_validate.json()
+        raise AuthenticationError("Token expired. Validation failed")
 
     def get_client_id(self, client_name=None) -> str:
         """

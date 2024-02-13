@@ -12,9 +12,8 @@ def auth(scope:str):
     def auth_wrapper(func):
         @wraps(func)
         def _auth(*args, **kwargs):
-            try:
-                token = request.headers.get("Authorization", "").replace("Bearer ", "")
-            except KeyError:
+            token = request.headers.get("Authorization", "").replace("Bearer ", "")
+            if scope and not token:
                 raise AuthenticationError("Token not provided")
 
             session = db.session
