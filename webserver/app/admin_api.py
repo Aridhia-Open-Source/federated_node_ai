@@ -24,6 +24,10 @@ session = scoped_session(session_factory)
 @bp.route('/audit', methods=['GET'])
 @auth(scope='can_do_admin')
 def get_audit_logs():
+    """
+    GET /admin/audit endpoint.
+        Returns a list of audit entries
+    """
     query = parse_query_params(Audit, request.args.copy())
     res = session.execute(query).all()
     if res:
@@ -34,18 +38,30 @@ def get_audit_logs():
 @audit
 @auth(scope='can_transfer_token')
 def post_transfer_token():
+    """
+    POST /admin/token_transfer endpoint.
+        Returns a user's token based on an approved DAR
+    """
     return "WIP", 200
 
 @bp.route('/workspace/token', methods=['POST'])
 @audit
 @auth(scope='can_transfer_token')
 def post_workspace_transfer_token():
+    """
+    POST /admin/workspace/token endpoint.
+        Sends a user's token based on an approved DAR to an approved third-party
+    """
     return "WIP", 200
 
 @bp.route('/selection/beacon', methods=['POST'])
 @audit
 @auth(scope='can_access_dataset')
 def select_beacon():
+    """
+    POST /admin/selection/beacon endpoint.
+        Checks the validity of a query on a dataset
+    """
     body = request.json.copy()
     dataset = session.get(Datasets, body['dataset_id'])
     if dataset is None:

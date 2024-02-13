@@ -30,10 +30,14 @@ class AuthenticationError(HTTPException):
 
 class KeycloakError(HTTPException):
     code = 500
+    def __init__(self, description: str | None = None, response: Response | None = None) -> None:
+        super().__init__(description, response)
+        logger.info(description)
+        self.description = "An internal Keycloak error occurred"
 
 class TaskImageException(HTTPException):
     code = 500
     def __init__(self, description: str | None = None, response: Response | None = None) -> None:
         super().__init__(description, response)
         logger.info(description)
-        self.description = "An internal Keycloak error occurred"
+        self.description = "An error occurred with the Task"

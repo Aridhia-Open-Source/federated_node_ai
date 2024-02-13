@@ -16,7 +16,7 @@ tests_local:
 	./run_tests.sh
 
 tests_ci:
-	./run_tests.sh --build
+	./run_tests.sh ci
 
 migrate:
 	echo "Use 'python -m alembic revision --autogenerate -m'"

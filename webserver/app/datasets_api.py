@@ -8,10 +8,9 @@ datasets-related endpoints:
 - GET /datasets/id/dictionaries/table_name
 """
 
-import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import select
-from .helpers.exceptions import DBError, DBRecordNotFoundError, InvalidRequest
+from .helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from .helpers.db import db
 from .helpers.keycloak import Keycloak
 from .helpers.wrappers import auth, audit
@@ -27,6 +26,9 @@ session = db.session
 @audit
 @auth(scope='can_access_dataset')
 def get_datasets():
+    """
+    GET /datasets/ endpoint. Returns a list of all datasets
+    """
     return {
         "datasets": Datasets.get_all()
     }, 200
@@ -35,6 +37,9 @@ def get_datasets():
 @audit
 @auth(scope='can_admin_dataset')
 def post_datasets():
+    """
+    POST /datasets/ endpoint. Creates a new dataset
+    """
     try:
         body = Datasets.validate(request.json)
         cata_body = body.pop("catalogue")
@@ -60,9 +65,6 @@ def post_datasets():
         session.commit()
         return { "dataset_id": dataset.id }, 201
 
-    except sqlalchemy.exc.IntegrityError as exc:
-        session.rollback()
-        raise DBError("Record already exists") from exc
     except KeyError as kexc:
         session.rollback()
         raise InvalidRequest(
@@ -76,6 +78,9 @@ def post_datasets():
 @audit
 @auth(scope='can_access_dataset')
 def get_datasets_by_id(dataset_id):
+    """
+    GET /datasets/id endpoint. Gets dataset with a give id
+    """
     ds = session.get(Datasets, dataset_id)
     if ds is None:
         raise DBRecordNotFoundError(f"Dataset with id {dataset_id} does not exist")
@@ -85,6 +90,9 @@ def get_datasets_by_id(dataset_id):
 @audit
 @auth(scope='can_access_dataset')
 def get_datasets_catalogue_by_id(dataset_id):
+    """
+    GET /datasets/id/catalogue endpoint. Gets dataset's catalogue
+    """
     cata = select(Catalogues).where(Catalogues.dataset_id == dataset_id).limit(1)
     res = session.execute(cata).all()
     if res:
@@ -96,6 +104,10 @@ def get_datasets_catalogue_by_id(dataset_id):
 @audit
 @auth(scope='can_access_dataset')
 def get_datasets_dictionaries_by_id(dataset_id):
+    """
+    GET /datasets/id/dictionaries endpoint.
+        Gets the dataset's list of dictionaries
+    """
     dictionary = select(Dictionaries).where(Dictionaries.dataset_id == dataset_id)
     res = session.execute(dictionary).all()
     if res:
@@ -109,7 +121,12 @@ def get_datasets_dictionaries_by_id(dataset_id):
 @bp.route('/<dataset_id>/dictionaries/<table_name>', methods=['GET'])
 @audit
 @auth(scope='can_access_dataset')
+
 def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
+    """
+    GET /datasets/id/dictionaries/table_name endpoint.
+        Gets the dataset's table within its dictionaries
+    """
     dictionary = select(Dictionaries).where(
         Dictionaries.dataset_id == dataset_id,
         Dictionaries.table_name == table_name

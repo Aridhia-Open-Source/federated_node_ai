@@ -8,8 +8,6 @@ tasks-related endpoints:
 - POST /tasks/id/cancel
 """
 from datetime import datetime
-import re
-import sqlalchemy
 from flask import Blueprint, request
 from sqlalchemy import update
 
@@ -29,12 +27,18 @@ session = db.session
 @audit
 @auth(scope='can_do_admin')
 def get_service_info():
+    """
+    GET /tasks/service-info endpoint. Gets the server info
+    """
     return "WIP", 200
 
 @bp.route('/', methods=['GET'])
 @audit
 @auth(scope='can_admin_task')
 def get_tasks():
+    """
+    GET /tasks/ endpoint. Gets the list of tasks
+    """
     query = parse_query_params(Tasks, request.args.copy())
     res = session.execute(query).all()
     if res:
@@ -45,6 +49,9 @@ def get_tasks():
 @audit
 @auth(scope='can_admin_task')
 def get_task_id(task_id):
+    """
+    GET /tasks/id endpoint. Gets a single task
+    """
     task = session.get(Tasks, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Dataset with id {task_id} does not exist")
@@ -54,10 +61,13 @@ def get_task_id(task_id):
 @audit
 @auth(scope='can_admin_task')
 def cancel_tasks(task_id):
+    """
+    POST /tasks/id/cancel endpoint. Cancels a task either scheduled or running one
+    """
     task = session.get(Tasks, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Task with id {task_id} does not exist")
-    # Should update
+    # Should remove pod/stop ML pipeline
     query = update(Tasks).where(Tasks.id == task_id).values(
         status='cancelled',
         updated_at=datetime.now()
@@ -73,15 +83,15 @@ def cancel_tasks(task_id):
 @audit
 @auth(scope='can_exec_task')
 def post_tasks():
+    """
+    POST /tasks/ endpoint. Creates a new task
+    """
     try:
         body = request.json
-        body["requested_by"] = Keycloak().decode_token(Keycloak.get_token_from_headers(request.headers)).get('sub')
+        body["requested_by"] = Keycloak().decode_token(
+            Keycloak.get_token_from_headers(request.headers)
+        ).get('sub')
         body = Tasks.validate(request.json)
-
-        if not re.match(r'(\d|\w|\_|\-|\/)+:(\d|\w|\_|\-)+', body["docker_image"]):
-            raise InvalidRequest(
-                f"{body["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
-            )
 
         ds_id = body.pop("dataset_id")
         body["dataset"] = session.get(Datasets, ds_id)
@@ -96,15 +106,8 @@ def post_tasks():
         task.can_image_be_found()
 
         task.add()
+        # Create pod/start ML pipeline
         return {"task_id": task.id}, 201
-    except sqlalchemy.exc.IntegrityError as exc:
-        session.rollback()
-        raise DBError("Record already exists") from exc
-    except KeyError as kexc:
-        session.rollback()
-        raise InvalidRequest(
-            "Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there"
-        ) from kexc
     except:
         session.rollback()
         raise
@@ -113,4 +116,8 @@ def post_tasks():
 @audit
 @auth(scope='can_exec_task')
 def post_tasks_validate():
+    """
+    POST /tasks/validate endpoint.
+        Allows task definition validation and the DB query that will be used
+    """
     return "WIP", 200

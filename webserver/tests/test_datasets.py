@@ -15,7 +15,12 @@ def run_query(query):
     """
     return db.session.execute(query).all()
 
-def post_dataset(client, headers, data_body=sample_ds_body, code=201):
+def post_dataset(
+        client,
+        headers,
+        data_body=sample_ds_body,
+        code=201
+    ):
     """
     Helper method that created a given dataset, if none specified
     uses dataset_post_body
@@ -28,7 +33,16 @@ def post_dataset(client, headers, data_body=sample_ds_body, code=201):
     assert response.status_code == code, response.data.decode()
     return response.json
 
-def test_get_all_datasets(simple_admin_header, user_uuid, client, k8s_client, k8s_config):
+def test_get_all_datasets(
+        simple_admin_header,
+        user_uuid,
+        client,
+        k8s_client,
+        k8s_config
+    ):
+    """
+    Get all dataset is possible only for admin users
+    """
     dataset = Datasets(name="TestDs", host="db", password='pass', username='user')
     dataset.add(user_id=user_uuid)
     expected_ds_entry = {
@@ -47,9 +61,30 @@ def test_get_all_datasets(simple_admin_header, user_uuid, client, k8s_client, k8
         ]
     }
 
-def test_get_dataset_by_id_200(simple_admin_header, user_uuid, client, k8s_config, k8s_client):
+def test_get_all_datasets_fail_for_non_admin(
+        simple_user_header,
+        user_uuid,
+        client,
+        k8s_client,
+        k8s_config
+    ):
     """
-    /datasets/{id} GET returns a valid list
+    Get all dataset is possible for non-admin users
+    """
+    dataset = Datasets(name="TestDs", host="db", password='pass', username='user')
+    dataset.add(user_id=user_uuid)
+    response = client.get("/datasets/", headers=simple_user_header)
+    assert response.status_code == 200
+
+def test_get_dataset_by_id_200(
+        simple_admin_header,
+        user_uuid,
+        client,
+        k8s_config,
+        k8s_client
+    ):
+    """
+    /datasets/{id} GET returns a valid list for admin users
     """
     dataset = Datasets(name="TestDs2", host="db_host", password='pass', username='user')
     dataset.add(user_id=user_uuid)
@@ -63,7 +98,25 @@ def test_get_dataset_by_id_200(simple_admin_header, user_uuid, client, k8s_confi
     assert response.status_code == 200
     assert response.json == expected_ds_entry
 
-def test_get_dataset_by_id_404(simple_admin_header, client):
+def test_get_dataset_by_id_401(
+        simple_user_header,
+        user_uuid,
+        client,
+        k8s_config,
+        k8s_client
+    ):
+    """
+    /datasets/{id} GET returns a valid list for non-approved users
+    """
+    dataset = Datasets(name="TestDs2", host="db_host", password='pass', username='user')
+    dataset.add(user_id=user_uuid)
+    response = client.get(f"/datasets/{dataset.id}", headers=simple_user_header)
+    assert response.status_code == 401
+
+def test_get_dataset_by_id_404(
+        simple_admin_header,
+        client
+    ):
     """
     /datasets/{id} GET returns a valid list
     """
@@ -73,9 +126,15 @@ def test_get_dataset_by_id_404(simple_admin_header, client):
     assert response.status_code == 404
     assert response.json == {"error": f"Dataset with id {invalid_id} does not exist"}
 
-def test_post_dataset_is_successful(post_json_admin_header, client, k8s_client, k8s_config, dataset_post_body):
+def test_post_dataset_is_successful(
+        post_json_admin_header,
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body
+    ):
     """
-    /datasets POST is not successful
+    /datasets POST is successful
     """
     data_body = dataset_post_body.copy()
     data_body['name'] = 'TestDs78'
@@ -89,7 +148,35 @@ def test_post_dataset_is_successful(post_json_admin_header, client, k8s_client, 
         query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
         assert len(query)== 1
 
-def test_post_dataset_with_duplicate_dictionaries_fails(post_json_admin_header, client, k8s_client, k8s_config,dataset_post_body):
+def test_post_dataset_is_unsuccessful_non_admin(
+        post_json_user_header,
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body
+    ):
+    """
+    /datasets POST is not successful for non-admin users
+    """
+    data_body = dataset_post_body.copy()
+    data_body['name'] = 'TestDs78'
+    post_dataset(client, post_json_user_header, data_body, 401)
+
+    query = run_query(select(Datasets).where(Datasets.name == data_body["name"]))
+    assert len(query) == 0
+    query = run_query(select(Catalogues).where(Catalogues.title == data_body["catalogue"]["title"]))
+    assert len(query)== 0
+    for d in data_body["dictionaries"]:
+        query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
+        assert len(query)== 0
+
+def test_post_dataset_with_duplicate_dictionaries_fails(
+        post_json_admin_header,
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body
+    ):
     """
     /datasets POST is not successful
     """
@@ -113,7 +200,13 @@ def test_post_dataset_with_duplicate_dictionaries_fails(post_json_admin_header, 
         query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
         assert len(query) == 0
 
-def test_post_datasets_with_same_dictionaries_succeeds(post_json_admin_header, client, k8s_client, k8s_config, dataset_post_body):
+def test_post_datasets_with_same_dictionaries_succeeds(
+        post_json_admin_header,
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body
+    ):
     """
     /datasets POST is successful with same catalogues and dictionaries
     """
@@ -143,7 +236,11 @@ def test_post_datasets_with_same_dictionaries_succeeds(post_json_admin_header, c
         query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
         assert len(query) == 2
 
-def test_post_dataset_with_catalogue(post_json_admin_header, client, dataset_post_body):
+def test_post_dataset_with_catalogue(
+        post_json_admin_header,
+        client,
+        dataset_post_body
+    ):
     """
     /datasets POST with catalogue but no dictionary is not successful
     """
@@ -152,7 +249,12 @@ def test_post_dataset_with_catalogue(post_json_admin_header, client, dataset_pos
     response = post_dataset(client, post_json_admin_header, data_body, 500)
     assert response == missing_dict_cata_message
 
-def test_post_dataset_with_dictionaries(post_json_admin_header, query_validator, client, dataset_post_body):
+def test_post_dataset_with_dictionaries(
+        post_json_admin_header,
+        query_validator,
+        client,
+        dataset_post_body
+    ):
     """
     /datasets POST with dictionary but no catalogue is not successful
     """
@@ -160,3 +262,88 @@ def test_post_dataset_with_dictionaries(post_json_admin_header, query_validator,
     data_body.pop("catalogue")
     response = post_dataset(client, post_json_admin_header, data_body, 500)
     assert response == missing_dict_cata_message
+
+def test_admin_get_dictionaries(
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body,
+        post_json_admin_header,
+        simple_admin_header
+):
+    """
+    Check that admin can see the dictionaries for a given dataset
+    """
+    data_body = dataset_post_body.copy()
+    data_body['name'] = 'TestDs78'
+    resp_ds = post_dataset(client, post_json_admin_header, data_body)
+    response = client.get(
+        f"/datasets/{resp_ds["dataset_id"]}/dictionaries",
+        headers=simple_admin_header
+    )
+    assert response.status_code == 200
+    for i in range(0, len(data_body["dictionaries"])):
+        assert response.json[i].items() >= data_body["dictionaries"][i].items()
+
+def test_admin_get_dictionaries_not_allowed_user(
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body,
+        post_json_admin_header,
+        simple_user_header
+):
+    """
+    Check that non-admin or non DAR approved users
+    cannot see the dictionaries for a given dataset
+    """
+    data_body = dataset_post_body.copy()
+    data_body['name'] = 'TestDs78'
+    resp_ds = post_dataset(client, post_json_admin_header, data_body)
+    response = client.get(
+        f"/datasets/{resp_ds["dataset_id"]}/dictionaries",
+        headers=simple_user_header
+    )
+    assert response.status_code == 401
+
+def test_admin_get_catalogue(
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body,
+        post_json_admin_header,
+        simple_admin_header
+):
+    """
+    Check that admin can see the catalogue for a given dataset
+    """
+    data_body = dataset_post_body.copy()
+    data_body['name'] = 'TestDs78'
+    resp_ds = post_dataset(client, post_json_admin_header, data_body)
+    response = client.get(
+        f"/datasets/{resp_ds["dataset_id"]}/catalogue",
+        headers=simple_admin_header
+    )
+    assert response.status_code == 200
+    assert response.json.items() >= data_body["catalogue"].items()
+
+def test_admin_get_catalogue_not_allowed_user(
+        client,
+        k8s_client,
+        k8s_config,
+        dataset_post_body,
+        post_json_admin_header,
+        simple_user_header
+):
+    """
+    Check that non-admin or non DAR approved users
+    cannot see the catalogue for a given dataset
+    """
+    data_body = dataset_post_body.copy()
+    data_body['name'] = 'TestDs78'
+    resp_ds = post_dataset(client, post_json_admin_header, data_body)
+    response = client.get(
+        f"/datasets/{resp_ds["dataset_id"]}/catalogue",
+        headers=simple_user_header
+    )
+    assert response.status_code == 401

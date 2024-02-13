@@ -66,7 +66,7 @@ class Keycloak:
             'client_secret': KEYCLOAK_SECRET,
             'client_id': KEYCLOAK_CLIENT,
             'grant_type': 'refresh_token',
-            'refresh_token': token,
+            'refresh_token': token
         }
         ac_resp = requests.post(
             URLS["get_token"],
@@ -495,7 +495,7 @@ class Keycloak:
         Method to return a dictionary representing a Keycloak user
         """
         user_response = requests.get(
-            f"{URLS["user"]}?username={username}",
+            f"{URLS["user"]}?username={username}&exact=true",
             headers={"Authorization": f"Bearer {self.admin_token}"}
         )
         if not user_response.ok:

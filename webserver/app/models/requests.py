@@ -54,8 +54,8 @@ class Requests(db.Model, BaseModel):
         self.created_at = created_at
         self.updated_at = datetime.now()
 
-    def _get_client_name(self):
-        return f"Request {self.title} - {self.project_name}"
+    def _get_client_name(self, user_id:str):
+        return f"Request {user_id} - {self.project_name}"
 
     def approve(self):
         """
@@ -67,12 +67,13 @@ class Requests(db.Model, BaseModel):
         admin_global_policy = global_kc_client.get_role('Administrator')
         system_global_policy = global_kc_client.get_role('System')
 
-        new_client_name = self._get_client_name()
+        new_client_name = self._get_client_name(json.loads(self.requested_by)["email"])
         token_lifetime = (self.proj_end - datetime.now()).seconds
         global_kc_client.create_client(new_client_name, token_lifetime)
 
         kc_client = Keycloak(new_client_name)
         kc_client.enable_token_exchange()
+        user = kc_client.create_user(**json.loads(self.requested_by))
 
         scopes = ["can_admin_dataset","can_exec_task", "can_admin_task", "can_access_dataset"]
         created_scopes = []
@@ -88,8 +89,6 @@ class Requests(db.Model, BaseModel):
             "scopes": created_scopes,
             "uris": []
         })
-
-        user = kc_client.create_user(**json.loads(self.requested_by))
 
         policies = []
         # Create admin policy

@@ -1,10 +1,6 @@
 import json
 import pytest
-from sqlalchemy import select
-from unittest import mock
-from unittest.mock import Mock, MagicMock
 from app.models.datasets import Datasets
-from app.models.tasks import Tasks
 
 
 @pytest.fixture(scope='function')
@@ -17,7 +13,98 @@ def task_body():
         "use_query": "SELECT * FROM patients LIMIT 10;"
     }
 
-def test_create_task(post_json_admin_header, user_uuid, query_validator, client, task_body, k8s_client, k8s_config):
+def create_dataset(user_uuid):
+    """
+    Common function to create a dataset. no validations, just create one
+    straight on the DB
+    """
+    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
+    dataset.add(user_id=user_uuid)
+    return dataset.id
+
+def test_get_list_tasks(
+        client,
+        simple_admin_header
+    ):
+    """
+    Tests that admin users can see the list of tasks
+    """
+    response = client.get(
+        '/tasks/',
+        headers=simple_admin_header
+    )
+    assert response.status_code == 200
+
+def test_get_list_tasks_base_user(
+        client,
+        simple_user_header
+    ):
+    """
+    Tests that non-admin users cannot see the list of tasks
+    """
+    response = client.get(
+        '/tasks/',
+        headers=simple_user_header
+    )
+    assert response.status_code == 401
+
+def test_create_task(
+        docker_client,
+        post_json_admin_header,
+        user_uuid,
+        query_validator,
+        client,
+        task_body,
+        k8s_client,
+        k8s_config
+    ):
+    """
+    Tests task creation returns 201
+    """
+    data = task_body
+    data["dataset_id"] = create_dataset(user_uuid)
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 201
+
+def test_create_task_with_non_existing_dataset(
+        docker_client,
+        post_json_admin_header,
+        user_uuid,
+        query_validator,
+        client,
+        task_body,
+        k8s_client,
+        k8s_config
+    ):
+    """
+    Tests task creation returns 404 when the requested dataset doesn't exist
+    """
+    data = task_body
+    data["dataset_id"] = '123456'
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 404
+    assert response.json == {"error": "Dataset with id 123456 does not exist"}
+
+def test_create_unauthorized_task(
+        docker_client,
+        post_json_user_header,
+        user_uuid,
+        query_validator,
+        client,
+        task_body,
+        k8s_client,
+        k8s_config
+    ):
     """
     Tests task creation returns 201
     """
@@ -29,14 +116,47 @@ def test_create_task(post_json_admin_header, user_uuid, query_validator, client,
     response = client.post(
         '/tasks/',
         data=json.dumps(data),
+        headers=post_json_user_header
+    )
+    assert response.status_code == 401
+
+def test_create_task_image_not_found(
+        docker_client_404,
+        post_json_admin_header,
+        user_uuid,
+        query_validator,
+        client,
+        task_body,
+        k8s_client,
+        k8s_config
+    ):
+    """
+    Tests task creation returns 500 with a requested docker image is not found
+    """
+    dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
+    dataset.add(user_id=user_uuid)
+    data = task_body
+    data["dataset_id"] = dataset.id
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
         headers=post_json_admin_header
     )
-    assert response.status_code == 201
+    assert response.status_code == 500
+    assert response.json == {"error": "An error occurred with the Task"}
 
-# This for some reason still persists the mocking of app.helpers.query_validator.validate
-def test_create_task_with_invalid_query(post_json_admin_header, user_uuid, query_invalidator, client, task_body, k8s_client, k8s_config):
+def test_create_task_with_invalid_query(
+        post_json_admin_header,
+        user_uuid,
+        query_invalidator,
+        client,
+        task_body,
+        k8s_client,
+        k8s_config
+    ):
     """
-    Tests task creation returns 201
+    Tests task creation return 500 with an invalid query
     """
     dataset = Datasets(name="TestDs", host="db_host", password='pass', username='user')
     dataset.add(user_id=user_uuid)
@@ -50,3 +170,72 @@ def test_create_task_with_invalid_query(post_json_admin_header, user_uuid, query
         headers=post_json_admin_header
     )
     assert response.status_code == 500
+
+def test_cancel_task(
+        client,
+        docker_client,
+        user_uuid,
+        simple_admin_header,
+        post_json_admin_header,
+        task_body,
+        k8s_client,
+        k8s_config,
+        query_validator
+    ):
+    """
+    Test that an admin can cancel an existing task
+    """
+    data = task_body
+    data["dataset_id"] = create_dataset(user_uuid)
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 201
+
+    response = client.post(
+        f'/tasks/{response.json['task_id']}/cancel',
+        headers=simple_admin_header
+    )
+    assert response.status_code == 201
+
+def test_cancel_404_task(
+        client,
+        simple_admin_header
+    ):
+    """
+    Test that an admin can cancel a non-existing task returns a 404
+    """
+    response = client.post(
+        '/tasks/123456/cancel',
+        headers=simple_admin_header
+    )
+    assert response.status_code == 404
+
+def test_validate_task(
+        client,
+        simple_admin_header
+    ):
+    """
+    Test the validation endpoint can be used by admins returns 201
+    """
+    response = client.post(
+        '/tasks/validate',
+        headers=simple_admin_header
+    )
+    assert response.status_code == 200
+
+def test_validate_task_basic_user(
+        client,
+        simple_user_header
+    ):
+    """
+    Test the validation endpoint can be used by non-admins returns 201
+    """
+    response = client.post(
+        '/tasks/validate',
+        headers=simple_user_header
+    )
+    assert response.status_code == 200

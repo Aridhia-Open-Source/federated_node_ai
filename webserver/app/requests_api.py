@@ -5,9 +5,8 @@ request-related endpoints:
 - GET /code/approve
 """
 import json
-import sqlalchemy
 from flask import Blueprint, request
-from app.helpers.exceptions import DBRecordNotFoundError, DBError, InvalidRequest
+from app.helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from app.helpers.wrappers import audit, auth
 from app.helpers.db import db
 from app.models.datasets import Datasets
@@ -21,6 +20,9 @@ session = db.session
 @audit
 @auth(scope='can_admin_request')
 def get_requests():
+    """
+    GET /requests/ endpoint. Gets a list of Data Access Requests
+    """
     query = parse_query_params(Requests, request.args.copy())
     res = session.execute(query).all()
     if res:
@@ -31,6 +33,9 @@ def get_requests():
 @audit
 @auth(scope='can_send_request')
 def post_requests():
+    """
+    POST /requests/ endpoint. Creates a new Data Access Request
+    """
     try:
         body = request.json
         if 'email' not in body["requested_by"].keys():
@@ -46,9 +51,6 @@ def post_requests():
         req = Requests(**req_attributes)
         req.add()
         return {"request_id": req.id}, 201
-    except sqlalchemy.exc.IntegrityError as exc:
-        session.rollback()
-        raise DBError("Record already exists") from exc
     except KeyError as kexc:
         session.rollback()
         raise InvalidRequest(
@@ -62,6 +64,9 @@ def post_requests():
 @audit
 @auth(scope='can_admin_request')
 def post_approve_requests(code):
+    """
+    POST /requests/code/approve endpoint. Approves a pending Data Access Request
+    """
     dar = session.get(Requests, code)
     if dar is None:
         raise DBRecordNotFoundError(f"Data Access Request {code} not found")
@@ -73,5 +78,4 @@ def post_approve_requests(code):
         raise InvalidRequest("Request was rejected already")
 
     user_info = dar.approve()
-    # Just token
     return user_info, 201

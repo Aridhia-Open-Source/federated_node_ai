@@ -44,7 +44,8 @@ def auth(scope:str):
             client = 'global'
             token_type = 'refresh_token'
             if requested_project:
-                client = requested_project
+                token_info = Keycloak().decode_token(token)
+                client = f"Request {token_info['username']} - {requested_project}"
                 token = Keycloak(client).exchange_global_token(token)
                 token_type = 'access_token'
 
@@ -70,7 +71,7 @@ def audit(func):
         else:
             source_ip = request.environ['REMOTE_ADDR']
 
-        token = Keycloak().decode_token(request.headers.get("Authorization", '').replace("Bearer ", ""))
+        token = Keycloak().decode_token(Keycloak.get_token_from_headers(request.headers))
         http_method = request.method
         http_endpoint = request.path
         api_function = func.__name__

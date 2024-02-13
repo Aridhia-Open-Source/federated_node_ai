@@ -1,13 +1,14 @@
 import docker
 import logging
 import os
+import re
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
 from app.models.datasets import Datasets
-from app.helpers.exceptions import TaskImageException
+from app.helpers.exceptions import InvalidRequest, TaskImageException
 
 logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)
@@ -69,3 +70,11 @@ class Tasks(db.Model, BaseModel):
             logger.info(dexc.explanation)
             raise TaskImageException("Problem connecting to the Image Registry")
 
+    @classmethod
+    def validate(cls, data:dict):
+        valid = super().validate(data)
+        if not re.match(r'(\d|\w|\_|\-|\/)+:(\d|\w|\_|\-)+', valid["docker_image"]):
+            raise InvalidRequest(
+                f"{valid["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
+            )
+        return valid
