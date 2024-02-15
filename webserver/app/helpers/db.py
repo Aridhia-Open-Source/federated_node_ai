@@ -24,7 +24,7 @@ class BaseModel():
             db.session.commit()
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls) -> list:
         ds = db.session.execute(select(cls)).all()
         jsonized = []
         for d in ds:

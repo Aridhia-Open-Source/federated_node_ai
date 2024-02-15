@@ -20,6 +20,7 @@ pytest = "*"
 pytest-mock = "*"
 python-dotenv = "*"
 pytest-cov = "*"
+responses = "*"
 
 [requires]
 python_version = "3.12"

@@ -1,8 +1,8 @@
 import logging
-import sqlalchemy
 import re
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import ProgrammingError, OperationalError
 
 from app.helpers.const import build_sql_uri
 from app.models.datasets import Datasets
@@ -29,7 +29,6 @@ def connect_to_dataset(dataset:Datasets) -> sessionmaker:
         bind=engine
     )
 
-
 def validate(query:str, dataset:Datasets) -> bool:
     """
     Simple method to validate SQL syntax, and against
@@ -39,6 +38,6 @@ def validate(query:str, dataset:Datasets) -> bool:
         with connect_to_dataset(dataset)() as session:
             session.execute(text(query)).all()
         return True
-    except (sqlalchemy.exc.ProgrammingError, sqlalchemy.exc.OperationalError) as exc:
+    except (ProgrammingError, OperationalError) as exc:
         logger.info(f"Query validation failed\n{str(exc)}")
         return False

@@ -32,7 +32,10 @@ class KeycloakError(HTTPException):
     code = 500
     def __init__(self, description: str | None = None, response: Response | None = None) -> None:
         super().__init__(description, response)
+        # Log the original message and save it to a made up field
         logger.info(description)
+        self.details = description
+        # Generic message returned to the end user
         self.description = "An internal Keycloak error occurred"
 
 class TaskImageException(HTTPException):

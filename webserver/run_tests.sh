@@ -18,7 +18,9 @@ is_ci=$1
 
 echo "Starting docker compose"
 if [[ "$is_ci" != "ci" ]]; then
-    docker compose -f docker-compose-tests.yaml run --rm app
+    docker compose -f docker-compose-tests.yaml run --name flask-app-test app
+    docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
+    docker rm flask-app-test
 else
     docker compose -f docker-compose-tests.yaml run --name flask-app-test app
     exit_code=$?

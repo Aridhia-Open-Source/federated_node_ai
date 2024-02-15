@@ -29,7 +29,7 @@ class Datasets(db.Model, BaseModel):
             # Get configuration for an in-cluster setup
             config.load_incluster_config()
         else:
-            #  Get config from outside the cluster. Mostly DEV
+            # Get config from outside the cluster. Mostly DEV
             config.load_kube_config()
         v1 = client.CoreV1Api()
         body = client.V1Secret()
@@ -47,13 +47,18 @@ class Datasets(db.Model, BaseModel):
             if e.status == 409:
                 pass
             else:
-                raise InvalidRequest(e)
+                raise InvalidRequest(e.reason)
 
     def get_creds_secret_name(self):
         return f"{re.sub('http(s)*://', '', self.host)}-{self.name.lower().replace(' ', '-')}-creds"
 
     def get_credentials(self) -> tuple:
-        config.load_kube_config()
+        if os.getenv('KUBERNETES_SERVICE_HOST'):
+            # Get configuration for an in-cluster setup
+            config.load_incluster_config()
+        else:
+            # Get config from outside the cluster. Mostly DEV
+            config.load_kube_config()
         v1 = client.CoreV1Api()
         secret = v1.read_namespaced_secret(self.get_creds_secret_name(), 'default', pretty='pretty')
         user = base64.b64decode(secret.data['PGUSER'].encode()).decode()

@@ -12,11 +12,18 @@ FILTERS = [
 ]
 
 
-def parse_query_params(model: Base, query_params: dict):
+def parse_query_params(model: Base, query_params: dict): # type: ignore
     """
     We aim to convert query strings in models fields
     to be used as filters.
-
+    The filters follow the python Django filtering system
+        - __lte => less than or equal
+        - __gte => greater than or equal
+        - =     => equal
+        - __eq  => equal
+        - __gt  => greater than
+        - __lt  => less than
+        - __ne  => not equal
     Parameters
     ----------
     :param model: The Table model to look against the query args

@@ -1,13 +1,15 @@
+import json
 import os
 import pytest
 import docker
 import requests
-from sqlalchemy import select
+from datetime import datetime as dt, timedelta
 from sqlalchemy.orm.session import close_all_sessions
 from unittest.mock import Mock
 from app import create_app
 from app.helpers.db import db
 from app.models.datasets import Datasets
+from app.models.requests import Requests
 from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIENT
 
 sample_ds_body = {
@@ -211,3 +213,16 @@ def dataset2(client, user_uuid, k8s_client, k8s_config):
     dataset = Datasets(name="AnotherDS", host="example.com", password='pass', username='user')
     dataset.add(user_id=user_uuid)
     return dataset
+
+@pytest.fixture
+def access_request(client, dataset, user_uuid, k8s_client, k8s_config):
+    request = Requests(
+        title="TestRequest",
+        project_name="example.com",
+        requested_by=json.dumps({"email": "some@test.com"}),
+        dataset=dataset,
+        proj_start=dt.now().date().strftime("%Y-%m-%d"),
+        proj_end=(dt.now().date() + timedelta(days=10)).strftime("%Y-%m-%d")
+    )
+    request.add()
+    return request

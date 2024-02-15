@@ -77,7 +77,7 @@ class Keycloak:
         )
         if not ac_resp.ok:
             logger.info(ac_resp.content.decode())
-            raise KeycloakError("Cannot exchange token")
+            raise KeycloakError("Cannot get an access token")
         access_token = ac_resp.json()["access_token"]
 
         payload = {
@@ -98,7 +98,7 @@ class Keycloak:
         )
         if not exchange_resp.ok:
             logger.info(exchange_resp.content.decode())
-            raise KeycloakError("Can't exchange token")
+            raise KeycloakError("Cannot exchange token")
         return exchange_resp.json()["access_token"]
 
     def get_impersonation_token(self, user_id:str) -> str:
@@ -124,7 +124,7 @@ class Keycloak:
         )
         if not exchange_resp.ok:
             logger.info(exchange_resp.content.decode())
-            raise KeycloakError("Can't exchange token")
+            raise KeycloakError("Cannot exchange impersonation token")
         return exchange_resp.json()["refresh_token"]
 
     def check_if_keycloak_resp_is_valid(self, response) -> bool:
@@ -268,7 +268,7 @@ class Keycloak:
         )
         if not client_id_resp.ok:
             logger.info(client_id_resp.content.decode())
-            raise AuthenticationError("Could not check client")
+            raise KeycloakError("Could not check client")
 
         return client_id_resp.json()[0]["id"]
 
@@ -364,7 +364,7 @@ class Keycloak:
         )
         if not scope_response.ok:
             logger.info(scope_response.content.decode())
-            raise KeycloakError("Error when fetching the scioes from Keycloak")
+            raise KeycloakError("Error when fetching the scopes from Keycloak")
 
         return scope_response.json()[0]
 
@@ -395,13 +395,16 @@ class Keycloak:
             logger.info(client_post_rest.content.decode())
             raise KeycloakError("Failed to create a project")
 
-        requests.put(
+        update_req = requests.put(
             URLS["client_auth"] % self.get_client_id(client_name),
             json={
                 "decisionStrategy": "AFFIRMATIVE",
             },
             headers=self._post_json_headers()
         )
+        if not update_req.ok:
+            logger.info(update_req.content.decode())
+            raise KeycloakError("Failed to create a project")
 
         return self.get_client_id(client_name)
 
@@ -418,7 +421,7 @@ class Keycloak:
             return self.get_scope(scope_name)
         elif not scope_post_rest.ok:
             logger.info(scope_post_rest.content.decode())
-            raise KeycloakError("Failed to setup a project")
+            raise KeycloakError("Failed to create a project's scope")
 
         return scope_post_rest.json()
 
@@ -435,7 +438,7 @@ class Keycloak:
             return self.get_policy(payload["name"])
         elif not policy_response.ok:
             logger.info(policy_response.content.decode())
-            raise KeycloakError("Failed to create a policy for the dataset")
+            raise KeycloakError("Failed to create a project's policy")
 
         return policy_response.json()
 
@@ -452,7 +455,7 @@ class Keycloak:
             return self.get_resource(payload["name"])
         elif not resource_response.ok:
             logger.info(resource_response.content.decode())
-            raise KeycloakError("Failed to create a resource for the dataset")
+            raise KeycloakError("Failed to create a project's resource")
 
         return resource_response.json()
 
@@ -464,7 +467,7 @@ class Keycloak:
         )
         if not self.check_if_keycloak_resp_is_valid(permission_response):
             logger.info(permission_response.content.decode())
-            raise KeycloakError("Failed to create permissions for the dataset")
+            raise KeycloakError("Failed to create a project's permission")
 
         return permission_response.json()
 

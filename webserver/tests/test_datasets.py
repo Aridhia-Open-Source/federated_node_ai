@@ -1,6 +1,7 @@
 import json
 from sqlalchemy import select
-
+from kubernetes.client.exceptions import ApiException
+from unittest.mock import Mock
 from app.helpers.db import db
 from app.models.datasets import Datasets
 from app.models.catalogues import Catalogues
@@ -160,6 +161,56 @@ class TestDatasets:
         for d in data_body["dictionaries"]:
             query = run_query(select(Dictionaries).where(Dictionaries.table_name == d["table_name"]))
             assert len(query)== 1
+
+    def test_post_dataset_fails_k8s_secrets(
+            self,
+            post_json_admin_header,
+            client,
+            dataset_post_body,
+            mocker
+        ):
+        """
+        /datasets POST fails if the k8s secrets cannot be created successfully
+        """
+        mocker.patch(
+            'kubernetes.client.CoreV1Api',
+            return_value=Mock(
+                create_namespaced_secret=Mock(
+                    side_effect=ApiException(status=500, reason="Failed")
+                )
+            )
+        )
+        data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs78'
+        post_dataset(client, post_json_admin_header, data_body, 500)
+
+        query = run_query(select(Datasets).where(Datasets.name == data_body["name"]))
+        assert len(query) == 0
+
+    def test_post_dataset_k8s_secrets_exists(
+            self,
+            post_json_admin_header,
+            client,
+            dataset_post_body,
+            mocker
+        ):
+        """
+        /datasets POST is successful if the k8s secrets already exists
+        """
+        mocker.patch(
+            'kubernetes.client.CoreV1Api',
+            return_value=Mock(
+                create_namespaced_secret=Mock(
+                    side_effect=ApiException(status=409, reason="Conflict")
+                )
+            )
+        )
+        data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs78'
+        post_dataset(client, post_json_admin_header, data_body)
+
+        query = run_query(select(Datasets).where(Datasets.name == data_body["name"]))
+        assert len(query) == 1
 
     def test_post_dataset_is_unsuccessful_non_admin(
             self,

@@ -1,5 +1,8 @@
 from datetime import datetime
 from sqlalchemy import select
+from unittest.mock import Mock
+from sqlalchemy.exc import ProgrammingError
+
 from app.helpers.db import db
 from app.models.audit import Audit
 
@@ -71,15 +74,14 @@ class TestBeacon:
         """
         Test that the beacon endpoint is accessible to admin users
         """
+        mocker.patch('app.helpers.query_validator.create_engine')
         mocker.patch(
-            'app.admin_api.validate',
-            return_value=True,
-            autospec=True
-        )
+            'app.helpers.query_validator.sessionmaker',
+        ).__enter__.return_value = Mock()
         response = client.post(
             "/selection/beacon",
             json={
-                "query": "SELECT * FROM films2",
+                "query": "SELECT * FROM table_name",
                 "dataset_id": dataset.id
             },
             headers=post_json_admin_header
@@ -97,15 +99,15 @@ class TestBeacon:
         """
         Test that the beacon endpoint is accessible to admin users
         """
+        mocker.patch('app.helpers.query_validator.create_engine')
         mocker.patch(
-            'app.admin_api.validate',
-            return_value=False,
-            autospec=True
+            'app.helpers.query_validator.sessionmaker',
+            side_effect = ProgrammingError(statement="", params={}, orig="error test")
         )
         response = client.post(
             "/selection/beacon",
             json={
-                "query": "SELECT * FROM films2",
+                "query": "SELECT * FROM table",
                 "dataset_id": dataset.id
             },
             headers=post_json_admin_header
@@ -113,7 +115,7 @@ class TestBeacon:
         assert response.status_code == 500
         assert response.json['result'] == 'Invalid'
 
-class TestTrasfers:
+class TestTransfers:
     def test_token_transfer_admin(
             self,
             client,
