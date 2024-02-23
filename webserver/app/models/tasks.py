@@ -7,13 +7,13 @@ from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
-from app.models.datasets import Datasets
+from app.models.datasets import Dataset
 from app.helpers.exceptions import InvalidRequest, TaskImageException
 
 logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)
 
-class Tasks(db.Model, BaseModel):
+class Task(db.Model, BaseModel):
     __tablename__ = 'tasks'
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(256), nullable=False)
@@ -25,14 +25,14 @@ class Tasks(db.Model, BaseModel):
 
     # This will be a FK or a Keycloak UUID. Something to track a user
     requested_by = Column(String(64), nullable=False)
-    dataset_id = Column(Integer, ForeignKey(Datasets.id, ondelete='CASCADE'))
-    dataset = relationship("Datasets")
+    dataset_id = Column(Integer, ForeignKey(Dataset.id, ondelete='CASCADE'))
+    dataset = relationship("Dataset")
 
     def __init__(self,
                  title:str,
                  docker_image:str,
                  requested_by:str,
-                 dataset:Datasets,
+                 dataset:Dataset,
                  description:str = '',
                  created_at:datetime=datetime.now()
                  ):

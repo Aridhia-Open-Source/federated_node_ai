@@ -8,7 +8,7 @@ from app.helpers.keycloak import Keycloak
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-class Datasets(db.Model, BaseModel):
+class Dataset(db.Model, BaseModel):
     __tablename__ = 'datasets'
     # No duplicated name/host entries
     # __table_args__ = (

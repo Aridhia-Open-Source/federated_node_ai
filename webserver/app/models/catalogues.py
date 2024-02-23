@@ -3,9 +3,9 @@ from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, UniqueCons
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
-from app.models.datasets import Datasets
+from app.models.datasets import Dataset
 
-class Catalogues( db.Model, BaseModel):
+class Catalogue( db.Model, BaseModel):
     __tablename__ = 'catalogues'
     __table_args__ = (
         UniqueConstraint('title', 'dataset_id'),
@@ -17,13 +17,13 @@ class Catalogues( db.Model, BaseModel):
     created_at = Column(DateTime(timezone=False), server_default=func.now())
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
 
-    dataset_id = Column(Integer, ForeignKey(Datasets.id, ondelete='CASCADE'))
-    dataset = relationship("Datasets")
+    dataset_id = Column(Integer, ForeignKey(Dataset.id, ondelete='CASCADE'))
+    dataset = relationship("Dataset")
 
     def __init__(self,
                  title:str,
                  description:str,
-                 dataset:Datasets,
+                 dataset:Dataset,
                  version:str='1',
                  created_at:datetime=datetime.now()
         ):

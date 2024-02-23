@@ -17,8 +17,8 @@ from .helpers.db import db
 from .helpers.keycloak import Keycloak
 from .helpers.query_filters import parse_query_params
 from .helpers.query_validator import validate as validate_query
-from .models.datasets import Datasets
-from .models.tasks import Tasks
+from .models.datasets import Dataset
+from .models.tasks import Task
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 session = db.session
@@ -39,7 +39,7 @@ def get_tasks():
     """
     GET /tasks/ endpoint. Gets the list of tasks
     """
-    query = parse_query_params(Tasks, request.args.copy())
+    query = parse_query_params(Task, request.args.copy())
     res = session.execute(query).all()
     if res:
         res = [r[0].sanitized_dict() for r in res]
@@ -52,10 +52,10 @@ def get_task_id(task_id):
     """
     GET /tasks/id endpoint. Gets a single task
     """
-    task = session.get(Tasks, task_id)
+    task = session.get(Task, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Dataset with id {task_id} does not exist")
-    return Tasks.sanitized_dict(task), 200
+    return Task.sanitized_dict(task), 200
 
 @bp.route('/<task_id>/cancel', methods=['POST'])
 @audit
@@ -64,18 +64,18 @@ def cancel_tasks(task_id):
     """
     POST /tasks/id/cancel endpoint. Cancels a task either scheduled or running one
     """
-    task = session.get(Tasks, task_id)
+    task = session.get(Task, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Task with id {task_id} does not exist")
     # Should remove pod/stop ML pipeline
-    query = update(Tasks).where(Tasks.id == task_id).values(
+    query = update(Task).where(Task.id == task_id).values(
         status='cancelled',
         updated_at=datetime.now()
         )
     try:
         session.execute(query)
         session.commit()
-        return Tasks.sanitized_dict(task), 201
+        return Task.sanitized_dict(task), 201
     except Exception as exc:
         raise DBError("An error occurred while updating") from exc
 
@@ -91,10 +91,10 @@ def post_tasks():
         body["requested_by"] = Keycloak().decode_token(
             Keycloak.get_token_from_headers(request.headers)
         ).get('sub')
-        body = Tasks.validate(request.json)
+        body = Task.validate(request.json)
 
         ds_id = body.pop("dataset_id")
-        body["dataset"] = session.get(Datasets, ds_id)
+        body["dataset"] = session.get(Dataset, ds_id)
         if body["dataset"] is None:
             raise DBRecordNotFoundError(f"Dataset {ds_id} not found")
 
@@ -102,7 +102,7 @@ def post_tasks():
         if not validate_query(query, body["dataset"]):
             raise InvalidRequest("Query missing or misformed")
 
-        task = Tasks(**body)
+        task = Task(**body)
         task.can_image_be_found()
 
         task.add()
