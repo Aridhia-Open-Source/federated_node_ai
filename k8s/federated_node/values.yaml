@@ -23,6 +23,10 @@ federatedNode:
   acr_url: ''
   acr_username: ''
   acr_password: ''
+  acr_email: ''
+  volumes:
+    results_path: /mnt/results
+    task_pod_results_path: /mnt/data
 
 imagePullSecrets:
     - name: regcred
@@ -46,8 +50,6 @@ podSecurityContext: {}
 
 securityContext: {}
 
-# populate it with cat ~/.docker/config.json | base64
-dockerjsonconfig: ewogICJhdXRocyI6IHsKICAgICJhY3JhdXNlYXN0YXRkZXYuYXp1cmVjci5pbyI6IHt9LAogICAgImFjcmNhbmNlbnRyYWxhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYWNycnNhbm9ydGhhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYWNydWtzb3V0aGF0ZGV2LmF6dXJlY3IuaW8iOiB7fSwKICAgICJhY3J1a3NvdXRoaHdzYW5hbHl0aXhhZ2lsaXR5LmF6dXJlY3IuaW8iOiB7fSwKICAgICJhY3J1c3dlc3RhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYXJpZGhpYXNjYW5yZXBvLmF6dXJlY3IuaW8iOiB7fSwKICAgICJkb2NrZXItZGV2LmFyaWRoaWEubmV0Ijoge30sCiAgICAiZG9ja2VyLmFyaWRoaWEubmV0Ijoge30sCiAgICAiZW1wdHlxY2Fjci5henVyZWNyLmlvIjoge30sCiAgICAibG9jYWxob3N0OjUwMDAiOiB7fQogIH0sCiAgImNyZWRzU3RvcmUiOiAiZGVza3RvcC5leGUiCn0K
 # ingress:
 #   enabled: false
 #   className: ""

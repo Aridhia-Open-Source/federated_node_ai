@@ -63,6 +63,10 @@ spec:
             - configMapRef:
                 name: keycloak-config
           env:
+          - name: RESULTS_PATH
+            value: {{ .Values.federatedNode.volumes.results_path }}
+          - name: TASK_POD_RESULTS_PATH
+            value: {{ .Values.federatedNode.volumes.task_pod_results_path }}
           - name: KEYCLOAK_SECRET
             valueFrom:
               secretKeyRef:
@@ -83,5 +87,12 @@ spec:
               secretKeyRef:
                 name: backend-secrets
                 key: ACR_USERNAME
+          volumeMounts:
+            - name: respv
+              mountPath: {{ .Values.federatedNode.volumes.results_path }}
       imagePullSecrets:
         - name: regcred
+      volumes:
+        - name: respv
+          persistentVolumeClaim:
+            claimName: flask-results-pv-volclaim

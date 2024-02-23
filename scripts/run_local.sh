@@ -24,6 +24,8 @@ else
         helm upgrade $HELM_CHART_NAME k8s/federated_node
     fi
 fi
+echo "Creating a separate test db"
+kubectl apply -f dev.k8s/deployments
 
 echo "If new images are needed, load them up with:"
 echo "minikube -p $CLUSTER_NAME image load <image_name>"

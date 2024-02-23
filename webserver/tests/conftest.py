@@ -1,7 +1,6 @@
 import json
 import os
 import pytest
-import docker
 import requests
 from datetime import datetime as dt, timedelta
 from sqlalchemy.orm.session import close_all_sessions
