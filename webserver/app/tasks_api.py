@@ -9,14 +9,11 @@ tasks-related endpoints:
 """
 from flask import Blueprint, request, send_file
 
-from .helpers.exceptions import DBRecordNotFoundError, InvalidRequest
+from .helpers.exceptions import DBRecordNotFoundError
 from .helpers.wrappers import audit, auth
 from .helpers.db import db
-from .helpers.keycloak import Keycloak
 from .helpers.query_filters import parse_query_params
-from .helpers.query_validator import validate as validate_query
-from .models.datasets import Datasets
-from .models.tasks import Tasks
+from .models.tasks import Task
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 session = db.session
@@ -37,7 +34,7 @@ def get_tasks():
     """
     GET /tasks/ endpoint. Gets the list of tasks
     """
-    query = parse_query_params(Tasks, request.args.copy())
+    query = parse_query_params(Task, request.args.copy())
     res = session.execute(query).all()
     if res:
         res = [r[0].sanitized_dict() for r in res]
@@ -50,7 +47,7 @@ def get_task_id(task_id):
     """
     GET /tasks/id endpoint. Gets a single task
     """
-    task = session.get(Tasks, task_id)
+    task = session.get(Task, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Dataset with id {task_id} does not exist")
     task_dict = task.sanitized_dict()
@@ -64,7 +61,7 @@ def cancel_tasks(task_id):
     """
     POST /tasks/id/cancel endpoint. Cancels a task either scheduled or running one
     """
-    task = session.get(Tasks, task_id)
+    task = session.get(Task, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Task with id {task_id} does not exist")
 
@@ -79,8 +76,8 @@ def post_tasks():
     POST /tasks/ endpoint. Creates a new task
     """
     try:
-        body = Tasks.validate(request.json)
-        task = Tasks(**body)
+        body = Task.validate(request.json)
+        task = Task(**body)
         task.add()
         # Create pod/start ML pipeline
         task.run()
@@ -97,7 +94,7 @@ def post_tasks_validate():
     POST /tasks/validate endpoint.
         Allows task definition validation and the DB query that will be used
     """
-    Tasks.validate(request.json)
+    Task.validate(request.json)
     return "Ok", 200
 
 @bp.route('/<task_id>/results', methods=['GET'])
@@ -108,7 +105,7 @@ def get_task_results(task_id):
     GET /tasks/id/results endpoint.
         Allows to get tasks results
     """
-    task = session.get(Tasks, task_id)
+    task = session.get(Task, task_id)
     if task is None:
         raise DBRecordNotFoundError(f"Dataset with id {task_id} does not exist")
 

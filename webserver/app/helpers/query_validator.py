@@ -5,12 +5,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
 from app.helpers.const import build_sql_uri
-from app.models.datasets import Datasets
+from app.models.datasets import Dataset
 
 logger = logging.getLogger('query_validator')
 logger.setLevel(logging.INFO)
 
-def connect_to_dataset(dataset:Datasets) -> sessionmaker:
+def connect_to_dataset(dataset:Dataset) -> sessionmaker:
     """
     Given a datasets object, create a connection string
     and return a session that can be used to send queries
@@ -29,7 +29,7 @@ def connect_to_dataset(dataset:Datasets) -> sessionmaker:
         bind=engine
     )
 
-def validate(query:str, dataset:Datasets) -> bool:
+def validate(query:str, dataset:Dataset) -> bool:
     """
     Simple method to validate SQL syntax, and against
     the actual dataset.

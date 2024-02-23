@@ -7,8 +7,8 @@ from sqlalchemy.orm.session import close_all_sessions
 from unittest.mock import Mock
 from app import create_app
 from app.helpers.db import db
-from app.models.datasets import Datasets
-from app.models.requests import Requests
+from app.models.datasets import Dataset
+from app.models.requests import Request
 from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIENT
 
 sample_ds_body = {
@@ -203,19 +203,19 @@ def dataset_post_body():
 
 @pytest.fixture
 def dataset(client, user_uuid, k8s_client, k8s_config):
-    dataset = Datasets(name="TestDs", host="example.com", password='pass', username='user')
+    dataset = Dataset(name="TestDs", host="example.com", password='pass', username='user')
     dataset.add(user_id=user_uuid)
     return dataset
 
 @pytest.fixture
 def dataset2(client, user_uuid, k8s_client, k8s_config):
-    dataset = Datasets(name="AnotherDS", host="example.com", password='pass', username='user')
+    dataset = Dataset(name="AnotherDS", host="example.com", password='pass', username='user')
     dataset.add(user_id=user_uuid)
     return dataset
 
 @pytest.fixture
 def access_request(client, dataset, user_uuid, k8s_client, k8s_config):
-    request = Requests(
+    request = Request(
         title="TestRequest",
         project_name="example.com",
         requested_by=json.dumps({"email": "some@test.com"}),

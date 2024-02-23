@@ -5,12 +5,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from app.helpers.db import BaseModel, db
-from app.models.datasets import Datasets
+from app.models.datasets import Dataset
 from app.helpers.keycloak import Keycloak
 from app.helpers.exceptions import DBError
 
 
-class Requests(db.Model, BaseModel):
+class Request(db.Model, BaseModel):
     __tablename__ = 'requests'
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(256), nullable=False)
@@ -25,18 +25,18 @@ class Requests(db.Model, BaseModel):
     created_at = Column(DateTime(timezone=False), server_default=func.now())
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
 
-    dataset_id = Column(Integer, ForeignKey(Datasets.id, ondelete='CASCADE'))
-    dataset = relationship("Datasets")
+    dataset_id = Column(Integer, ForeignKey(Dataset.id, ondelete='CASCADE'))
+    dataset = relationship("Dataset")
     STATUSES = {
         'approved': 'approved',
         'pending': 'pending',
-        'rejected': 'rejected'
+        'denied': 'denied'
     }
 
     def __init__(self,
                  title:str,
                  project_name:str,
-                 dataset:Datasets,
+                 dataset:Dataset,
                  requested_by:str,
                  proj_start:datetime,
                  proj_end:datetime,
@@ -80,7 +80,7 @@ class Requests(db.Model, BaseModel):
         for scope in scopes:
             created_scopes.append(kc_client.create_scope(scope))
 
-        ds = session.get(Datasets, self.dataset_id)
+        ds = session.get(Dataset, self.dataset_id)
 
         resource = kc_client.create_resource({
             "name": f"{ds.id}-{ds.name}",
@@ -147,8 +147,8 @@ class Requests(db.Model, BaseModel):
 
         ret_response = {"token": kc_client.get_impersonation_token(user["id"])}
         try:
-            query = update(Requests).\
-                where(Requests.id == self.id).\
+            query = update(Request).\
+                where(Request.id == self.id).\
                 values(status=self.STATUSES["approved"], requested_by=user["id"])
             session.execute(query)
             session.commit()

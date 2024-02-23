@@ -5,7 +5,7 @@ import os
 from datetime import datetime as dt, timedelta
 from sqlalchemy import update
 from app.helpers.db import db
-from app.models.requests import Requests
+from app.models.requests import Request
 from app.helpers.keycloak import Keycloak
 
 @pytest.fixture
@@ -157,7 +157,7 @@ def test_approve_request_already_approved(
     response_approval = approve_request(client, access_request.id, simple_admin_header, 200)
     assert response_approval == {"message": "Request alread approved"}
 
-def test_approve_request_already_rejected(
+def test_approve_request_already_denied(
         simple_admin_header,
         client,
         access_request
@@ -165,13 +165,13 @@ def test_approve_request_already_rejected(
     """
     Test the request fails if the dataset id is not found
     """
-    query = update(Requests).\
-        where(Requests.id == access_request.id).\
-        values(status=Requests.STATUSES["rejected"])
+    query = update(Request).\
+        where(Request.id == access_request.id).\
+        values(status=Request.STATUSES["denied"])
     db.session.execute(query)
     db.session.commit()
     response_approval = approve_request(client, access_request.id, simple_admin_header, 500)
-    assert response_approval == {"error": "Request was rejected already"}
+    assert response_approval == {"error": "Request was denied already"}
 
 def test_create_request_with_same_project_is_successful(
         request_base_body,
@@ -305,4 +305,4 @@ def test_request_for_invalid_dataset_fails(
     response = create_request(client, request_base_body, post_json_admin_header, 404)
 
     assert response == {"error": "Dataset with id 100 does not exist"}
-    assert Requests.get_all() == []
+    assert Request.get_all() == []

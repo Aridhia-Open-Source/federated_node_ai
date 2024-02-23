@@ -1,3 +1,4 @@
+import re
 from functools import wraps
 from flask import request
 from sqlalchemy import text
@@ -32,7 +33,7 @@ def auth(scope:str):
             elif request.headers.get('Content-Type'):
                 ds_id = request.json.get("dataset_id")
 
-            if ds_id:
+            if ds_id and re.match(r'^\d+$', str(ds_id)):
                 q = session.execute(text("SELECT * FROM datasets WHERE id=:ds_id"), dict(ds_id=ds_id)).all()
                 if not q:
                     raise DBRecordNotFoundError(f"Dataset with id {ds_id} does not exist")
