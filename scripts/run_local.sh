@@ -29,3 +29,6 @@ kubectl apply -f dev.k8s/deployments
 
 echo "If new images are needed, load them up with:"
 echo "minikube -p $CLUSTER_NAME image load <image_name>"
+
+echo "Use the following address to reach the flask service in k8s:"
+minikube -p $CLUSTER_NAME service backend --url

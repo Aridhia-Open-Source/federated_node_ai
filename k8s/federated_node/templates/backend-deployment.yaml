@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-app
+  name: backend
   namespace: {{ .Values.namespace | default "default" }}
   labels:
     app: flask
@@ -33,7 +33,7 @@ spec:
                 name: backend-configmap
       containers:
         - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          name: flask-app
+          name: backend
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             limits:

@@ -73,7 +73,7 @@ class Task(db.Model, BaseModel):
         if not validate_query(query, data["dataset"]):
             raise InvalidRequest("Query missing or misformed")
 
-        if not re.match(r'^(\w+\/?\w+)+:(\w+(\.|-)?)+$', data["docker_image"]):
+        if not re.match(r'^((\w+|-)\/?\w+)+:(\w+(\.|-)?)+$', data["docker_image"]):
             raise InvalidRequest(
                 f"{data["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
             )
