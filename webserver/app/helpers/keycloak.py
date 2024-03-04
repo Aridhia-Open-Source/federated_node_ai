@@ -3,6 +3,7 @@ import os
 import random
 import requests
 from base64 import b64encode
+from flask import request
 from app.helpers.exceptions import AuthenticationError, KeycloakError
 from app.helpers.const import PASS_GENERATOR_SET
 
@@ -43,11 +44,11 @@ class Keycloak:
         self.client_secret = self._get_client_secret()
 
     @classmethod
-    def get_token_from_headers(cls, header) -> str:
+    def get_token_from_headers(cls) -> str:
         """
         Public method for generalize the token fetching from an HTTP header
         """
-        return header['Authorization'].replace('Bearer ', '')
+        return request.headers['Authorization'].replace('Bearer ', '')
 
     def _post_json_headers(self) -> dict:
         """

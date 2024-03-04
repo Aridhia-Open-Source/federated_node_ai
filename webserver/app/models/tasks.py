@@ -2,7 +2,6 @@ import logging
 import json
 import os
 import re
-from flask import request
 from datetime import datetime
 from kubernetes.client.exceptions import ApiException
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
@@ -14,7 +13,7 @@ import urllib3
 from app.helpers.acr import ACRClient
 from app.helpers.db import BaseModel, db
 from app.helpers.keycloak import Keycloak
-from app.helpers.kubernetes import cp_from_pod, create_job, create_pod, k8s_client
+from app.helpers.kubernetes import KubernetesBatchClient, KubernetesClient
 from app.helpers.query_validator import validate as validate_query
 from app.helpers.exceptions import DBError, InvalidRequest, TaskImageException, TaskExecutionException
 from app.models.datasets import Dataset
@@ -62,7 +61,7 @@ class Task(db.Model, BaseModel):
     @classmethod
     def validate(cls, data:dict):
         data["requested_by"] = Keycloak().decode_token(
-            Keycloak.get_token_from_headers(request.headers)
+            Keycloak.get_token_from_headers()
         ).get('sub')
 
         data = super().validate(data)
@@ -74,7 +73,7 @@ class Task(db.Model, BaseModel):
         if not validate_query(query, data["dataset"]):
             raise InvalidRequest("Query missing or misformed")
 
-        if not re.match(r'(\d|\w|\_|\-|\/)+:(\d|\w|\_|\-)+', data["docker_image"]):
+        if not re.match(r'^(\w+\/?\w+)+:(\w+(\.|-)?)+$', data["docker_image"]):
             raise InvalidRequest(
                 f"{data["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
             )
@@ -121,8 +120,8 @@ class Task(db.Model, BaseModel):
         : param validate : An optional parameter to basically run in dry_run mode
             Defaults to False
         """
-        v1 = k8s_client()
-        body = create_pod({
+        v1 = KubernetesClient()
+        body = v1.create_pod_spec({
             "name": self.pod_name(),
             "image": self.docker_image,
             "labels": {
@@ -144,11 +143,11 @@ class Task(db.Model, BaseModel):
                 pretty='true'
             )
         except ApiException as e:
-            logging.error(json.loads(e.body))
+            logger.error(json.loads(e.body))
             raise InvalidRequest(f"Failed to run pod: {e.reason}")
 
     def get_current_pod(self):
-        v1 = k8s_client()
+        v1 = KubernetesClient()
         running_pods = v1.list_namespaced_pod('tasks')
         try:
             return [pod for pod in running_pods.items if pod.metadata.name == self.pod_name()][0]
@@ -188,12 +187,12 @@ class Task(db.Model, BaseModel):
             return self.status if self.status != 'running' else 'deleted'
 
     def terminate_pod(self):
-        v1 = k8s_client()
+        v1 = KubernetesClient()
         has_error = False
         try:
             v1.delete_namespaced_pod(self.pod_name(), namespace='tasks')
         except ApiException as kexc:
-            logging.error(kexc.reason)
+            logger.error(kexc.reason)
             has_error = True
 
         try:
@@ -210,9 +209,9 @@ class Task(db.Model, BaseModel):
         The idea is to create a job that holds indefinitely
         so that the backend can copy the results
         """
-        v1_batch = k8s_client(is_batch=True)
+        v1_batch = KubernetesBatchClient()
         job_name = f"result-job-{uuid4()}"
-        job = create_job({
+        job = v1_batch.create_job_spec({
             "name": job_name,
             "persistent_volumes": [
                 {
@@ -233,16 +232,18 @@ class Task(db.Model, BaseModel):
                 pretty='true'
             )
             # Get the job's pod
-            v1 = k8s_client()
+            v1 = KubernetesClient()
             job_pod = list(filter(lambda x: x.metadata.labels.get('job-name') == job_name, v1.list_namespaced_pod(namespace='tasks').items))[0]
-            res_file = cp_from_pod(job_pod.metadata.name, TASK_POD_RESULTS_PATH, f"{RESULTS_PATH}/{self.id}")
 
-            v1_batch.delete_namespaced_job(
-                namespace='tasks',
-                name=job_name
-            )
+            # TODO Need to find a more dynamic way for this to work. Pod is not ready immediately
+            import time
+            time.sleep(1)
+            res_file = v1.cp_from_pod(job_pod.metadata.name, TASK_POD_RESULTS_PATH, f"{RESULTS_PATH}/{self.id}")
+
+            v1.delete_pod(job_name)
+            v1.delete_pod(job_pod.metadata.name)
         except ApiException as e:
-            logging.error(getattr(e, 'reason'))
+            logger.error(getattr(e, 'reason'))
             raise InvalidRequest(f"Failed to run pod: {e.reason}")
         except urllib3.exceptions.MaxRetryError:
             raise InvalidRequest("The cluster could not create the job")

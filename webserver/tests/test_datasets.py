@@ -167,6 +167,7 @@ class TestDatasets:
             self,
             post_json_admin_header,
             client,
+            k8s_config,
             dataset_post_body,
             mocker
         ):
@@ -192,6 +193,7 @@ class TestDatasets:
             self,
             post_json_admin_header,
             client,
+            k8s_config,
             dataset_post_body,
             mocker
         ):

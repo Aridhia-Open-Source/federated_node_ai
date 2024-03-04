@@ -41,4 +41,8 @@ class ACRClient:
         )
         if not response_metadata.ok:
             raise AcrException(response_metadata.text)
-        return tag in response_metadata.json()["tags"]
+
+        tags_list = response_metadata.json()
+        if not tags_list:
+            return False
+        return tag in tags_list["tags"]

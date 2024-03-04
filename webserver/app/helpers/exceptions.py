@@ -9,11 +9,13 @@ def exception_handler(e:HTTPException):
     return {"error": e.description}, getattr(e, 'code', 500)
 
 class LogAndException(HTTPException):
-    def __init__(self, description: str | None = None, code=500, response: Response | None = None) -> None:
+    code = 500
+    def __init__(self, description: str | None = None, code=None, response: Response | None = None) -> None:
         super().__init__(description, response)
         logger.info(description)
         self.details = description
-        self.code = code
+        if code:
+            self.code = code
 
 class InvalidDBEntry(HTTPException):
     code = 500
@@ -28,6 +30,7 @@ class InvalidRequest(HTTPException):
     code = 500
 
 class AuthenticationError(LogAndException):
+    code = 401
     description = "Unauthorized"
 
 class KeycloakError(LogAndException):
