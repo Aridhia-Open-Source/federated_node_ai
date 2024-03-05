@@ -4,7 +4,6 @@ metadata:
   name: db
   namespace: {{ .Values.namespace | default "default" }}
 spec:
-  type: NodePort
   ports:
     - port: 5432
       name: pgport

@@ -7,3 +7,6 @@ __pycache__/
 
 .env
 *.env
+*.crt
+*.key
+k8s/federated_node/dev.values.yaml

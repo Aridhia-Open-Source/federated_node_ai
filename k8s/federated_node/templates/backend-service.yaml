@@ -4,7 +4,7 @@ metadata:
   name: backend
   namespace: {{ .Values.namespace | default "default" }}
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - port: {{ .Values.federatedNode.port | default 5000 }}
       name: http
