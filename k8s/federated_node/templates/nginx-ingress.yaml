@@ -5,10 +5,10 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     {{- if .Values.ingress.whitelist.enabled }}
-    nginx.ingress.kubernetes.io/whitelist-source-range: {{- join "," .Values.ingress.whitelist.ips }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: {{ join "," .Values.ingress.whitelist.ips | quote }}
     {{- end }}
     {{- if .Values.ingress.blacklist.enabled }}
-    nginx.ingress.kubernetes.io/denylist-source-range: {{- join "," .Values.ingress.blacklist.ips }}
+    nginx.ingress.kubernetes.io/denylist-source-range: {{ join "," .Values.ingress.blacklist.ips | quote }}
     {{- end }}
 spec:
   ingressClassName: nginx

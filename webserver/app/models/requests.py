@@ -124,7 +124,7 @@ class Request(db.Model, BaseModel):
         }, "/time")
         # Admin permission
         kc_client.create_permission({
-            "name": f"{ds.id}-{ds.name} Administation Permission",
+            "name": f"{ds.id}-{ds.name} Administration Permission",
             "description": "List of policies that will allow certain users or roles to administrate the dataset",
             "type": "resource",
             "logic": "POSITIVE",

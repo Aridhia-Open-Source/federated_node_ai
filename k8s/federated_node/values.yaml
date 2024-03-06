@@ -14,9 +14,9 @@ autoscaling:
   enabled: false
 
 db:
-  user: admin
-  password: asdfASpjpi!asd12
-  name: federated_node_db
+  user:
+  password:
+  name:
 
 federatedNode:
   port: 5000
