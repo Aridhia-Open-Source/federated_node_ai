@@ -1,6 +1,6 @@
 import json
 import pytest
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 
 
 @pytest.fixture(scope='function')

@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import ProgrammingError
 from unittest.mock import Mock
 from app.helpers.db import db
-from app.models.datasets import Dataset
-from app.models.catalogues import Catalogue
-from app.models.dictionaries import Dictionary
+from app.models.dataset import Dataset
+from app.models.catalogue import Catalogue
+from app.models.dictionary import Dictionary
 from tests.conftest import sample_ds_body
 
 missing_dict_cata_message = {"error": "Missing field. Make sure \"catalogue\" and \"dictionaries\" entries are there"}

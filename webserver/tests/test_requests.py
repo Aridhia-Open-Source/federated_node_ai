@@ -5,7 +5,7 @@ import os
 from datetime import datetime as dt, timedelta
 from sqlalchemy import update
 from app.helpers.db import db
-from app.models.requests import Request
+from app.models.request import Request
 from app.helpers.keycloak import Keycloak
 
 @pytest.fixture

@@ -25,7 +25,7 @@
   "roles": {
     "realm": [
       {
-        "name": "Administrators",
+        "name": "Administrator",
         "description": "Administrators with limited, non-realm, related permissions",
         "composite": true,
         "composites": {
@@ -65,7 +65,7 @@
         "composite": true,
         "composites": {
           "realm": [
-            "Administrators",
+            "Administrator",
             "Users"
           ],
           "client": {
@@ -226,7 +226,7 @@
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "config": {
-              "roles": "[{\"id\":\"Administrators\",\"required\":false},{\"id\":\"Super Administrator\",\"required\":false}]"
+              "roles": "[{\"id\":\"Administrator\",\"required\":false},{\"id\":\"Super Administrator\",\"required\":false}]"
             }
           },
           {
@@ -246,7 +246,7 @@
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "config": {
-              "roles": "[{\"id\":\"Administrators\",\"required\":false},{\"id\":\"Users\",\"required\":false},{\"id\":\"Super Administrator\",\"required\":false}]"
+              "roles": "[{\"id\":\"Administrator\",\"required\":false},{\"id\":\"Users\",\"required\":false},{\"id\":\"Super Administrator\",\"required\":false}]"
             }
           },
           {

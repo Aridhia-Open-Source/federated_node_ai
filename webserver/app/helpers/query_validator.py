@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
 from app.helpers.const import build_sql_uri
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 
 logger = logging.getLogger('query_validator')
 logger.setLevel(logging.INFO)

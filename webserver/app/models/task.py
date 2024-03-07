@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 from app.helpers.exceptions import InvalidRequest, TaskImageException
 
 logger = logging.getLogger('task_model')

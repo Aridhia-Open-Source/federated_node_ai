@@ -18,9 +18,9 @@ from .helpers.db import db
 from .helpers.keycloak import Keycloak
 from .helpers.query_validator import validate
 from .helpers.wrappers import auth, audit
-from .models.datasets import Dataset
-from .models.catalogues import Catalogue
-from .models.dictionaries import Dictionary
+from .models.dataset import Dataset
+from .models.catalogue import Catalogue
+from .models.dictionary import Dictionary
 
 
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
