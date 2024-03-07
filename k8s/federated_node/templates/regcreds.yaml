@@ -8,7 +8,7 @@ kind: Secret
 apiVersion: v1
 metadata:
   name: regcred
-  namespace: {{ .Values.namespace | default "default" }}
+  namespace: {{ .Release.Namespace }}
 data:
   .dockerconfigjson: {{ template "imagePullSecret" . }}
 type: kubernetes.io/dockerconfigjson

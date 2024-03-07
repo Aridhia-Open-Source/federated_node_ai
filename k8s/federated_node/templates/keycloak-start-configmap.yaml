@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: keycloak-start-config
-  namespace: keycloak
+  namespace: {{ .Values.namespaces.keycloak }}
 data:
   config.json: |-
 {{ .Files.Get "scripts/realms.json" | indent 4 }}

@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, UniqueCons
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.helpers.db import BaseModel, db
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 
 class Catalogue( db.Model, BaseModel):
     __tablename__ = 'catalogues'

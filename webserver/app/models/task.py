@@ -16,7 +16,7 @@ from app.helpers.keycloak import Keycloak
 from app.helpers.kubernetes import KubernetesBatchClient, KubernetesClient
 from app.helpers.query_validator import validate as validate_query
 from app.helpers.exceptions import DBError, InvalidRequest, TaskImageException, TaskExecutionException
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 
 logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)

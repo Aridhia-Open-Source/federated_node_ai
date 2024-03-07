@@ -1,10 +1,9 @@
 import json
 import pytest
 from kubernetes.client.exceptions import ApiException
-from unittest import mock
 from unittest.mock import Mock
 from app.helpers.exceptions import InvalidRequest
-from app.models.tasks import Task
+from app.models.task import Task
 from tests.helpers.kubernetes import MockKubernetesClient
 
 

@@ -3,7 +3,6 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-namespace: default
 
 image:
   repository: federated_node_run
@@ -12,6 +11,11 @@ image:
 
 autoscaling:
   enabled: false
+
+namespaces:
+  keycloak: keycloak
+  nginx: ingress-nginx
+  tasks: tasks
 
 db:
   user: admin
@@ -28,8 +32,11 @@ federatedNode:
     results_path: /mnt/results
     task_pod_results_path: /mnt/data
 
+token:
+  life:
+
 imagePullSecrets:
-    - name: regcred
+  - name: regcred
 
 serviceAccount:
   # Specifies whether a service account should be created

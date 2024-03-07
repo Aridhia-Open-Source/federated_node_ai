@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: {{ .Values.namespace | default "default" }}
+  namespace: {{ .Release.Namespace }}
   labels:
     app: flask
 spec:

@@ -10,8 +10,8 @@ from app import create_app
 from app.helpers.acr import ACRClient
 from app.helpers.db import db
 from app.helpers.kubernetes import KubernetesBatchClient
-from app.models.datasets import Dataset
-from app.models.requests import Request
+from app.models.dataset import Dataset
+from app.models.request import Request
 from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIENT
 from tests.helpers.kubernetes import MockKubernetesClient
 

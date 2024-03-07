@@ -32,7 +32,8 @@ URLS = {
     "resource": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/resource",
     "permission": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/permission/scope",
     "permissions_check": f"{KEYCLOAK_URL}/admin/realms/{REALM}/clients/%s/authz/resource-server/policy/evaluate",
-    "user": f"{KEYCLOAK_URL}/admin/realms/{REALM}/users"
+    "user": f"{KEYCLOAK_URL}/admin/realms/{REALM}/users",
+    "user_role": f"{KEYCLOAK_URL}/admin/realms/{REALM}/users/%s/role-mappings/realm"
 }
 
 class Keycloak:
@@ -309,7 +310,7 @@ class Keycloak:
         Get the realm roles
         """
         realm_resp = requests.get(
-            URLS["roles"] + f"?search={role_name}",
+            URLS["roles"],
             headers={
                 'Authorization': f'Bearer {self.admin_token}',
             }
@@ -317,7 +318,7 @@ class Keycloak:
         if not realm_resp.ok:
             logger.info(realm_resp.content.decode())
             raise KeycloakError("Failed to fetch roles")
-        return realm_resp.json()[0]
+        return list(filter(lambda x: x["name"] == role_name, realm_resp.json()))[0]
 
     def get_resource(self, resource_name:str) -> dict:
         headers={
@@ -494,8 +495,7 @@ class Keycloak:
                     "type": "password",
                     "temporary": False,
                     "value": random_password
-                }],
-                "realmRoles": ["User"]
+                }]
             },
             headers=self._post_json_headers()
         )
@@ -505,9 +505,26 @@ class Keycloak:
             raise KeycloakError("Failed to create the user")
 
         user_info = self.get_user(username)
+        # Assign a role
+        self.assign_role_to_user(user_info["id"])
+
         user_info["password"] = random_password
 
         return user_info
+
+    def assign_role_to_user(self, user_id:str):
+        """
+        Keycloak REST API can't handle role assignation to a user on creation
+        has to be a separate call
+        """
+        user_role_response = requests.post(
+            URLS["user_role"] % user_id,
+            json=[self.get_role("Users")],
+            headers=self._post_json_headers()
+        )
+        if not user_role_response.ok and user_role_response.status_code != 409:
+            logger.info(user_role_response.text)
+            raise KeycloakError("Failed to create the user")
 
     def get_user(self, username:str) -> dict:
         """
