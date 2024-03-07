@@ -2,21 +2,23 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: keycloak-config
-  namespace: keycloak
+  namespace: {{ .Values.namespaces.keycloak }}
 data:
   KEYCLOAK_ADMIN: admin
-  KC_DB_URL_HOST: "db.default.svc.cluster.local"
+  KC_DB_URL_HOST: "db.{{ .Release.Namespace }}.svc.cluster.local"
   KC_DB: postgres
   KC_DB_URL_PORT: "5432"
   KC_DB_URL_DATABASE: {{ .Values.db.name | default "fndb" | quote }}
   KC_DB_USERNAME: {{ .Values.db.user | default "admin" | quote }}
   KC_DB_PASSWORD: {{ .Values.db.password | default "password123" | quote }}
+  KEYCLOAK_TOKEN_LIFE: {{ .Values.token.life | default 2592000 | quote }}
   # PROXY_ADDRESS_FORWARDING: true
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: keycloak-config
-  namespace: default
+  namespace: {{ .Release.Namespace }}
+
 data:
   KEYCLOAK_ADMIN: admin

@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   name: backend-role
 rules:
 - apiGroups: [""]
@@ -11,7 +11,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   name: task-role
 rules:
 - apiGroups: [""]
@@ -22,11 +22,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: backend-role
-  namespace: default
+  namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
     name: secret-backend-handler
-    namespace: default
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role
   name: backend-role
@@ -36,11 +36,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: task-role
-  namespace: default
+  namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
     name: task-pod-handler
-    namespace: default
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role
   name: task-role

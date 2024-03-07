@@ -48,16 +48,17 @@ def post_datasets():
     """
     try:
         body = Dataset.validate(request.json)
-        cata_body = body.pop("catalogue")
-        dict_body = body.pop("dictionaries")
+        cata_body = body.pop("catalogue", {})
+        dict_body = body.pop("dictionaries", [])
         dataset = Dataset(**body)
-        cata_data = Catalogue.validate(cata_body)
-        catalogue = Catalogue(dataset=dataset, **cata_data)
 
         kc_client = Keycloak()
         token_info = kc_client.decode_token(kc_client.get_token_from_headers(request.headers))
         dataset.add(commit=False, user_id=token_info['sub'])
-        catalogue.add(commit=False)
+        if cata_body:
+            cata_data = Catalogue.validate(cata_body)
+            catalogue = Catalogue(dataset=dataset, **cata_data)
+            catalogue.add(commit=False)
 
         # Dictionary should be a list of dict. If not raise an error and revert changes
         if not isinstance(dict_body, list):
@@ -71,11 +72,6 @@ def post_datasets():
         session.commit()
         return { "dataset_id": dataset.id }, 201
 
-    except KeyError as kexc:
-        session.rollback()
-        raise InvalidRequest(
-            "Missing field. Make sure \"catalogue\" and \"dictionaries\" entries are there"
-        ) from kexc
     except:
         session.rollback()
         raise

@@ -2,6 +2,7 @@
   "realm": "FederatedNode",
   "enabled": true,
   "registrationEmailAsUsername": false,
+  "ssoSessionMaxLifespan": "${KEYCLOAK_TOKEN_LIFE}",
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": false,
