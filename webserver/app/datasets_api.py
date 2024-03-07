@@ -10,9 +10,11 @@ datasets-related endpoints:
 - POST /datasets/workspace/token
 - POST /datasets/selection/beacon
 """
-
+import json
 from flask import Blueprint, request
 from sqlalchemy import select
+
+from app.models.request import Request
 from .helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from .helpers.db import db
 from .helpers.keycloak import Keycloak
@@ -149,10 +151,34 @@ def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
 @auth(scope='can_transfer_token')
 def post_transfer_token():
     """
-    POST /datasets/selection/beacon endpoint.
+    POST /datasets/token_transfer endpoint.
         Returns a user's token based on an approved DAR
     """
-    return "WIP", 200
+    try:
+        # Not sure we need all of this in the Request table...
+        body = request.json
+        if 'email' not in body["requested_by"].keys():
+            raise InvalidRequest("Missing email from requested_by field")
+
+        body["requested_by"] = json.dumps(body["requested_by"])
+        ds_id = body.pop("dataset_id")
+        body["dataset"] = session.get(Dataset, ds_id)
+        if body["dataset"] is None:
+            raise DBRecordNotFoundError(f"Dataset {ds_id} not found")
+
+        req_attributes = Request.validate(body)
+        req = Request(**req_attributes)
+        req.add()
+        return req.approve(), 201
+
+    except KeyError as kexc:
+        session.rollback()
+        raise InvalidRequest(
+            "Missing field. Make sure \"catalogue\" and \"dictionary\" entries are there"
+        ) from kexc
+    except:
+        session.rollback()
+        raise
 
 @bp.route('/workspace/token', methods=['POST'])
 @audit

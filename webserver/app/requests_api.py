@@ -29,7 +29,8 @@ def get_requests():
         res = [r[0].sanitized_dict() for r in res]
     return res, 200
 
-@bp.route('/', methods=['POST'])
+# Disabled for the time being
+# @bp.route('/', methods=['POST'])
 @audit
 @auth(scope='can_send_request')
 def post_requests():
@@ -60,7 +61,8 @@ def post_requests():
         session.rollback()
         raise
 
-@bp.route('/<code>/approve', methods=['POST'])
+# Disabled for the time being
+# @bp.route('/<code>/approve', methods=['POST'])
 @audit
 @auth(scope='can_admin_request')
 def post_approve_requests(code):
@@ -72,10 +74,7 @@ def post_approve_requests(code):
         raise DBRecordNotFoundError(f"Data Access Request {code} not found")
 
     if dar.status == dar.STATUSES["approved"]:
-        return {"message": "Request alread approved"}, 200
-
-    if dar.status == dar.STATUSES["denied"]:
-        raise InvalidRequest("Request was denied already")
+        return {"message": "Request already approved"}, 200
 
     user_info = dar.approve()
     return user_info, 201
