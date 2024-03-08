@@ -44,8 +44,6 @@ class Task(db.Model, BaseModel):
                  docker_image:str,
                  requested_by:str,
                  dataset:Dataset,
-                #  command:str = '',
-                #  environment:dict = {},
                  executors:dict = {},
                  tags:dict = {},
                  resources:dict = {},
@@ -63,9 +61,7 @@ class Task(db.Model, BaseModel):
         self.description = description
         self.created_at = created_at
         self.updated_at = datetime.now()
-        # self.command = self._parse_command(command)
         self.tags = tags
-        # self.environment = environment
         self.executors = executors
         self.resources = resources
         self.inputs = inputs
@@ -80,16 +76,10 @@ class Task(db.Model, BaseModel):
         # Support only for one image at a time, the standard is executors == list
         executors = data["executors"][0]
         data["docker_image"] = executors["image"]
-        # data["command"] = executors["command"]
-        # data["environment"] = executors["env"]
         data = super().validate(data)
 
-        # query = data.pop('use_query')
         ds_id = data.get("tags", {}).get("dataset_id")
         data["dataset"] = db.session.get(Dataset, ds_id)
-
-        # if not validate_query(query, data["dataset"]):
-        #     raise InvalidRequest("Query missing or misformed")
 
         if not re.match(r'^((\w+|-)\/?\w+)+:(\w+(\.|-)?)+$', data["docker_image"]):
             raise InvalidRequest(
@@ -97,21 +87,6 @@ class Task(db.Model, BaseModel):
             )
         cls.can_image_be_found(data["docker_image"])
         return data
-
-    def _parse_command(self, command:str) -> list[str]:
-        """
-        A docker command has to follow a certain structure.
-        Anything within double quotes should be enclosed in a single
-        list element.
-        Rest should be split for whitespaces and live in a separate list item
-        i.e.:
-            command -> sh -c "./script.sh arg1"
-            returns -> ["sh", "-c", "./script.sh arg1"]
-        """
-        if command:
-            no_quotes_cmd = [cmd for cmd in command.split("\"") if cmd]
-            return no_quotes_cmd[0].split(" ")[:-1] + no_quotes_cmd[1:]
-        return None
 
     @classmethod
     def can_image_be_found(cls, docker_image):
