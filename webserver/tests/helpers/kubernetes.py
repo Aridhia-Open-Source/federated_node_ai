@@ -20,7 +20,7 @@ class MockKubernetesClient(KubernetesBase):
     def create_persistent_volume(self, **kwargs):
         return Mock()
 
-    def create_namespaced_persistent_volume_claim(self, **kwargs):
+    def create_namespaced_persistent_volume_claim(self, namespace, **kwargs):
         return Mock()
 
     def list_namespaced_pod(self, namespace):

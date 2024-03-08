@@ -351,6 +351,7 @@ class TestDatasets:
     def test_post_dataset_with_catalogue_only(
             self,
             post_json_admin_header,
+            dataset,
             client,
             dataset_post_body
         ):
@@ -358,6 +359,7 @@ class TestDatasets:
         /datasets POST with catalogue but no dictionary is successful
         """
         data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs22'
         data_body.pop("dictionaries")
         post_dataset(client, post_json_admin_header, data_body)
 
@@ -373,6 +375,7 @@ class TestDatasets:
             self,
             post_json_admin_header,
             query_validator,
+            dataset,
             client,
             dataset_post_body
         ):
@@ -380,6 +383,7 @@ class TestDatasets:
         /datasets POST with dictionary but no catalogue is successful
         """
         data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs22'
         data_body.pop("catalogue")
         post_dataset(client, post_json_admin_header, data_body)
 

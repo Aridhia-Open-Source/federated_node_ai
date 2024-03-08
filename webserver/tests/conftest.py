@@ -152,7 +152,7 @@ def k8s_client(mocker, k8s_config):
 @pytest.fixture()
 def k8s_client_task(mocker, k8s_config):
     return mocker.patch(
-        'app.models.tasks.KubernetesClient',
+        'app.models.task.KubernetesClient',
         return_value=MockKubernetesClient()
     )
 
@@ -160,7 +160,7 @@ def k8s_client_task(mocker, k8s_config):
 @pytest.fixture(scope="function", autouse=False)
 def query_validator(mocker):
     mocker.patch(
-        'app.models.tasks.validate_query',
+        'app.models.task.validate_query',
         return_value=True,
         autospec=True
     )
@@ -168,7 +168,7 @@ def query_validator(mocker):
 @pytest.fixture(scope="function", autouse=False)
 def query_invalidator(mocker):
     mocker.patch(
-        'app.models.tasks.validate_query',
+        'app.models.task.validate_query',
         return_value=False,
         autospec=True
     )
@@ -177,7 +177,7 @@ def query_invalidator(mocker):
 @pytest.fixture()
 def acr_client(mocker):
     mocker.patch(
-        'app.models.tasks.ACRClient',
+        'app.models.task.ACRClient',
         return_value=Mock(
             login=Mock(return_value="access_token"),
             has_image_metadata=Mock(return_value=True)
@@ -207,7 +207,7 @@ def acr_http(mocker):
 @pytest.fixture()
 def acr_client_404(mocker):
     mocker.patch(
-        'app.models.tasks.ACRClient',
+        'app.models.task.ACRClient',
         return_value=Mock(
             login=Mock(return_value="access_token"),
             has_image_metadata=Mock(return_value=False)
