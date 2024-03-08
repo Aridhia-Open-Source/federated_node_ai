@@ -1,12 +1,18 @@
 import json
 import os
 import pytest
+<<<<<<< HEAD
 import requests
 import responses
+=======
+import docker
+import requests
+>>>>>>> main
 from datetime import datetime as dt, timedelta
 from sqlalchemy.orm.session import close_all_sessions
 from unittest.mock import Mock
 from app import create_app
+<<<<<<< HEAD
 from app.helpers.acr import ACRClient
 from app.helpers.db import db
 from app.helpers.kubernetes import KubernetesBatchClient
@@ -14,6 +20,12 @@ from app.models.dataset import Dataset
 from app.models.request import Request
 from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIENT
 from tests.helpers.kubernetes import MockKubernetesClient
+=======
+from app.helpers.db import db
+from app.models.dataset import Dataset
+from app.models.request import Request
+from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIENT
+>>>>>>> main
 
 sample_ds_body = {
     "name": "TestDs",
@@ -67,7 +79,10 @@ def app_ctx(app):
     with app.app_context():
         yield
 
+<<<<<<< HEAD
 # Users' section
+=======
+>>>>>>> main
 @pytest.fixture
 def user_uuid():
     return Keycloak().get_user(os.getenv("KEYCLOAK_ADMIN"))["id"]
@@ -79,10 +94,13 @@ def login_admin(client):
         password=os.getenv("KEYCLOAK_ADMIN_PASSWORD")
     )
 
+<<<<<<< HEAD
 @pytest.fixture()
 def basic_user():
     return Keycloak().create_user(**{"email": "test@basicuser.com"})
 
+=======
+>>>>>>> main
 @pytest.fixture
 def login_user(client, basic_user):
     return Keycloak().get_impersonation_token(basic_user["id"])
@@ -116,7 +134,10 @@ def post_form_admin_header(login_admin):
         "Authorization": f"Bearer {login_admin}"
     }
 
+<<<<<<< HEAD
 # Flask client to perform requests
+=======
+>>>>>>> main
 @pytest.fixture
 def client():
     app = create_app()
@@ -128,6 +149,7 @@ def client():
             close_all_sessions()
             db.drop_all()
 
+<<<<<<< HEAD
 # K8s
 @pytest.fixture
 def k8s_config(mocker):
@@ -161,6 +183,29 @@ def k8s_client_task(mocker, k8s_config):
 def query_validator(mocker):
     mocker.patch(
         'app.models.task.validate_query',
+=======
+@pytest.fixture()
+def k8s_config(mocker):
+    mock = Mock()
+    mocker.patch('kubernetes.config.load_kube_config', return_value=mock)
+    return mock
+
+@pytest.fixture()
+def k8s_client(mocker):
+    mock = Mock()
+    mocker.patch(
+        'kubernetes.client.CoreV1Api',
+        return_value=Mock(
+            read_namespaced_secret=Mock(return_value=Mock(data={'PGUSER': 'YWJjMTIz', 'PGPASSWORD': 'YWJjMTIz'}))
+        )
+    )
+    return mock
+
+@pytest.fixture(scope="function", autouse=False)
+def query_validator(mocker):
+    mocker.patch(
+        'app.tasks_api.validate_query',
+>>>>>>> main
         return_value=True,
         autospec=True
     )
@@ -168,11 +213,16 @@ def query_validator(mocker):
 @pytest.fixture(scope="function", autouse=False)
 def query_invalidator(mocker):
     mocker.patch(
+<<<<<<< HEAD
         'app.models.task.validate_query',
+=======
+        'app.tasks_api.validate_query',
+>>>>>>> main
         return_value=False,
         autospec=True
     )
 
+<<<<<<< HEAD
 # ACR mocking
 @pytest.fixture()
 def acr_client(mocker):
@@ -223,6 +273,40 @@ def acr_class():
     )
 
 # Dataset Mocking
+=======
+@pytest.fixture()
+def docker_client(mocker):
+    mocker.patch(
+        'docker.from_env',
+        return_value=Mock(
+            login=Mock(),
+            images=Mock(
+                get_registry_data=Mock()
+            )
+        ),
+        autospec=True
+    )
+
+@pytest.fixture()
+def docker_client_404(mocker):
+    mocker.patch(
+        'docker.from_env',
+        return_value=Mock(
+            login=Mock(),
+            images=Mock(
+                get_registry_data=Mock(
+                    side_effect=docker.errors.NotFound("image not found")
+                )
+            )
+        ),
+        autospec=True
+    )
+
+@pytest.fixture()
+def basic_user():
+    return Keycloak().create_user(**{"email": "test@basicuser.com"})
+
+>>>>>>> main
 @pytest.fixture(scope='function')
 def dataset_post_body():
     return {
@@ -242,19 +326,31 @@ def dataset_post_body():
     }
 
 @pytest.fixture
+<<<<<<< HEAD
 def dataset(client, user_uuid, k8s_client):
+=======
+def dataset(client, user_uuid, k8s_client, k8s_config):
+>>>>>>> main
     dataset = Dataset(name="TestDs", host="example.com", password='pass', username='user')
     dataset.add(user_id=user_uuid)
     return dataset
 
 @pytest.fixture
+<<<<<<< HEAD
 def dataset2(client, user_uuid, k8s_client):
+=======
+def dataset2(client, user_uuid, k8s_client, k8s_config):
+>>>>>>> main
     dataset = Dataset(name="AnotherDS", host="example.com", password='pass', username='user')
     dataset.add(user_id=user_uuid)
     return dataset
 
 @pytest.fixture
+<<<<<<< HEAD
 def access_request(client, dataset, user_uuid, k8s_client):
+=======
+def access_request(client, dataset, user_uuid, k8s_client, k8s_config):
+>>>>>>> main
     request = Request(
         title="TestRequest",
         project_name="example.com",
@@ -265,6 +361,7 @@ def access_request(client, dataset, user_uuid, k8s_client):
     )
     request.add()
     return request
+<<<<<<< HEAD
 
 # Conditional url side_effects
 def side_effect(dict_mock:dict):
@@ -294,3 +391,5 @@ def side_effect(dict_mock:dict):
             status=200, data=default_body
         )
     return _url_side_effects
+=======
+>>>>>>> main

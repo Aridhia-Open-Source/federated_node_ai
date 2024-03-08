@@ -53,7 +53,11 @@ def post_datasets():
         dataset = Dataset(**body)
 
         kc_client = Keycloak()
+<<<<<<< HEAD
         token_info = kc_client.decode_token(kc_client.get_token_from_headers())
+=======
+        token_info = kc_client.decode_token(kc_client.get_token_from_headers(request.headers))
+>>>>>>> main
         dataset.add(commit=False, user_id=token_info['sub'])
         if cata_body:
             cata_data = Catalogue.validate(cata_body)
@@ -144,7 +148,11 @@ def get_datasets_dictionaries_table_by_id(dataset_id, table_name):
 
 @bp.route('/token_transfer', methods=['POST'])
 @audit
+<<<<<<< HEAD
 @auth(scope='can_transfer_token', check_dataset=False)
+=======
+@auth(scope='can_transfer_token')
+>>>>>>> main
 def post_transfer_token():
     """
     POST /datasets/token_transfer endpoint.
@@ -178,7 +186,11 @@ def post_transfer_token():
 
 @bp.route('/workspace/token', methods=['POST'])
 @audit
+<<<<<<< HEAD
 @auth(scope='can_transfer_token', check_dataset=False)
+=======
+@auth(scope='can_transfer_token')
+>>>>>>> main
 def post_workspace_transfer_token():
     """
     POST /datasets/workspace/token endpoint.
@@ -188,7 +200,11 @@ def post_workspace_transfer_token():
 
 @bp.route('/selection/beacon', methods=['POST'])
 @audit
+<<<<<<< HEAD
 @auth(scope='can_access_dataset', check_dataset=False)
+=======
+@auth(scope='can_access_dataset')
+>>>>>>> main
 def select_beacon():
     """
     POST /dataset/datasets/selection/beacon endpoint.

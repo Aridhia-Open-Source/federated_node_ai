@@ -1,15 +1,19 @@
+<<<<<<< HEAD
 {{- define "imagePullSecret" }}
 {{- with .Values.federatedNode }}
 {{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}" .acr_url .acr_username .acr_password .acr_email (printf "%s:%s" .acr_username .acr_password | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
 
+=======
+>>>>>>> main
 kind: Secret
 apiVersion: v1
 metadata:
   name: regcred
   namespace: {{ .Release.Namespace }}
 data:
+<<<<<<< HEAD
   .dockerconfigjson: {{ template "imagePullSecret" . }}
 type: kubernetes.io/dockerconfigjson
 ---
@@ -20,4 +24,7 @@ metadata:
   namespace: tasks
 data:
   .dockerconfigjson: {{ template "imagePullSecret" . }}
+=======
+  .dockerconfigjson: {{ .Values.dockerjsonconfig }}
+>>>>>>> main
 type: kubernetes.io/dockerconfigjson

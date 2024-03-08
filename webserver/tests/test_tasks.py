@@ -1,5 +1,6 @@
 import json
 import pytest
+<<<<<<< HEAD
 from kubernetes.client.exceptions import ApiException
 from unittest.mock import Mock
 from app.helpers.exceptions import InvalidRequest
@@ -31,6 +32,19 @@ def task_body(dataset):
         "outputs":{},
         "resources": {},
         "volumes": {},
+=======
+from app.models.dataset import Dataset
+
+
+@pytest.fixture(scope='function')
+def task_body():
+    return {
+        "title": "Test Task",
+        "docker_image": "example:latest",
+        "requested_by": "das9908-as098080c-9a80s9",
+        "description": "First task ever!",
+        "use_query": "SELECT * FROM patients LIMIT 10;"
+>>>>>>> main
     }
 
 def test_get_list_tasks(
@@ -60,9 +74,16 @@ def test_get_list_tasks_base_user(
     assert response.status_code == 401
 
 def test_create_task(
+<<<<<<< HEAD
         acr_client,
         k8s_client_task,
         post_json_admin_header,
+=======
+        docker_client,
+        post_json_admin_header,
+        query_validator,
+        dataset,
+>>>>>>> main
         client,
         task_body
     ):
@@ -70,6 +91,10 @@ def test_create_task(
     Tests task creation returns 201
     """
     data = task_body
+<<<<<<< HEAD
+=======
+    data["dataset_id"] = dataset.id
+>>>>>>> main
 
     response = client.post(
         '/tasks/',
@@ -79,8 +104,15 @@ def test_create_task(
     assert response.status_code == 201
 
 def test_create_task_with_non_existing_dataset(
+<<<<<<< HEAD
         acr_client,
         post_json_admin_header,
+=======
+        docker_client,
+        post_json_admin_header,
+        user_uuid,
+        query_validator,
+>>>>>>> main
         client,
         task_body
     ):
@@ -99,9 +131,16 @@ def test_create_task_with_non_existing_dataset(
     assert response.json == {"error": "Dataset with id 123456 does not exist"}
 
 def test_create_unauthorized_task(
+<<<<<<< HEAD
         acr_client,
         post_json_user_header,
         dataset,
+=======
+        docker_client,
+        post_json_user_header,
+        dataset,
+        query_validator,
+>>>>>>> main
         client,
         task_body
     ):
@@ -119,14 +158,22 @@ def test_create_unauthorized_task(
     assert response.status_code == 401
 
 def test_create_task_image_not_found(
+<<<<<<< HEAD
         acr_client_404,
         post_json_admin_header,
+=======
+        docker_client_404,
+        post_json_admin_header,
+        dataset,
+        query_validator,
+>>>>>>> main
         client,
         task_body
     ):
     """
     Tests task creation returns 500 with a requested docker image is not found
     """
+<<<<<<< HEAD
     response = client.post(
         '/tasks/',
         data=json.dumps(task_body),
@@ -142,13 +189,64 @@ def test_cancel_task(
         simple_admin_header,
         post_json_admin_header,
         task_body
+=======
+    data = task_body
+    data["dataset_id"] = dataset.id
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 500
+    assert response.json == {"error": "An error occurred with the Task"}
+
+def test_create_task_with_invalid_query(
+        post_json_admin_header,
+        dataset,
+        query_invalidator,
+        client,
+        task_body
+    ):
+    """
+    Tests task creation return 500 with an invalid query
+    """
+    data = task_body
+    data["dataset_id"] = dataset.id
+    data["use_query"] = "Not a real query"
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 500
+
+def test_cancel_task(
+        client,
+        docker_client,
+        dataset,
+        simple_admin_header,
+        post_json_admin_header,
+        task_body,
+        query_validator
+>>>>>>> main
     ):
     """
     Test that an admin can cancel an existing task
     """
+<<<<<<< HEAD
     response = client.post(
         '/tasks/',
         data=json.dumps(task_body),
+=======
+    data = task_body
+    data["dataset_id"] = dataset.id
+
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+>>>>>>> main
         headers=post_json_admin_header
     )
     assert response.status_code == 201
@@ -174,31 +272,44 @@ def test_cancel_404_task(
 
 def test_validate_task(
         client,
+<<<<<<< HEAD
         task_body,
         acr_client,
         post_json_admin_header
+=======
+        simple_admin_header
+>>>>>>> main
     ):
     """
     Test the validation endpoint can be used by admins returns 201
     """
     response = client.post(
         '/tasks/validate',
+<<<<<<< HEAD
         data=json.dumps(task_body),
         headers=post_json_admin_header
+=======
+        headers=simple_admin_header
+>>>>>>> main
     )
     assert response.status_code == 200
 
 def test_validate_task_basic_user(
         client,
+<<<<<<< HEAD
         task_body,
         acr_client,
         post_json_user_header
+=======
+        simple_user_header
+>>>>>>> main
     ):
     """
     Test the validation endpoint can be used by non-admins returns 201
     """
     response = client.post(
         '/tasks/validate',
+<<<<<<< HEAD
         data=json.dumps(task_body),
         headers=post_json_user_header
     )
@@ -325,3 +436,8 @@ def test_get_results_job_creation_failure(
     )
     assert response.status_code == 500
     assert response.json["error"] == 'Failed to run pod: Something went wrong'
+=======
+        headers=simple_user_header
+    )
+    assert response.status_code == 200
+>>>>>>> main

@@ -24,6 +24,7 @@ else
         helm upgrade $HELM_CHART_NAME k8s/federated_node
     fi
 fi
+<<<<<<< HEAD
 echo "Creating a separate test db"
 kubectl apply -f dev.k8s/deployments
 
@@ -32,3 +33,8 @@ echo "minikube -p $CLUSTER_NAME image load <image_name>"
 
 echo "Use the following address to reach the flask service in k8s:"
 minikube -p $CLUSTER_NAME service backend --url
+=======
+
+echo "If new images are needed, load them up with:"
+echo "minikube -p $CLUSTER_NAME image load <image_name>"
+>>>>>>> main

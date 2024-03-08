@@ -50,7 +50,11 @@ class BaseModel():
         Make sure we have all required fields. Set to None if missing
         """
         if not data:
+<<<<<<< HEAD
             raise InvalidDBEntry(f"No usable data found for table {cls.__tablename__}")
+=======
+            raise InvalidDBEntry(f"No usable data foundfor table {cls.__tablename__}")
+>>>>>>> main
         valid = data.copy()
         for k, v in data.items():
             field = getattr(cls, k, None)

@@ -37,7 +37,10 @@ services:
       KEYCLOAK_SECRET: ${KEYCLOAK_SECRET}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KEYCLOAK_LOGLEVEL: DEBUG
+<<<<<<< HEAD
       KEYCLOAK_TOKEN_LIFE: 3600
+=======
+>>>>>>> main
     expose:
       - 8080
     ports:
@@ -76,17 +79,25 @@ services:
       PGPORT:
       PGUSER:
       PGPASSWORD:
+<<<<<<< HEAD
       PYTHONPATH: /app
       ACR_URL: test.acr.com
       ACR_USERNAME: test
       ACR_PASSWORD: pass
       RESULTS_PATH: /tmp/results
       TASK_POD_RESULTS_PATH: /mnt/data
+=======
+      ACR_URL:
+      PYTHONPATH: /app
+>>>>>>> main
       KEYCLOAK_ADMIN:
       KEYCLOAK_SECRET:
       KEYCLOAK_ADMIN_PASSWORD:
       KEYCLOAK_URL:
+<<<<<<< HEAD
       TASK_NAMESPACE: tasks
       KEYCLOAK_NAMESPACE: keycloak
+=======
+>>>>>>> main
 volumes:
   data:
