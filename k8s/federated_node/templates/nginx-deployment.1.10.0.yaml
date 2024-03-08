@@ -11,7 +11,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: tls
-  # namespace: ingress-nginx
+  # namespace: {{ .Values.namespaces.nginx }}
 type: kubernetes.io/tls
 data:
   tls.key: |-
@@ -32,7 +32,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 automountServiceAccountToken: true
 ---
 # Source: ingress-nginx/templates/controller-configmap.yaml
@@ -47,7 +47,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx-controller
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 data:
   allow-snippet-annotations: "false"
   log-format-escape-json: "true"
@@ -156,7 +156,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ingress-nginx
-    namespace: ingress-nginx
+    namespace: {{ .Values.namespaces.nginx }}
 ---
 # Source: ingress-nginx/templates/controller-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -170,7 +170,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 rules:
   - apiGroups:
       - ""
@@ -263,7 +263,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -271,7 +271,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ingress-nginx
-    namespace: ingress-nginx
+    namespace: {{ .Values.namespaces.nginx }}
 ---
 # Source: ingress-nginx/templates/controller-service-webhook.yaml
 apiVersion: v1
@@ -285,7 +285,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx-controller-admission
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 spec:
   type: ClusterIP
   ports:
@@ -311,7 +311,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx-controller
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 spec:
   type: LoadBalancer
   ipFamilyPolicy: SingleStack
@@ -345,7 +345,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
   name: ingress-nginx-controller
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
 spec:
   selector:
     matchLabels:
@@ -510,7 +510,7 @@ webhooks:
     clientConfig:
       service:
         name: ingress-nginx-controller-admission
-        namespace: ingress-nginx
+        namespace: {{ .Values.namespaces.nginx }}
         path: /networking/v1/ingresses
 ---
 # Source: ingress-nginx/templates/admission-webhooks/job-patch/serviceaccount.yaml
@@ -518,7 +518,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ingress-nginx-admission
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
@@ -576,14 +576,14 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ingress-nginx-admission
-    namespace: ingress-nginx
+    namespace: {{ .Values.namespaces.nginx }}
 ---
 # Source: ingress-nginx/templates/admission-webhooks/job-patch/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ingress-nginx-admission
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
@@ -608,7 +608,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ingress-nginx-admission
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
@@ -626,14 +626,14 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ingress-nginx-admission
-    namespace: ingress-nginx
+    namespace: {{ .Values.namespaces.nginx }}
 ---
 # Source: ingress-nginx/templates/admission-webhooks/job-patch/job-createSecret.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: ingress-nginx-admission-create
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
@@ -692,7 +692,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: ingress-nginx-admission-patch
-  namespace: ingress-nginx
+  namespace: {{ .Values.namespaces.nginx }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
