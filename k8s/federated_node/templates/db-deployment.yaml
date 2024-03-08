@@ -24,7 +24,6 @@ spec:
               value: {{ .Values.db.user | default "admin" | quote }}
             - name: POSTGRES_PASSWORD
               value: {{ .Values.db.password | default "password123" | quote }}
-<<<<<<< HEAD
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
@@ -32,5 +31,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: db-volclaim
-=======
->>>>>>> main

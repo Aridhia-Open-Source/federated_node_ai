@@ -1,11 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-<<<<<<< HEAD
   name: backend
-=======
-  name: flask-app
->>>>>>> main
   namespace: {{ .Release.Namespace }}
   labels:
     app: flask
@@ -37,11 +33,7 @@ spec:
                 name: backend-configmap
       containers:
         - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-<<<<<<< HEAD
           name: backend
-=======
-          name: flask-app
->>>>>>> main
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             limits:
@@ -71,13 +63,10 @@ spec:
             - configMapRef:
                 name: keycloak-config
           env:
-<<<<<<< HEAD
           - name: RESULTS_PATH
             value: {{ .Values.federatedNode.volumes.results_path }}
           - name: TASK_POD_RESULTS_PATH
             value: {{ .Values.federatedNode.volumes.task_pod_results_path }}
-=======
->>>>>>> main
           - name: KEYCLOAK_SECRET
             valueFrom:
               secretKeyRef:
@@ -98,7 +87,6 @@ spec:
               secretKeyRef:
                 name: backend-secrets
                 key: ACR_USERNAME
-<<<<<<< HEAD
           volumeMounts:
             - name: respv
               mountPath: {{ .Values.federatedNode.volumes.results_path }}
@@ -108,7 +96,3 @@ spec:
         - name: respv
           persistentVolumeClaim:
             claimName: flask-results-pv-volclaim
-=======
-      imagePullSecrets:
-        - name: regcred
->>>>>>> main

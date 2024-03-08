@@ -82,11 +82,7 @@ def upgrade() -> None:
     )
     op.create_table('tasks',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-<<<<<<< HEAD
     sa.Column('name', sa.String(length=256), nullable=False),
-=======
-    sa.Column('title', sa.String(length=256), nullable=False),
->>>>>>> main
     sa.Column('docker_image', sa.String(length=256), nullable=False),
     sa.Column('description', sa.String(length=2048), nullable=True),
     sa.Column('status', sa.String(length=64), nullable=True),

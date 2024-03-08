@@ -9,17 +9,10 @@ sqlalchemy = "*"
 psycopg2 = "*"
 alembic = "*"
 kubernetes = "*"
-<<<<<<< HEAD
 flask-sqlalchemy = "*"
 joserfc = "*"
 pyjwt = "*"
 waitress = "*"
-=======
-docker = "*"
-flask-sqlalchemy = "*"
-joserfc = "*"
-pyjwt = "*"
->>>>>>> main
 
 [dev-packages]
 pylint=">=3.0.3"

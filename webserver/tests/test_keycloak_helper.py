@@ -1,18 +1,9 @@
 import pytest
 import responses
-<<<<<<< HEAD
 from app.helpers.exceptions import KeycloakError
 from app.helpers.keycloak import URLS, Keycloak
 
 class TestKeycloakResponseFailures:
-=======
-from responses import matchers
-from app.helpers.exceptions import KeycloakError
-from app.helpers.keycloak import URLS, Keycloak, \
-    KEYCLOAK_CLIENT, KEYCLOAK_SECRET, KEYCLOAK_ADMIN, KEYCLOAK_ADMIN_PASSWORD
-
-class TestKeycloakReponseFailures:
->>>>>>> main
     """
     Collection of tests that aims to prove the correct exceptions are raised
         in case of failed requests in the context of the Keycloak class.

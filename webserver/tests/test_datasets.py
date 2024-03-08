@@ -167,10 +167,7 @@ class TestDatasets:
             self,
             post_json_admin_header,
             client,
-<<<<<<< HEAD
             k8s_config,
-=======
->>>>>>> main
             dataset_post_body,
             mocker
         ):
@@ -196,10 +193,7 @@ class TestDatasets:
             self,
             post_json_admin_header,
             client,
-<<<<<<< HEAD
             k8s_config,
-=======
->>>>>>> main
             dataset_post_body,
             mocker
         ):
@@ -381,10 +375,7 @@ class TestDatasets:
             self,
             post_json_admin_header,
             query_validator,
-<<<<<<< HEAD
             dataset,
-=======
->>>>>>> main
             client,
             dataset_post_body
         ):
@@ -392,10 +383,7 @@ class TestDatasets:
         /datasets POST with dictionary but no catalogue is successful
         """
         data_body = dataset_post_body.copy()
-<<<<<<< HEAD
         data_body['name'] = 'TestDs22'
-=======
->>>>>>> main
         data_body.pop("catalogue")
         post_dataset(client, post_json_admin_header, data_body)
 

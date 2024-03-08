@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import logging
 import json
 import os
@@ -18,24 +17,10 @@ from app.helpers.kubernetes import TASK_NAMESPACE, KubernetesBatchClient, Kubern
 from app.helpers.query_validator import validate as validate_query
 from app.helpers.exceptions import DBError, InvalidRequest, TaskImageException, TaskExecutionException
 from app.models.dataset import Dataset
-=======
-import docker
-import logging
-import os
-import re
-from datetime import datetime
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from app.helpers.db import BaseModel, db
-from app.models.dataset import Dataset
-from app.helpers.exceptions import InvalidRequest, TaskImageException
->>>>>>> main
 
 logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)
 
-<<<<<<< HEAD
 TASK_POD_RESULTS_PATH = os.getenv("TASK_POD_RESULTS_PATH")
 RESULTS_PATH = os.getenv("RESULTS_PATH")
 
@@ -43,12 +28,6 @@ class Task(db.Model, BaseModel):
     __tablename__ = 'tasks'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(256), nullable=False)
-=======
-class Task(db.Model, BaseModel):
-    __tablename__ = 'tasks'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(256), nullable=False)
->>>>>>> main
     docker_image = Column(String(256), nullable=False)
     description = Column(String(2048))
     status = Column(String(64), default='scheduled')
@@ -61,7 +40,6 @@ class Task(db.Model, BaseModel):
     dataset = relationship("Dataset")
 
     def __init__(self,
-<<<<<<< HEAD
                  name:str,
                  docker_image:str,
                  requested_by:str,
@@ -78,16 +56,6 @@ class Task(db.Model, BaseModel):
                  created_at:datetime=datetime.now()
                  ):
         self.name = name
-=======
-                 title:str,
-                 docker_image:str,
-                 requested_by:str,
-                 dataset:Dataset,
-                 description:str = '',
-                 created_at:datetime=datetime.now()
-                 ):
-        self.title = title
->>>>>>> main
         self.status = 'scheduled'
         self.docker_image = docker_image
         self.requested_by = requested_by
@@ -95,7 +63,6 @@ class Task(db.Model, BaseModel):
         self.description = description
         self.created_at = created_at
         self.updated_at = datetime.now()
-<<<<<<< HEAD
         # self.command = self._parse_command(command)
         self.tags = tags
         # self.environment = environment
@@ -148,10 +115,6 @@ class Task(db.Model, BaseModel):
 
     @classmethod
     def can_image_be_found(cls, docker_image):
-=======
-
-    def can_image_be_found(self):
->>>>>>> main
         """
         Looks through the ACR if the image exists
         """
@@ -162,7 +125,6 @@ class Task(db.Model, BaseModel):
             "username": acr_username,
             "password": acr_password
         }
-<<<<<<< HEAD
         acr_client = ACRClient(url=acr_url, **auth_config)
         if not acr_client.has_image_metadata(docker_image):
             raise TaskImageException(f"Image {docker_image} not found on our repository")
@@ -305,27 +267,3 @@ class Task(db.Model, BaseModel):
         except urllib3.exceptions.MaxRetryError:
             raise InvalidRequest("The cluster could not create the job")
         return res_file
-=======
-        try:
-            client = docker.from_env()
-            client.login(registry=acr_url, **auth_config)
-
-            client.images.get_registry_data(
-                f"{acr_url}/{self.docker_image}",
-                auth_config=auth_config
-            )
-        except docker.errors.NotFound:
-            raise TaskImageException(f"Image {self.docker_image} not found on our repository")
-        except docker.errors.APIError as dexc:
-            logger.info(dexc.explanation)
-            raise TaskImageException("Problem connecting to the Image Registry")
-
-    @classmethod
-    def validate(cls, data:dict):
-        valid = super().validate(data)
-        if not re.match(r'(\d|\w|\_|\-|\/)+:(\d|\w|\_|\-)+', valid["docker_image"]):
-            raise InvalidRequest(
-                f"{valid["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
-            )
-        return valid
->>>>>>> main
