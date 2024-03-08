@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: flask
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: flask
+  template:
+    metadata:
+      labels:
+        app: flask
+    spec:
+      serviceAccountName: secret-backend-handler
+      initContainers:
+        - name: db-migrations
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ["/bin/sh"]
+          workingDir: /
+          args:
+            [
+              "-c",
+              'python -m alembic upgrade head',
+            ]
+          envFrom:
+            - configMapRef:
+                name: backend-configmap
+      containers:
+        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          name: flask-app
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            limits:
+              memory: 200Mi
+              cpu: 100m
+          ports:
+            - name: http
+              containerPort: {{ .Values.federatedNode.port | default 5000 }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health_check
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 180
+            timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /health_check
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 60
+            timeoutSeconds: 30
+          envFrom:
+            - configMapRef:
+                name: backend-configmap
+            - configMapRef:
+                name: keycloak-config
+          env:
+          - name: KEYCLOAK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: kc-secrets
+                key: KEYCLOAK_GLOBAL_CLIENT_SECRET
+          - name: KEYCLOAK_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kc-secrets
+                key: KEYCLOAK_ADMIN_PASSWORD
+          - name: ACR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: ACR_PASSWORD
+          - name: ACR_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: backend-secrets
+                key: ACR_USERNAME
+      imagePullSecrets:
+        - name: regcred

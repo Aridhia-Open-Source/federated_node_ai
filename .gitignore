@@ -1,0 +1,12 @@
+.venv
+.vscode
+artifacts/*.xml
+
+*.pyc
+__pycache__/
+
+.env
+*.env
+k8s/federated_node/dev.values.yaml
+*.key
+*.crt

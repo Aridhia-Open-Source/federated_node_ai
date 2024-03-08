@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+sqlalchemy = "*"
+psycopg2 = "*"
+alembic = "*"
+kubernetes = "*"
+docker = "*"
+flask-sqlalchemy = "*"
+joserfc = "*"
+pyjwt = "*"
+
+[dev-packages]
+pylint=">=3.0.3"
+pytest = "*"
+pytest-mock = "*"
+python-dotenv = "*"
+pytest-cov = "*"
+responses = "*"
+
+[requires]
+python_version = "3.12"
