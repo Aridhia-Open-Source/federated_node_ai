@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from app.helpers.db import BaseModel, db
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 from app.helpers.keycloak import Keycloak
 from app.helpers.exceptions import DBError
 

@@ -36,6 +36,8 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_SECRET: ${KEYCLOAK_SECRET}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_LOGLEVEL: DEBUG
+      KEYCLOAK_TOKEN_LIFE: 3600
     expose:
       - 8080
     ports:
@@ -84,5 +86,7 @@ services:
       KEYCLOAK_SECRET:
       KEYCLOAK_ADMIN_PASSWORD:
       KEYCLOAK_URL:
+      TASK_NAMESPACE: tasks
+      KEYCLOAK_NAMESPACE: keycloak
 volumes:
   data:

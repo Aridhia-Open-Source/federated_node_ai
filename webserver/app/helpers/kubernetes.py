@@ -11,6 +11,9 @@ from app.helpers.exceptions import InvalidRequest, KubernetesException
 logger = logging.getLogger('kubernetes_helper')
 logger.setLevel(logging.INFO)
 
+TASK_NAMESPACE = os.getenv("TASK_NAMESPACE")
+
+
 class KubernetesBase:
     def __init__(self) -> None:
         if os.getenv('KUBERNETES_SERVICE_HOST'):
@@ -20,6 +23,16 @@ class KubernetesBase:
             # Get config from outside the cluster. Mostly DEV
             config.load_kube_config()
         super().__init__()
+
+    def create_env_from_dict(self, env_dict) -> list[client.V1EnvVar]:
+        """
+        Kubernetes library accepts env vars as a V1EnvVar
+        object. This method converts a dict into V1EnvVar
+        """
+        env = []
+        for k, v in env_dict.items():
+            env.append(client.V1EnvVar(name=k, value=str(v)))
+        return env
 
     def create_pod_spec(self, pod_spec:dict):
         """
@@ -38,6 +51,7 @@ class KubernetesBase:
         container = client.V1Container(
             name=pod_spec["name"],
             image=f"{acr_url}/{pod_spec["image"]}",
+            env=self.create_env_from_dict(pod_spec.get("environment", {})),
             # For testing purposes now - Should this be dynamic?
             volume_mounts=[vol_mount]
         )
@@ -54,7 +68,7 @@ class KubernetesBase:
         )
         metadata = client.V1ObjectMeta(
             name=pod_spec["name"],
-            namespace='tasks',
+            namespace=TASK_NAMESPACE,
             labels=pod_spec["labels"]
         )
         return client.V1Pod(
@@ -94,7 +108,7 @@ class KubernetesBase:
 
         metadata = client.V1ObjectMeta(
             name=pod_spec["name"],
-            namespace='tasks',
+            namespace=TASK_NAMESPACE,
             labels=pod_spec["labels"]
         )
         specs = client.V1PodSpec(
@@ -117,7 +131,7 @@ class KubernetesBase:
             spec=specs
         )
 
-    def delete_pod(self, name:str, namespace='tasks'):
+    def delete_pod(self, name:str, namespace=TASK_NAMESPACE):
         """
         Given a pod name, delete it. If it doesn't exist
         ignores the exception and logs a message.
@@ -140,7 +154,7 @@ class KubernetesBase:
         pv = client.V1PersistentVolume(
             api_version='v1',
             kind='PersistentVolume',
-            metadata=client.V1ObjectMeta(name=name, namespace='tasks'),
+            metadata=client.V1ObjectMeta(name=name, namespace=TASK_NAMESPACE),
             spec=client.V1PersistentVolumeSpec(
                 access_modes=['ReadWriteMany'],
                 capacity={"storage": "100Mi"},
@@ -152,7 +166,7 @@ class KubernetesBase:
         pvc = client.V1PersistentVolumeClaim(
             api_version='v1',
             kind='PersistentVolumeClaim',
-            metadata=client.V1ObjectMeta(name=f"{name}-volclaim", namespace='tasks'),
+            metadata=client.V1ObjectMeta(name=f"{name}-volclaim", namespace=TASK_NAMESPACE),
             spec=client.V1PersistentVolumeClaimSpec(
                 access_modes=['ReadWriteMany'],
                 resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"}),
@@ -161,12 +175,12 @@ class KubernetesBase:
         )
         try:
             self.create_persistent_volume(body=pv)
-            self.create_namespaced_persistent_volume_claim(namespace='tasks', body=pvc)
+            self.create_namespaced_persistent_volume_claim(namespace=TASK_NAMESPACE, body=pvc)
         except ApiException as kexc:
             if kexc.status != 409:
                 raise KubernetesException(kexc.body)
 
-    def cp_from_pod(self, pod_name:str, source_path:str, dest_path:str, namespace='tasks'):
+    def cp_from_pod(self, pod_name:str, source_path:str, dest_path:str, namespace=TASK_NAMESPACE):
         """
         Method that emulates the `kubectl cp` command
         """

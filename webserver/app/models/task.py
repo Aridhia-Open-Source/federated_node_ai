@@ -13,10 +13,10 @@ import urllib3
 from app.helpers.acr import ACRClient
 from app.helpers.db import BaseModel, db
 from app.helpers.keycloak import Keycloak
-from app.helpers.kubernetes import KubernetesBatchClient, KubernetesClient
+from app.helpers.kubernetes import TASK_NAMESPACE, KubernetesBatchClient, KubernetesClient
 from app.helpers.query_validator import validate as validate_query
 from app.helpers.exceptions import DBError, InvalidRequest, TaskImageException, TaskExecutionException
-from app.models.datasets import Dataset
+from app.models.dataset import Dataset
 
 logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)
@@ -27,7 +27,7 @@ RESULTS_PATH = os.getenv("RESULTS_PATH")
 class Task(db.Model, BaseModel):
     __tablename__ = 'tasks'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(256), nullable=False)
+    name = Column(String(256), nullable=False)
     docker_image = Column(String(256), nullable=False)
     description = Column(String(2048))
     status = Column(String(64), default='scheduled')
@@ -40,15 +40,20 @@ class Task(db.Model, BaseModel):
     dataset = relationship("Dataset")
 
     def __init__(self,
-                 title:str,
+                 name:str,
                  docker_image:str,
                  requested_by:str,
                  dataset:Dataset,
-                 command:str = '',
+                 executors:dict = {},
+                 tags:dict = {},
+                 resources:dict = {},
+                 inputs:dict = {},
+                 outputs:dict = {},
+                 volumes:dict = {},
                  description:str = '',
                  created_at:datetime=datetime.now()
                  ):
-        self.title = title
+        self.name = name
         self.status = 'scheduled'
         self.docker_image = docker_image
         self.requested_by = requested_by
@@ -56,22 +61,25 @@ class Task(db.Model, BaseModel):
         self.description = description
         self.created_at = created_at
         self.updated_at = datetime.now()
-        self.command = self._parse_command(command)
+        self.tags = tags
+        self.executors = executors
+        self.resources = resources
+        self.inputs = inputs
+        self.outputs = outputs
+        self.volumes = volumes
 
     @classmethod
     def validate(cls, data:dict):
         data["requested_by"] = Keycloak().decode_token(
             Keycloak.get_token_from_headers()
         ).get('sub')
-
+        # Support only for one image at a time, the standard is executors == list
+        executors = data["executors"][0]
+        data["docker_image"] = executors["image"]
         data = super().validate(data)
 
-        query = data.pop('use_query')
-        ds_id = data.pop("dataset_id")
+        ds_id = data.get("tags", {}).get("dataset_id")
         data["dataset"] = db.session.get(Dataset, ds_id)
-
-        if not validate_query(query, data["dataset"]):
-            raise InvalidRequest("Query missing or misformed")
 
         if not re.match(r'^((\w+|-)\/?\w+)+:(\w+(\.|-)?)+$', data["docker_image"]):
             raise InvalidRequest(
@@ -79,21 +87,6 @@ class Task(db.Model, BaseModel):
             )
         cls.can_image_be_found(data["docker_image"])
         return data
-
-    def _parse_command(self, command:str) -> list[str]:
-        """
-        A docker command has to follow a certain structure.
-        Anything within double quotes should be enclosed in a single
-        list element.
-        Rest should be split for whitespaces and live in a separate list item
-        i.e.:
-            command -> sh -c "./script.sh arg1"
-            returns -> ["sh", "-c", "./script.sh arg1"]
-        """
-        if command:
-            no_quotes_cmd = [cmd for cmd in command.split("\"") if cmd]
-            return no_quotes_cmd[0].split(" ")[:-1] + no_quotes_cmd[1:]
-        return None
 
     @classmethod
     def can_image_be_found(cls, docker_image):
@@ -112,7 +105,7 @@ class Task(db.Model, BaseModel):
             raise TaskImageException(f"Image {docker_image} not found on our repository")
 
     def pod_name(self):
-        return f"{self.title.lower().replace(' ', '-')}-{self.requested_by}"
+        return f"{self.name.lower().replace(' ', '-')}-{self.requested_by}"
 
     def run(self, validate=False):
         """
@@ -129,7 +122,8 @@ class Task(db.Model, BaseModel):
                 "requested_by": self.requested_by
             },
             "dry_run": 'true' if validate else 'false',
-            "command": self.command,
+            "environment": self.executors[0]["env"],
+            "command": self.executors[0]["command"],
             "mount_path": TASK_POD_RESULTS_PATH
         })
         try:
@@ -138,7 +132,7 @@ class Task(db.Model, BaseModel):
                 raise TaskExecutionException("Pod is already running", code=409)
 
             v1.create_namespaced_pod(
-                namespace='tasks',
+                namespace=TASK_NAMESPACE,
                 body=body,
                 pretty='true'
             )
@@ -190,7 +184,7 @@ class Task(db.Model, BaseModel):
         v1 = KubernetesClient()
         has_error = False
         try:
-            v1.delete_namespaced_pod(self.pod_name(), namespace='tasks')
+            v1.delete_namespaced_pod(self.pod_name(), namespace=TASK_NAMESPACE)
         except ApiException as kexc:
             logger.error(kexc.reason)
             has_error = True
@@ -227,13 +221,13 @@ class Task(db.Model, BaseModel):
         })
         try:
             v1_batch.create_namespaced_job(
-                namespace='tasks',
+                namespace=TASK_NAMESPACE,
                 body=job,
                 pretty='true'
             )
             # Get the job's pod
             v1 = KubernetesClient()
-            job_pod = list(filter(lambda x: x.metadata.labels.get('job-name') == job_name, v1.list_namespaced_pod(namespace='tasks').items))[0]
+            job_pod = list(filter(lambda x: x.metadata.labels.get('job-name') == job_name, v1.list_namespaced_pod(namespace=TASK_NAMESPACE).items))[0]
 
             # TODO Need to find a more dynamic way for this to work. Pod is not ready immediately
             import time

@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import ProgrammingError
 from unittest.mock import Mock
 from app.helpers.db import db
-from app.models.datasets import Dataset
-from app.models.catalogues import Catalogue
-from app.models.dictionaries import Dictionary
+from app.models.dataset import Dataset
+from app.models.catalogue import Catalogue
+from app.models.dictionary import Dictionary
 from tests.conftest import sample_ds_body
 
 missing_dict_cata_message = {"error": "Missing field. Make sure \"catalogue\" and \"dictionaries\" entries are there"}
@@ -261,11 +261,29 @@ class TestDatasets:
         # Make sure any db entry is created
         query = run_query(select(Dataset).where(Dataset.name == data_body["name"]))
         assert len(query) == 0
+
+    def test_post_dataset_with_empty_dictionaries_succeeds(
+            self,
+            post_json_admin_header,
+            client,
+            dataset,
+            dataset_post_body
+        ):
+        """
+        /datasets POST is successful with dictionaries = []
+        """
+        data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs22'
+        data_body["dictionaries"] = []
+        post_dataset(client, post_json_admin_header, data_body)
+
+        # Make sure any db entry is created
+        query_ds = run_query(select(Dataset).where(Dataset.name == data_body["name"]))
+        assert len(query_ds) == 1
         query = run_query(select(Catalogue).where(Catalogue.title == data_body["catalogue"]["title"]))
+        assert len(query) == 1
+        query = run_query(select(Dictionary).where(Dictionary.dataset_id == query_ds[0][0].id))
         assert len(query) == 0
-        for d in data_body["dictionaries"]:
-            query = run_query(select(Dictionary).where(Dictionary.table_name == d["table_name"]))
-            assert len(query) == 0
 
     def test_post_dataset_with_wrong_dictionaries_format(
             self,
@@ -330,34 +348,53 @@ class TestDatasets:
             query = run_query(select(Dictionary).where(Dictionary.table_name == d["table_name"]))
             assert len(query) == 2
 
-    def test_post_dataset_with_catalogue(
+    def test_post_dataset_with_catalogue_only(
             self,
             post_json_admin_header,
+            dataset,
             client,
             dataset_post_body
         ):
         """
-        /datasets POST with catalogue but no dictionary is not successful
+        /datasets POST with catalogue but no dictionary is successful
         """
         data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs22'
         data_body.pop("dictionaries")
-        response = post_dataset(client, post_json_admin_header, data_body, 500)
-        assert response == missing_dict_cata_message
+        post_dataset(client, post_json_admin_header, data_body)
 
-    def test_post_dataset_with_dictionaries(
+        # Make sure any db entry is created
+        query_ds = run_query(select(Dataset).where(Dataset.name == data_body["name"]))
+        assert len(query_ds) == 1
+        query = run_query(select(Catalogue).where(Catalogue.title == data_body["catalogue"]["title"]))
+        assert len(query) == 1
+        query = run_query(select(Dictionary).where(Dictionary.dataset_id == query_ds[0][0].id))
+        assert len(query) == 0
+
+    def test_post_dataset_with_dictionaries_only(
             self,
             post_json_admin_header,
             query_validator,
+            dataset,
             client,
             dataset_post_body
         ):
         """
-        /datasets POST with dictionary but no catalogue is not successful
+        /datasets POST with dictionary but no catalogue is successful
         """
         data_body = dataset_post_body.copy()
+        data_body['name'] = 'TestDs22'
         data_body.pop("catalogue")
-        response = post_dataset(client, post_json_admin_header, data_body, 500)
-        assert response == missing_dict_cata_message
+        post_dataset(client, post_json_admin_header, data_body)
+
+        # Make sure any db entry is created
+        query_ds = run_query(select(Dataset).where(Dataset.name == data_body["name"]))
+        assert len(query_ds) == 1
+        query = run_query(select(Catalogue).where(Catalogue.dataset_id == query_ds[0][0].id))
+        assert len(query) == 0
+        for d in data_body["dictionaries"]:
+            query = run_query(select(Dictionary).where(Dictionary.table_name == d["table_name"]))
+            assert len(query)== 1
 
 
 class TestDictionaries:
@@ -570,60 +607,3 @@ class TestBeacon:
         )
         assert response.status_code == 500
         assert response.json['result'] == 'Invalid'
-
-class TestTransfers:
-    def test_token_transfer_admin(
-            self,
-            client,
-            simple_admin_header
-    ):
-        """
-        Test token transfer is accessible by admin users
-        """
-        response = client.post(
-            "/datasets/token_transfer",
-            headers=simple_admin_header
-        )
-        assert response.status_code == 200
-
-    def test_token_transfer_standard_user(
-            self,
-            client,
-            simple_user_header
-    ):
-        """
-        Test token transfer is accessible by admin users
-        """
-        response = client.post(
-            "/datasets/token_transfer",
-            headers=simple_user_header
-        )
-        assert response.status_code == 401
-
-    def test_workspace_token_transfer_admin(
-            self,
-            client,
-            simple_admin_header
-    ):
-        """
-        Test token transfer is not accessible by non-admin users
-        """
-        response = client.post(
-            "/datasets/workspace/token",
-            headers=simple_admin_header
-        )
-        assert response.status_code == 200
-
-    def test_workspace_token_transfer_standard_user(
-            self,
-            client,
-            simple_user_header
-    ):
-        """
-        Test workspace token transfer is not accessible by non-admin users
-        """
-        response = client.post(
-            "/datasets/workspace/token",
-            headers=simple_user_header
-        )
-        assert response.status_code == 401

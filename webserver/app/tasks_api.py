@@ -13,7 +13,7 @@ from .helpers.exceptions import DBRecordNotFoundError
 from .helpers.wrappers import audit, auth
 from .helpers.db import db
 from .helpers.query_filters import parse_query_params
-from .models.tasks import Task
+from .models.task import Task
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 session = db.session

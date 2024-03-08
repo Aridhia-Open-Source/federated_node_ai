@@ -18,10 +18,10 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from app.helpers.db import Base
-import app.models.datasets
+import app.models.dataset
 import app.models.audit
-import app.models.requests
-import app.models.tasks
+import app.models.request
+import app.models.task
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 

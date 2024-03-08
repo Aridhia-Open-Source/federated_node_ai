@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: backend-configmap
-  namespace: {{ .Values.namespace | default "default" }}
+  namespace: {{ .Release.Namespace }}
 data:
   FLASK_APP: "."
   PGHOST: "db"
@@ -11,4 +11,7 @@ data:
   PGUSER: {{ .Values.db.user | default "admin" | quote }}
   PGPASSWORD: {{ .Values.db.password | default "password123" | quote }}
   ACR_URL: {{ .Values.federatedNode.acr_url }}
-  KEYCLOAK_URL: "http://keycloak.keycloak.svc.cluster.local:8080"
+  KEYCLOAK_URL: "http://keycloak.{{ .Values.namespaces.keycloak }}.svc.cluster.local:8080"
+  DEFAULT_NAMESPACE: {{ .Release.Namespace }}
+  KEYCLOAK_NAMESPACE: {{ .Values.namespaces.keycloak }}
+  TASKS_NAMESPACE: {{ .Values.namespaces.tasks }}
