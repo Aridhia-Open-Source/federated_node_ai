@@ -18,16 +18,16 @@ is_ci=$1
 
 echo "Starting docker compose"
 if [[ "$is_ci" != "ci" ]]; then
-    docker compose -f docker-compose-tests.yaml run --name flask-app-test app
+    docker compose -f docker-compose-tests-ci.yaml -f docker-compose-tests.yaml run --name flask-app-test app
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     docker rm flask-app-test
 else
-    docker compose -f docker-compose-tests.yaml run --name flask-app-test app
+    docker compose -f docker-compose-tests-ci.yaml run --name flask-app-test app
     exit_code=$?
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     echo "Cleaning up compose resources"
-    docker compose -f docker-compose-tests.yaml stop
-    docker compose -f docker-compose-tests.yaml rm -f
+    docker compose -f docker-compose-tests-ci.yaml stop
+    docker compose -f docker-compose-tests-ci.yaml rm -f
     docker rm flask-app-test
     exit $exit_code
 fi
