@@ -3,23 +3,55 @@ kind: PersistentVolume
 metadata:
   name: flask-results-pv
 spec:
+  storageClassName: shared-results
   accessModes:
     - ReadWriteMany
+    - ReadOnlyMany
   capacity:
     storage: 100Mi
   # This should be changed to some more reliable destination
-  hostPath:
-    path: /data/flask/
+  {{ if .Values.storage.local }}
+  local:
+    path: {{ .Values.storage.local.path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - federatednode
+  {{ else if .Values.storage.azure }}
+  azureFile:
+    secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+    shareName: results
+  {{ else if .Values.storage.aws }}
+  {{ end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: flask-results-pv-volclaim
+  namespace: {{ .Release.namespace }}
 spec:
+  storageClassName: shared-results
+  volumeName: flask-results-pv
   resources:
     requests:
       storage: 100Mi
-  # This should be changed to some more reliable destination
-  volumeMode: Filesystem
+  accessModes:
+    - ReadOnlyMany
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tasks-results-pv-volclaim
+  namespace: {{ .Values.namespaces.tasks }}
+spec:
+  volumeName: flask-results-pv
+  storageClassName: shared-results
+  resources:
+    requests:
+      storage: 100Mi
   accessModes:
     - ReadWriteMany

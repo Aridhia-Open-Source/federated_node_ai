@@ -18,9 +18,9 @@ namespaces:
   tasks: tasks
 
 db:
-  user: admin
-  password: asdfASpjpi!asd12
-  name: federated_node_db
+  user:
+  password:
+  name:
 
 federatedNode:
   port: 5000
@@ -31,6 +31,18 @@ federatedNode:
   volumes:
     results_path: /mnt/results
     task_pod_results_path: /mnt/data
+
+storage:
+  azure:
+    # secretName:
+    # storageAccountName:
+    # storageAccountKey:
+  nfs:
+    # provisioner:
+    # url:
+    # path:
+  local:
+    # path:
 
 token:
   life:

@@ -140,15 +140,17 @@ class Task(db.Model, BaseModel):
             logger.error(json.loads(e.body))
             raise InvalidRequest(f"Failed to run pod: {e.reason}")
 
-    def get_current_pod(self):
+    def get_current_pod(self, pod_name:str=None):
+        if pod_name is None:
+            pod_name = self.pod_name()
         v1 = KubernetesClient()
         running_pods = v1.list_namespaced_pod('tasks')
         try:
-            return [pod for pod in running_pods.items if pod.metadata.name == self.pod_name()][0]
+            return [pod for pod in running_pods.items if pod.metadata.name == pod_name][0]
         except IndexError:
             return
 
-    def get_status(self) -> dict | str:
+    def get_status(self, pod_name:str=None) -> dict | str:
         """
         k8s sdk returns a bunch of nested objects as a pod's status.
         Here the objects are deconstructed and a customized dictionary is returned
@@ -158,7 +160,7 @@ class Task(db.Model, BaseModel):
             :str: if the pod is not found or deleted
         """
         try:
-            status_obj = self.get_current_pod().status.container_statuses[0].state
+            status_obj = self.get_current_pod(pod_name).status.container_statuses[0].state
             for status in ['running', 'waiting', 'terminated']:
                 st = getattr(status_obj, status)
                 if st is not None:
@@ -229,13 +231,13 @@ class Task(db.Model, BaseModel):
             v1 = KubernetesClient()
             job_pod = list(filter(lambda x: x.metadata.labels.get('job-name') == job_name, v1.list_namespaced_pod(namespace=TASK_NAMESPACE).items))[0]
 
-            # TODO Need to find a more dynamic way for this to work. Pod is not ready immediately
-            import time
-            time.sleep(1)
+            while True:
+                job_status = self.get_status(job_pod.metadata.name)
+                if 'running' in job_status:
+                    break
             res_file = v1.cp_from_pod(job_pod.metadata.name, TASK_POD_RESULTS_PATH, f"{RESULTS_PATH}/{self.id}")
-
-            v1.delete_pod(job_name)
             v1.delete_pod(job_pod.metadata.name)
+            v1_batch.delete_job(job_name)
         except ApiException as e:
             logger.error(getattr(e, 'reason'))
             raise InvalidRequest(f"Failed to run pod: {e.reason}")
