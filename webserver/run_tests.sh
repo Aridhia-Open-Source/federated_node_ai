@@ -9,10 +9,17 @@ export PGPASSWORD=test_app
 export KEYCLOAK_URL=http://keycloak:8080
 export KEYCLOAK_REALM=FederatedNode
 export ACR_URL=test.acrio.com
+export ACR_USERNAME=test
+export ACR_PASSWORD=pass
 export KEYCLOAK_SECRET=asdf12ad89123ocasASD129
 export KEYCLOAK_CLIENT=global
 export KEYCLOAK_ADMIN=admin
 export KEYCLOAK_ADMIN_PASSWORD=password1
+export PYTHONPATH=/app
+export RESULTS_PATH=/tmp/results
+export TASK_POD_RESULTS_PATH=/mnt/data
+export TASK_NAMESPACE=tasks
+export KEYCLOAK_NAMESPACE=keycloak
 
 is_ci=$1
 
@@ -24,6 +31,9 @@ if [[ "$is_ci" != "ci" ]]; then
 else
     docker compose -f docker-compose-tests-ci.yaml run --quiet-pull --name flask-app-test app
     exit_code=$?
+    if [[ exit_code -gt 0 ]]; then
+        docker logs flask-app-test
+    fi
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     echo "Cleaning up compose resources"
     docker compose -f docker-compose-tests-ci.yaml stop

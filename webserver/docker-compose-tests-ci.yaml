@@ -31,9 +31,9 @@ services:
       KC_DB_URL_DATABASE: ${PGDATABASE}
       KC_DB_USERNAME: ${PGUSER}
       KC_DB_PASSWORD: ${PGPASSWORD}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_SECRET: ${KEYCLOAK_SECRET}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN:
+      KEYCLOAK_SECRET:
+      KEYCLOAK_ADMIN_PASSWORD:
       KEYCLOAK_LOGLEVEL: DEBUG
       KEYCLOAK_TOKEN_LIFE: 3600
     expose:
@@ -63,9 +63,6 @@ services:
     depends_on:
       kc_init:
         condition: service_completed_successfully
-    volumes:
-      - ./tests:/app/tests
-      - ./app:/app/app
     environment:
       PGHOST:
       PGDATABASE:
