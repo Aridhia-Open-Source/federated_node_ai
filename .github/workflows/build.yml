@@ -9,8 +9,6 @@ on:
   pull_request:
     branches:
       - main
-env:
-  TEST: test
 jobs:
   tests:
     defaults:
@@ -40,6 +38,7 @@ jobs:
           fail_below_min: true
           thresholds: '60 80'
   build:
+    needs: tests
     defaults:
       run:
         shell: bash
@@ -64,5 +63,5 @@ jobs:
         with:
           context: webserver
           file: build/Dockerfile
-          push: false
           tags: federated_node_run:${{ vars.VERSION }}
+          push: false
