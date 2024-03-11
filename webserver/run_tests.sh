@@ -22,7 +22,7 @@ if [[ "$is_ci" != "ci" ]]; then
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     docker rm flask-app-test
 else
-    docker compose -f docker-compose-tests-ci.yaml run --name flask-app-test app
+    docker compose -f docker-compose-tests-ci.yaml run --quiet-pull --name flask-app-test app
     exit_code=$?
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     echo "Cleaning up compose resources"
