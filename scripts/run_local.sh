@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 export CLUSTER_NAME=federatednode
-echo "Starting MK"
+# echo "Starting MK"
 minikube start -p $CLUSTER_NAME --driver=docker
 
-echo "Switching context"
+# echo "Switching context"
 kubectl config use-context $CLUSTER_NAME
 
 echo "applying definitions"

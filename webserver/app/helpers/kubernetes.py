@@ -146,6 +146,21 @@ class KubernetesBase:
             if e.status != 404:
                 raise InvalidRequest(f"Failed to delete pod {name}: {e.reason}")
 
+    def delete_job(self, name:str, namespace=TASK_NAMESPACE):
+        """
+        Given a pod name, delete it. If it doesn't exist
+        ignores the exception and logs a message.
+        """
+        try:
+            self.delete_namespaced_job(
+                namespace=namespace,
+                name=name
+            )
+        except ApiException as e:
+            logger.error(getattr(e, 'reason'))
+            if e.status != 404:
+                raise InvalidRequest(f"Failed to delete pod {name}: {e.reason}")
+
     def create_persistent_storage(self, name:str):
         """
         Function to dynamically create (if doesn't already exist)
@@ -159,7 +174,7 @@ class KubernetesBase:
                 access_modes=['ReadWriteMany'],
                 capacity={"storage": "100Mi"},
                 host_path=client.V1HostPathVolumeSource(path=f"/data/{name}"),
-                volume_mode='Filesystem'
+                storage_class_name="shared-results"
             )
         )
 
@@ -169,8 +184,7 @@ class KubernetesBase:
             metadata=client.V1ObjectMeta(name=f"{name}-volclaim", namespace=TASK_NAMESPACE),
             spec=client.V1PersistentVolumeClaimSpec(
                 access_modes=['ReadWriteMany'],
-                resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"}),
-                volume_mode='Filesystem'
+                resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"})
             )
         )
         try:
