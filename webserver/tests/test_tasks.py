@@ -318,7 +318,13 @@ def test_get_results(
     )
     pod_mock = Mock()
     pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
+    pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
     k8s_client.return_value.list_namespaced_pod.return_value.items = [pod_mock]
+
+    mocker.patch(
+        'app.models.task.Task.get_status',
+        return_value={"running": {}}
+    )
 
     response = client.get(
         f'/tasks/{response.json["task_id"]}/results',
