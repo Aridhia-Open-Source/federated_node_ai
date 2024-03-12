@@ -187,7 +187,7 @@ global_client_policy_resp = requests.post(
     'Authorization': f'Bearer {admin_token}'
   }
 )
-if is_response_good(global_client_policy_resp):
+if global_client_policy_resp.status_code == 409:
   global_client_policy_resp = requests.get(
     f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/policy/client?name=token-exchange-global",
     headers = {
