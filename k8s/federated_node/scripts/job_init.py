@@ -4,7 +4,8 @@ import json
 import os
 import time
 
-KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://keycloak.keycloak.svc.cluster.local:8080")
+KEYCLOAK_NAMESPACE = os.getenv("KEYCLOAK_NAMESPACE")
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", f"http://keycloak.{KEYCLOAK_NAMESPACE}.svc.cluster.local:8080")
 REALM = 'master'
 KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "FederatedNode")
 KEYCLOAK_CLIENT = os.getenv("KEYCLOAK_CLIENT", "global")
