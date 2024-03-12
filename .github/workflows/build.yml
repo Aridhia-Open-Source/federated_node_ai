@@ -9,6 +9,8 @@ on:
   pull_request:
     branches:
       - main
+env:
+  DOCKER_ACR: docker-dev.aridhia.net
 jobs:
   linters:
     defaults:
@@ -18,13 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Run pylint
-      #   run: |
-      #     make pylint
+      - name: Run pylint
+        run: |
+          make pylint
 
-      # - name: Run hadolint
-      #   run: |
-      #     make hadolint
+      - name: Run hadolint
+        run: |
+          make hadolint
   tests:
     needs: linters
     defaults:
@@ -34,17 +36,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Run Python Tests
-      #   working-directory: webserver
-      #   run: |
-      #     make tests_ci
+      - name: Run Python Tests
+        working-directory: webserver
+        run: |
+          make tests_ci
 
-      # - uses: irongut/CodeCoverageSummary@v1.3.0
-      #   name: Code Coverage Summary Report
-      #   with:
-      #     filename: artifacts/coverage.xml
-      #     fail_below_min: true
-      #     thresholds: '60 80'
+      - uses: irongut/CodeCoverageSummary@v1.3.0
+        name: Code Coverage Summary Report
+        with:
+          filename: artifacts/coverage.xml
+          fail_below_min: true
+          thresholds: '60 80'
   build:
     needs: tests
     defaults:
@@ -63,6 +65,7 @@ jobs:
       # - name: Login to Docker Hub
       #   uses: docker/login-action@v3
       #   with:
+      #     registry: ${{ env.DOCKER_ACR }}
       #     username: ${{ secrets.DOCKER_USERNAME }}
       #     password: ${{ secrets.DOCKER_TOKEN }}
 
@@ -71,5 +74,5 @@ jobs:
         with:
           context: webserver
           file: webserver/build/Dockerfile
-          tags: federated_node_run:${{ vars.VERSION }}
+          tags: ${{ env.DOCKER_ACR }}/federated_node_run:${{ vars.VERSION }}
           push: false
