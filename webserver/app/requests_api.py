@@ -29,8 +29,9 @@ def get_requests():
         res = [r[0].sanitized_dict() for r in res]
     return res, 200
 
-# Disabled for the time being
+# Disabled for the time being, also disable the pylint rule for duplicated code
 # @bp.route('/', methods=['POST'])
+# pylint: disable=R0801
 @audit
 @auth(scope='can_send_request')
 def post_requests():
@@ -61,8 +62,9 @@ def post_requests():
         session.rollback()
         raise
 
-# Disabled for the time being
+# Disabled for the time being, also disable the pylint rule for duplicated code
 # @bp.route('/<code>/approve', methods=['POST'])
+# pylint: disable=R0801
 @audit
 @auth(scope='can_admin_request')
 def post_approve_requests(code):

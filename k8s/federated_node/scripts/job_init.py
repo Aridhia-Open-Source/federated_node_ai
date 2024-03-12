@@ -197,10 +197,14 @@ if global_client_policy_resp.status_code == 409:
 elif not global_client_policy_resp.ok:
     print(global_client_policy_resp.text)
     exit(1)
-global_policy_id = global_client_policy_resp.json()[0]["id"]
+
+if isinstance(global_client_policy_resp.json(), dict):
+  global_policy_id = global_client_policy_resp.json()["id"]
+else:
+  global_policy_id = global_client_policy_resp.json()[0]["id"]
 
 print("Updating permissions")
-# Getitng auto-created permission for token-exchange
+# Getting auto-created permission for token-exchange
 token_exch_name = f"token-exchange.permission.client.{client_id}"
 token_exch_permission_resp = requests.get(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/permission/scope?name={token_exch_name}",
