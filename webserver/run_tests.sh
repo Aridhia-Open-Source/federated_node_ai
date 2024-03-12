@@ -33,9 +33,9 @@ else
     exit_code=$?
     if [[ exit_code -gt 0 ]]; then
         echo "Something went wrong. Here are some logs"
-        docker compose -f docker-compose-tests-ci.yaml logs -f keycloak
-        docker compose -f docker-compose-tests-ci.yaml logs -f kc_init
-        docker compose -f docker-compose-tests-ci.yaml logs -f app
+        docker compose -f docker-compose-tests-ci.yaml logs keycloak
+        docker compose -f docker-compose-tests-ci.yaml logs kc_init
+        docker compose -f docker-compose-tests-ci.yaml logs app
     fi
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     echo "Cleaning up compose resources"
