@@ -11,3 +11,6 @@ expose_api:
 
 dashboard:
 	minikube -p federatednode dashboard --url
+
+pylint:
+	./scripts/pylint.sh

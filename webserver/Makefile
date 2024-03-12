@@ -9,9 +9,6 @@ run:
 build_docker:
 	docker build . -f build/Dockerfile -t federated_node_run:0.0.1
 
-pylint:
-	pylint app
-
 tests_local:
 	./run_tests.sh
 
