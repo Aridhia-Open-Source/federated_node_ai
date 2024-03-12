@@ -188,6 +188,7 @@ global_client_policy_resp = requests.post(
   }
 )
 if is_response_good(global_client_policy_resp):
+  print("token-exchange-global already exists. Fetching its id")
   global_client_policy_resp = requests.get(
     f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/policy/client?name=token-exchange-global",
     headers = {
@@ -197,6 +198,8 @@ if is_response_good(global_client_policy_resp):
 elif not global_client_policy_resp.ok:
     print(global_client_policy_resp.text)
     exit(1)
+
+print(global_client_policy_resp.json())
 global_policy_id = global_client_policy_resp.json()[0]["id"]
 
 print("Updating permissions")
