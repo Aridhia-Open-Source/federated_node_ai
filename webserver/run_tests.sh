@@ -42,5 +42,6 @@ else
     docker compose -f docker-compose-tests-ci.yaml stop
     docker compose -f docker-compose-tests-ci.yaml rm -f
     docker rm flask-app-test
+    docker volume rm federated_node_tests_data
     exit $exit_code
 fi

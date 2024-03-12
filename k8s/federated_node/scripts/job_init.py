@@ -187,7 +187,7 @@ global_client_policy_resp = requests.post(
     'Authorization': f'Bearer {admin_token}'
   }
 )
-if global_client_policy_resp.status_code == 409:
+if is_response_good(global_client_policy_resp):
   global_client_policy_resp = requests.get(
     f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/policy/client?name=token-exchange-global",
     headers = {
@@ -200,7 +200,7 @@ elif not global_client_policy_resp.ok:
 global_policy_id = global_client_policy_resp.json()[0]["id"]
 
 print("Updating permissions")
-# Getitng auto-created permission for token-exchange
+# Getting auto-created permission for token-exchange
 token_exch_name = f"token-exchange.permission.client.{client_id}"
 token_exch_permission_resp = requests.get(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{rm_client_id}/authz/resource-server/permission/scope?name={token_exch_name}",
