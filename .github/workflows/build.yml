@@ -32,6 +32,8 @@ jobs:
         shell: bash
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Run Python Tests
         working-directory: webserver
         run: |
