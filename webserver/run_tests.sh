@@ -31,7 +31,11 @@ if [[ "$is_ci" != "ci" ]]; then
 else
     docker compose -f docker-compose-tests-ci.yaml run --quiet-pull --name flask-app-test app
     exit_code=$?
-    test $exit_code -gt 0 && docker logs flask-app-test
+    if [[ exit_code -gt 0 ]]; then
+        echo "Something went wrong. Here are some logs"
+        docker compose -f docker-compose-tests-ci.yaml logs -f kc_init
+        docker compose -f docker-compose-tests-ci.yaml logs -f app
+    fi
     docker cp flask-app-test:/app/artifacts/coverage.xml ../artifacts/
     echo "Cleaning up compose resources"
     docker compose -f docker-compose-tests-ci.yaml stop
