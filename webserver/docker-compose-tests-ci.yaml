@@ -20,9 +20,16 @@ services:
       "--hostname-strict=false",
       "--hostname-strict-https=false"
     ]
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     depends_on:
       - db
     environment:
+      KC_HEALTH_ENABLED: true
       KC_DB_URL_HOST: ${PGHOST}
       KC_DB: postgres
       KC_DB_URL_PORT: ${PGPORT}
@@ -42,7 +49,8 @@ services:
     links:
       - keycloak
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
     command: ["/bin/sh", "-c", "pip install requests && python3 /scripts/setup_realm.py" ]
     environment:
       KEYCLOAK_ADMIN_PASSWORD:
