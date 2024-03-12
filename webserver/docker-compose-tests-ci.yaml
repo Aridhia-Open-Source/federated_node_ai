@@ -39,6 +39,8 @@ services:
   kc_init:
     image: python:3.12.1-slim-bullseye
     container_name: keycloak_test_initializer
+    links:
+      - keycloak
     depends_on:
       - keycloak
     command: ["/bin/sh", "-c", "pip install requests && python3 /scripts/setup_realm.py" ]
@@ -66,16 +68,16 @@ services:
       PGUSER:
       PGPASSWORD:
       PYTHONPATH: /app
-      ACR_URL: test.acr.com
-      ACR_USERNAME: test
-      ACR_PASSWORD: pass
-      RESULTS_PATH: /tmp/results
-      TASK_POD_RESULTS_PATH: /mnt/data
+      ACR_URL:
+      ACR_USERNAME:
+      ACR_PASSWORD:
+      RESULTS_PATH:
+      TASK_POD_RESULTS_PATH:
       KEYCLOAK_ADMIN:
       KEYCLOAK_SECRET:
       KEYCLOAK_ADMIN_PASSWORD:
       KEYCLOAK_URL:
-      TASK_NAMESPACE: tasks
-      KEYCLOAK_NAMESPACE: keycloak
+      TASK_NAMESPACE:
+      KEYCLOAK_NAMESPACE:
 volumes:
   data:
