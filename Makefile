@@ -11,3 +11,6 @@ expose_api:
 
 dashboard:
 	minikube -p federatednode dashboard --url
+
+chart:
+	helm package k8s/federated_node -d artifacts/
