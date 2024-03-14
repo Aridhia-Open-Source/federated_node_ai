@@ -18,15 +18,15 @@ PASS=$(kubectl get secret -n keycloak kc-secrets -o json | jq -r '.data.KEYCLOAK
 SEC=$(kubectl get secret -n keycloak kc-secrets -o json | jq -r '.data.KEYCLOAK_GLOBAL_CLIENT_SECRET' | base64 -d)
 
 if grep 'KEYCLOAK_SECRET=' "$DEV_ENV_FILE"; then
-    sed -i -n "s/KEYCLOAK_SECRET=.*/KEYCLOAK_SECRET=${SEC}/" "$DEV_ENV_FILE"
+    sed -i "s/KEYCLOAK_SECRET=.*/KEYCLOAK_SECRET=${SEC}/g" "$DEV_ENV_FILE"
 else
     echo "KEYCLOAK_SECRET=${SEC}" >> "$DEV_ENV_FILE"
 fi
 
 if grep 'KEYCLOAK_ADMIN_PASSWORD=' "$DEV_ENV_FILE"; then
-    echo "KEYCLOAK_ADMIN_PASSWORD=${PASS}" >> "$DEV_ENV_FILE"
+    sed -i "s/KEYCLOAK_ADMIN_PASSWORD=.*/KEYCLOAK_ADMIN_PASSWORD=${PASS}/g" "$DEV_ENV_FILE"
 else
-    sed -i -n "s/KEYCLOAK_ADMIN_PASSWORD=.*/KEYCLOAK_ADMIN_PASSWORD=${PASS}/" "$DEV_ENV_FILE"
+    echo "KEYCLOAK_ADMIN_PASSWORD=${PASS}" >> "$DEV_ENV_FILE"
 fi
 
 echo "run kubectl port-forward -n keycloak svc/keycloak 8080"
