@@ -14,4 +14,4 @@ data:
   KEYCLOAK_URL: "http://keycloak.{{ .Values.namespaces.keycloak }}.svc.cluster.local:8080"
   DEFAULT_NAMESPACE: {{ .Release.Namespace }}
   KEYCLOAK_NAMESPACE: {{ .Values.namespaces.keycloak }}
-  TASKS_NAMESPACE: {{ .Values.namespaces.tasks }}
+  TASK_NAMESPACE: {{ .Values.namespaces.tasks }}
