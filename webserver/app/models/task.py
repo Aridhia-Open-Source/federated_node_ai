@@ -144,7 +144,7 @@ class Task(db.Model, BaseModel):
         if pod_name is None:
             pod_name = self.pod_name()
         v1 = KubernetesClient()
-        running_pods = v1.list_namespaced_pod('tasks')
+        running_pods = v1.list_namespaced_pod(TASK_NAMESPACE)
         try:
             return [pod for pod in running_pods.items if pod.metadata.name == pod_name][0]
         except IndexError:
