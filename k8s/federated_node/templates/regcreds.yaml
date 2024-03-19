@@ -11,7 +11,7 @@ metadata:
   name: regcred
   namespace: {{ . }}
 data:
-  .dockerconfigjson: {{ template "imagePullSecret" . }}
+  .dockerconfigjson: {{ template "imagePullSecret" $ }}
 type: kubernetes.io/dockerconfigjson
 ---
 {{- end }}
