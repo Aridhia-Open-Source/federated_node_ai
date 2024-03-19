@@ -41,17 +41,3 @@ spec:
       storage: 100Mi
   accessModes:
     - ReadOnlyMany
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: tasks-results-pv-volclaim
-  namespace: {{ .Values.namespaces.tasks }}
-spec:
-  volumeName: flask-results-pv
-  storageClassName: shared-results
-  resources:
-    requests:
-      storage: 100Mi
-  accessModes:
-    - ReadWriteMany

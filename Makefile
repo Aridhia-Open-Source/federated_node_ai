@@ -10,7 +10,10 @@ expose_api:
 	minikube -p federatednode service backend --url
 
 dashboard:
-	minikube -p federatednode dashboard --url
+	minikube -p federatednode dashboard --url --port 41234
 
 pylint:
 	./scripts/pylint.sh
+
+chart:
+	helm package k8s/federated_node -d artifacts/

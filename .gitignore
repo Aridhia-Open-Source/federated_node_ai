@@ -11,3 +11,6 @@ __pycache__/
 *.key
 k8s/federated_node/dev.values.yaml
 dev_script.sh
+
+# Ingore helm charts archives
+artifacts/*.tgz

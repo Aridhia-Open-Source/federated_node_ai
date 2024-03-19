@@ -2,7 +2,7 @@ import logging
 import re
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import ProgrammingError, OperationalError
+from sqlalchemy.exc import ProgrammingError, OperationalError, InternalError
 
 from app.helpers.const import build_sql_uri
 from app.models.dataset import Dataset
@@ -36,8 +36,10 @@ def validate(query:str, dataset:Dataset) -> bool:
     """
     try:
         with connect_to_dataset(dataset)() as session:
+            # Read only query, so things like UPDATE, DELETE or DROP won't be executed
+            session.execute(text('SET TRANSACTION READ ONLY'))
             session.execute(text(query)).all()
         return True
-    except (ProgrammingError, OperationalError) as exc:
+    except (ProgrammingError, OperationalError, InternalError) as exc:
         logger.info(f"Query validation failed\n{str(exc)}")
         return False
