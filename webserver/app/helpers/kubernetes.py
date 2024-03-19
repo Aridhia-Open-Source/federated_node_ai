@@ -189,6 +189,10 @@ class KubernetesBase:
         )
         try:
             self.create_persistent_volume(body=pv)
+        except ApiException as kexc:
+            if kexc.status != 409:
+                raise KubernetesException(kexc.body)
+        try:
             self.create_namespaced_persistent_volume_claim(namespace=TASK_NAMESPACE, body=pvc)
         except ApiException as kexc:
             if kexc.status != 409:
