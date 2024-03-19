@@ -4,20 +4,14 @@
 {{- end }}
 {{- end }}
 
+{{- range list .Release.Namespace .Values.namespaces.tasks }}
 kind: Secret
 apiVersion: v1
 metadata:
   name: regcred
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ . }}
 data:
   .dockerconfigjson: {{ template "imagePullSecret" . }}
 type: kubernetes.io/dockerconfigjson
 ---
-kind: Secret
-apiVersion: v1
-metadata:
-  name: regcred
-  namespace: tasks
-data:
-  .dockerconfigjson: {{ template "imagePullSecret" . }}
-type: kubernetes.io/dockerconfigjson
+{{- end }}
