@@ -72,5 +72,5 @@ jobs:
         with:
           context: webserver
           file: webserver/build/Dockerfile
-          tags: ${{ env.DOCKER_ACR }}/${{ github.repository_owner }}/federated_node_run:${{ vars.VERSION }}
+          tags: ${{ vars.DOCKER_ACR }}/${{ github.repository_owner }}/federated_node_run:${{ vars.VERSION }}
           push: true
