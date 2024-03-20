@@ -9,8 +9,6 @@ on:
   pull_request:
     branches:
       - main
-env:
-  DOCKER_ACR: docker-dev.aridhia.net
 jobs:
   linters:
     defaults:
