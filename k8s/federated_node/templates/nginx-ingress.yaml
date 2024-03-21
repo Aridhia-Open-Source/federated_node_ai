@@ -11,7 +11,7 @@ metadata:
     nginx.ingress.kubernetes.io/denylist-source-range: {{ join "," .Values.ingress.blacklist.ips | quote }}
     {{- end }}
 spec:
-  ingressClassName: nginx
+  ingressClassName: fn-nginx
   tls:
   - hosts:
     - {{ .Values.ingress.host }}
