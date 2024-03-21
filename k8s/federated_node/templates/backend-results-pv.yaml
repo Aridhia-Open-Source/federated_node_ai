@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: flask-results-pv
+  name: results-pv
 spec:
   storageClassName: shared-results
   accessModes:
@@ -17,15 +17,16 @@ spec:
     required:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: kubernetes.io/hostname
+        - key: kubernetes.io/os
           operator: In
           values:
-          - federatednode
+          - linux
   {{ else if .Values.storage.azure }}
   azureFile:
+    shareName: {{ .Values.storage.azure.shareName }}/results
+    readOnly: false
     secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
-    shareName: results
-  {{ else if .Values.storage.aws }}
+  {{ else if .Values.storage.nfs }}
   {{ end }}
 ---
 apiVersion: v1
@@ -35,7 +36,7 @@ metadata:
   namespace: {{ .Release.namespace }}
 spec:
   storageClassName: shared-results
-  volumeName: flask-results-pv
+  volumeName: results-pv
   resources:
     requests:
       storage: 100Mi

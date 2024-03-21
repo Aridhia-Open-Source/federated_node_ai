@@ -1,25 +1,53 @@
+{{ if not .Values.db.host }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: db-pv
 spec:
+  storageClassName: db-storage
   accessModes:
     - ReadWriteMany
   capacity:
     storage: 100Mi
   # This should be changed to some more reliable destination
-  hostPath:
+  {{ if .Values.storage.local }}
+  local:
     path: /data/db/
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+  {{ else if .Values.storage.azure }}
+  azureFile:
+    shareName: {{ .Values.storage.azure.shareName }}/db
+    readOnly: false
+    secretName: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+  mountOptions:
+  - dir_mode=0750
+  - file_mode=0750
+  - uid=70
+  - gid=70
+  - mfsymlinks
+  - nobrl
+  {{ else if .Values.storage.nfs }}
+  {{ end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: db-volclaim
+  namespace: {{ .Release.namespace }}
 spec:
+  storageClassName: db-storage
+  # This should be changed to some more reliable destination
+  volumeName: db-pv
   resources:
     requests:
       storage: 100Mi
-  # This should be changed to some more reliable destination
-  volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
+{{ end }}
