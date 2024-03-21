@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ingress-nginx
+  name: {{ .Values.namespaces.nginx }}
   annotations:
     "helm.sh/hook": pre-install
 ---
@@ -31,7 +31,7 @@ metadata:
     app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
-  name: ingress-nginx
+  name: fn-ingress-nginx
   namespace: {{ .Values.namespaces.nginx }}
 automountServiceAccountToken: true
 ---
@@ -64,7 +64,7 @@ metadata:
     app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/managed-by: Helm
-  name: ingress-nginx
+  name: fn-ingress-nginx
 rules:
   - apiGroups:
       - ""
@@ -148,14 +148,14 @@ metadata:
     app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/managed-by: Helm
-  name: ingress-nginx
+  name: fn-ingress-nginx
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: ingress-nginx
+  name: fn-ingress-nginx
 subjects:
   - kind: ServiceAccount
-    name: ingress-nginx
+    name: fn-ingress-nginx
     namespace: {{ .Values.namespaces.nginx }}
 ---
 # Source: ingress-nginx/templates/controller-role.yaml
@@ -270,7 +270,7 @@ roleRef:
   name: ingress-nginx
 subjects:
   - kind: ServiceAccount
-    name: ingress-nginx
+    name: fn-ingress-nginx
     namespace: {{ .Values.namespaces.nginx }}
 ---
 # Source: ingress-nginx/templates/controller-service-webhook.yaml
@@ -451,7 +451,7 @@ spec:
               memory: 90Mi
       nodeSelector:
         kubernetes.io/os: linux
-      serviceAccountName: ingress-nginx
+      serviceAccountName: fn-ingress-nginx
       terminationGracePeriodSeconds: 300
       volumes:
         - name: webhook-cert
@@ -471,7 +471,8 @@ metadata:
     app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: controller
-  name: nginx
+  name: fn-nginx
+  namespace: {{ .Release.Namespace }}
 spec:
   controller: k8s.io/ingress-nginx
 ---
@@ -490,6 +491,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/component: admission-webhook
   name: ingress-nginx-admission
+  namespace: {{ .Release.Namespace }}
 webhooks:
   - name: validate.nginx.ingress.kubernetes.io
     matchPolicy: Equivalent

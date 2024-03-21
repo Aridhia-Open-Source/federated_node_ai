@@ -166,16 +166,27 @@ class KubernetesBase:
         Function to dynamically create (if doesn't already exist)
         a PV and its PVC
         """
+        pv_spec = client.V1PersistentVolumeSpec(
+            access_modes=['ReadWriteMany'],
+            capacity={"storage": "100Mi"},
+            storage_class_name="shared-results"
+        )
+        if os.getenv("AZURE_STORAGE_ENABLED"):
+            pv_spec.csi=client.V1AzureFilePersistentVolumeSource(
+                read_only=False,
+                secret_name=os.getenv("AZURE_SHARE_NAME"),
+                share_name=os.getenv("AZURE_SECRET_NAME")
+            )
+        else:
+            pv_spec.host_path=client.V1HostPathVolumeSource(
+                path=f"/data/{name}"
+            )
+
         pv = client.V1PersistentVolume(
             api_version='v1',
             kind='PersistentVolume',
             metadata=client.V1ObjectMeta(name=name, namespace=TASK_NAMESPACE),
-            spec=client.V1PersistentVolumeSpec(
-                access_modes=['ReadWriteMany'],
-                capacity={"storage": "100Mi"},
-                host_path=client.V1HostPathVolumeSource(path=f"/data/{name}"),
-                storage_class_name="shared-results"
-            )
+            spec=pv_spec
         )
 
         pvc = client.V1PersistentVolumeClaim(
