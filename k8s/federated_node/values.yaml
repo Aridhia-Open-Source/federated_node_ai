@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: federated_node_run
+  repository: ghcr.io/aridhia/federated_node_run
   tag: 0.0.1
   pullPolicy: IfNotPresent
 
@@ -21,6 +21,13 @@ db:
   user:
   password:
   name:
+  host:
+  # If a configmap with host user exists, use that
+  configMap:
+  # If a secret with password exists, use that
+  secret:
+    name:
+    key:
 
 federatedNode:
   port: 5000
@@ -37,6 +44,7 @@ storage:
     # secretName:
     # storageAccountName:
     # storageAccountKey:
+    # shareName:
   nfs:
     # provisioner:
     # url:

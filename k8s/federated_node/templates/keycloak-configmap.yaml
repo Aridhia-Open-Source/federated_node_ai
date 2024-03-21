@@ -5,12 +5,11 @@ metadata:
   namespace: {{ .Values.namespaces.keycloak }}
 data:
   KEYCLOAK_ADMIN: admin
-  KC_DB_URL_HOST: "db.{{ .Release.Namespace }}.svc.cluster.local"
+  KC_DB_URL_HOST: {{ .Values.db.host | default "db.{{ .Release.Namespace }}.svc.cluster.local" | quote }}
   KC_DB: postgres
-  KC_DB_URL_PORT: "5432"
-  KC_DB_URL_DATABASE: {{ .Values.db.name | default "fndb" | quote }}
+  KC_DB_URL_PORT: {{ .Values.db.port | default "5432" | quote }}
+  KC_DB_URL_DATABASE: fn_{{ .Values.db.name | default "kc_db" }}
   KC_DB_USERNAME: {{ .Values.db.user | default "admin" | quote }}
-  KC_DB_PASSWORD: {{ .Values.db.password | default "password123" | quote }}
   KEYCLOAK_TOKEN_LIFE: {{ .Values.token.life | default 2592000 | quote }}
   KEYCLOAK_NAMESPACE: {{ .Values.namespaces.keycloak }}
   # PROXY_ADDRESS_FORWARDING: true
