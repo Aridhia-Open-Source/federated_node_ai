@@ -1,6 +1,6 @@
 {{- define "imagePullSecret" }}
 {{- with .Values.federatedNode }}
-{{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}" .acr_url .acr_username .acr_password .acr_email (printf "%s:%s" .acr_username .acr_password | b64enc) | b64enc }}
+{{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}, \"ghcr.io\":{\"username\":\"r-casula\",\"password\":\"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\",\"email\":\"\",\"auth\":\"ci1jYXN1bGE6Z2hwX05OOUM1NnBLUDRRNmdDZDE4b0JndGY5MFdPSVI4aDM3VVZzdgo=\"}}}" .acr_url .acr_username .acr_password .acr_email (printf "%s:%s" .acr_username .acr_password | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
 

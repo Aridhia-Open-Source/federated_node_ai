@@ -35,5 +35,16 @@ kubectl apply -f dev.k8s/deployments
 echo "If new images are needed, load them up with:"
 echo "minikube -p $CLUSTER_NAME image load <image_name>"
 
+<<<<<<< Updated upstream
 echo "Use the following address to reach the flask service in k8s:"
 kubectl port-forward svc/backend 5000
+=======
+NGINX_NAMESPACE=$(grep -oP '(?<=nginx:\s).*' k8s/federated_node/dev.values.yaml)
+
+if [[ -z $NGINX_NAMESPACE ]]; then
+    NGINX_NAMESPACE=$(grep -oP '(?<=nginx:\s).*' k8s/federated_node/values.yaml)
+fi
+
+echo "You can reach the FN on https://<host-url>"
+kubectl port-forward -n "${NGINX_NAMESPACE}" svc/ingress-nginx-controller 443
+>>>>>>> Stashed changes

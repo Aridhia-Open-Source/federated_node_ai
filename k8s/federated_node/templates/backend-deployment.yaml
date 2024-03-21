@@ -31,6 +31,21 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-configmap
+            {{ if .Values.db.configMap }}
+            - configMapRef:
+                name: {{ .Values.db.configMap }}
+            {{ end }}
+          env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                {{ if .Values.db.secret }}
+                name: {{.Values.db.secret.name}}
+                key: {{.Values.db.secret.key}}
+                {{else}}
+                name: backend-secrets
+                key: PGPASSWORD
+                {{ end }}
       containers:
         - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           name: backend
@@ -60,6 +75,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-configmap
+            {{ if .Values.db.configMap }}
+            - configMapRef:
+                name: {{ .Values.db.configMap }}
+            {{ end }}
             - configMapRef:
                 name: keycloak-config
           env:
@@ -67,6 +86,16 @@ spec:
             value: {{ .Values.federatedNode.volumes.results_path }}
           - name: TASK_POD_RESULTS_PATH
             value: {{ .Values.federatedNode.volumes.task_pod_results_path }}
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                {{ if .Values.db.secret }}
+                name: {{.Values.db.secret.name}}
+                key: {{.Values.db.secret.key}}
+                {{else}}
+                name: backend-secrets
+                key: PGPASSWORD
+                {{ end }}
           - name: KEYCLOAK_SECRET
             valueFrom:
               secretKeyRef:
