@@ -156,23 +156,6 @@ def k8s_client_task(mocker, k8s_config):
         return_value=MockKubernetesClient()
     )
 
-# Query validators
-@pytest.fixture(scope="function", autouse=False)
-def query_validator(mocker):
-    mocker.patch(
-        'app.models.task.validate_query',
-        return_value=True,
-        autospec=True
-    )
-
-@pytest.fixture(scope="function", autouse=False)
-def query_invalidator(mocker):
-    mocker.patch(
-        'app.models.task.validate_query',
-        return_value=False,
-        autospec=True
-    )
-
 # ACR mocking
 @pytest.fixture()
 def acr_client(mocker):

@@ -374,7 +374,6 @@ class TestDatasets:
     def test_post_dataset_with_dictionaries_only(
             self,
             post_json_admin_header,
-            query_validator,
             dataset,
             client,
             dataset_post_body
