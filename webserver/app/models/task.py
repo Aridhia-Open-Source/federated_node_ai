@@ -14,7 +14,6 @@ from app.helpers.acr import ACRClient
 from app.helpers.db import BaseModel, db
 from app.helpers.keycloak import Keycloak
 from app.helpers.kubernetes import TASK_NAMESPACE, KubernetesBatchClient, KubernetesClient
-from app.helpers.query_validator import validate as validate_query
 from app.helpers.exceptions import DBError, InvalidRequest, TaskImageException, TaskExecutionException
 from app.models.dataset import Dataset
 

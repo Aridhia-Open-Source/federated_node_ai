@@ -1,4 +1,4 @@
-{{ if not .Values.db.host }}
+{{ if and (not .Values.db.secret) (not .Values.db.configMap) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:

@@ -46,6 +46,7 @@ class KubernetesBase:
 
         vol_mount = client.V1VolumeMount(
             mount_path=pod_spec["mount_path"],
+            sub_path=pod_spec['labels']['task_id'],
             name="data"
         )
         container = client.V1Container(
@@ -61,10 +62,13 @@ class KubernetesBase:
         pvc = client.V1PersistentVolumeClaimVolumeSource(claim_name=pvc_name)
 
         specs = client.V1PodSpec(
+            init_containers=[self.get_task_pod_init_container(pod_spec['labels']['task_id'])],
             containers=[container],
             image_pull_secrets=secrets,
             restart_policy="Never",
-            volumes=[client.V1Volume(name="data", persistent_volume_claim=pvc)]
+            volumes=[
+                client.V1Volume(name="data", persistent_volume_claim=pvc)
+            ]
         )
         metadata = client.V1ObjectMeta(
             name=pod_spec["name"],
@@ -131,6 +135,26 @@ class KubernetesBase:
             spec=specs
         )
 
+    def get_task_pod_init_container(self, task_id:str):
+        """
+        This will return a common spec for initContainer
+        fot analytics tasks.
+        The aim is to prepare the PV task-dedicated folder
+        so the whole volume is not exposed
+        """
+        mount_path = "/mnt/vol"
+
+        vol_mount = client.V1VolumeMount(
+            mount_path=mount_path,
+            name="data"
+        )
+        return client.V1Container(
+            name=f"init-{task_id}",
+            image="alpine:3.19",
+            volume_mounts=[vol_mount],
+            command=["mkdir", "-p", f"{mount_path}/{task_id}"]
+        )
+
     def delete_pod(self, name:str, namespace=TASK_NAMESPACE):
         """
         Given a pod name, delete it. If it doesn't exist
@@ -165,6 +189,7 @@ class KubernetesBase:
         """
         Function to dynamically create (if doesn't already exist)
         a PV and its PVC
+        :param name: is the PV name and PVC prefix
         """
         pv_spec = client.V1PersistentVolumeSpec(
             access_modes=['ReadWriteMany'],
@@ -174,8 +199,8 @@ class KubernetesBase:
         if os.getenv("AZURE_STORAGE_ENABLED"):
             pv_spec.csi=client.V1AzureFilePersistentVolumeSource(
                 read_only=False,
-                secret_name=os.getenv("AZURE_SHARE_NAME"),
-                share_name=os.getenv("AZURE_SECRET_NAME")
+                secret_name=os.getenv("AZURE_SECRET_NAME"),
+                share_name=os.getenv("AZURE_SHARE_NAME")
             )
         else:
             pv_spec.host_path=client.V1HostPathVolumeSource(
@@ -195,6 +220,8 @@ class KubernetesBase:
             metadata=client.V1ObjectMeta(name=f"{name}-volclaim", namespace=TASK_NAMESPACE),
             spec=client.V1PersistentVolumeClaimSpec(
                 access_modes=['ReadWriteMany'],
+                volume_name=name,
+                storage_class_name="shared-results",
                 resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"})
             )
         )
