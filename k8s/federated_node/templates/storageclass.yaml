@@ -17,6 +17,7 @@ parameters:
   path: {{ .Values.storage.nfs.path -}}
   readOnly: "false"
 {{- end -}}
+{{ if .Values.storage.azure }}
 {{ if not .Values.storage.azure.host }}
 ---
 apiVersion: storage.k8s.io/v1
@@ -25,7 +26,7 @@ metadata:
   name: db-storage
 {{ if .Values.storage.local }}
 provisioner: Local
-{{- else if .Values.storage.azure -}}
+{{ else if .Values.storage.azure }}
 provisioner: disk.csi.azure.com
 parameters:
   protocol: nfs
@@ -37,5 +38,6 @@ mountOptions:
   - actimeo=30
   - rsize=262144
   - wsize=262144
-{{- end -}}
-{{- end -}}
+{{ end }}
+{{ end }}
+{{ end }}
