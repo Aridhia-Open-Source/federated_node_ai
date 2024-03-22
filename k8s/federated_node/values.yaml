@@ -39,6 +39,18 @@ federatedNode:
     results_path: /mnt/results
     task_pod_results_path: /mnt/data
 
+# Base to support multiple ACRs. This is for regcreds initially. Will be
+# expanded to the flask docker lookup in a second instance
+acrs:
+  - url: other
+    password: gageawgweag
+    username: test2
+    email: c
+  - url: some
+    password: asohasofihasohf
+    username: user2
+    email: c
+
 storage:
   azure:
     # secretName:

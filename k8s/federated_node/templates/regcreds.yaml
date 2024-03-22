@@ -1,7 +1,9 @@
 {{- define "imagePullSecret" }}
-{{- with .Values.federatedNode }}
-{{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}" .acr_url .acr_username .acr_password .acr_email (printf "%s:%s" .acr_username .acr_password | b64enc) | b64enc }}
-{{- end }}
+{{- $content := "" -}}
+  {{- range $v := .Values.acrs -}}
+    {{- $content = (printf "%s\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}," $content $v.url $v.username $v.password $v.email (printf "%s:%s" $v.username $v.password | b64enc)) -}}
+  {{- end }}
+{{- printf "{\"auths\":{ %s }}" (trimSuffix "," $content) | b64enc -}}
 {{- end }}
 
 {{- range list .Release.Namespace .Values.namespaces.tasks }}
