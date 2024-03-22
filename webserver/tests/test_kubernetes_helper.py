@@ -25,7 +25,9 @@ def pod_dict():
     return {
         "name": "pod_name",
         "image": "image",
-        "labels": {},
+        "labels": {
+            "task_id": 1
+        },
         "command": "cmd",
         "mount_path": "/mnt"
     }
