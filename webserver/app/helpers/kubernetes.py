@@ -197,7 +197,7 @@ class KubernetesBase:
             storage_class_name="shared-results"
         )
         if os.getenv("AZURE_STORAGE_ENABLED"):
-            pv_spec.csi=client.V1AzureFilePersistentVolumeSource(
+            pv_spec.azure_file=client.V1AzureFilePersistentVolumeSource(
                 read_only=False,
                 secret_name=os.getenv("AZURE_SECRET_NAME"),
                 share_name=os.getenv("AZURE_SHARE_NAME")

@@ -2,6 +2,7 @@
   "realm": "FederatedNode",
   "enabled": true,
   "registrationEmailAsUsername": false,
+  "offlineSessionIdleTimeout": "${KEYCLOAK_TOKEN_LIFE}",
   "ssoSessionMaxLifespan": "${KEYCLOAK_TOKEN_LIFE}",
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
@@ -156,6 +157,9 @@
         "/*"
       ],
       "webOrigins": ["+"],
+      "attributes": {
+        "client.session.idle.timeout": "${KEYCLOAK_TOKEN_LIFE}"
+      },
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,

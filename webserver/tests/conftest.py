@@ -196,14 +196,27 @@ def acr_client_404(mocker):
             has_image_metadata=Mock(return_value=False)
         )
     )
+@pytest.fixture
+def acr_name():
+    return "acr.azurecr.io"
+
+@pytest.fixture
+def acr_config(acr_name):
+    return {
+        acr_name: {"username": "user", "password": "pass"}
+    }
+
+@pytest.fixture
+def acr_json_loader(mocker, acr_config):
+    return mocker.patch(
+    'app.helpers.acr.json',
+    load=Mock(return_value=acr_config)
+)
 
 @pytest.fixture()
-def acr_class():
-    return ACRClient(
-        os.getenv("ACR_URL"),
-        os.getenv("ACR_USERNAME"),
-        os.getenv("ACR_PASSWORD"),
-    )
+def acr_class(mocker, acr_json_loader):
+    mocker.patch('app.helpers.acr.open')
+    return ACRClient()
 
 # Dataset Mocking
 @pytest.fixture(scope='function')
