@@ -85,5 +85,6 @@ services:
       KEYCLOAK_URL:
       TASK_NAMESPACE:
       KEYCLOAK_NAMESPACE:
+      FLASK_APP: .
 volumes:
   data:
