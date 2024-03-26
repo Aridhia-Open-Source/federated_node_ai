@@ -17,6 +17,9 @@ namespaces:
   nginx: ingress-nginx
   tasks: tasks
 
+# token:
+#   life:
+
 db:
   user:
   password:
@@ -38,6 +41,14 @@ federatedNode:
   volumes:
     results_path: /mnt/results
     task_pod_results_path: /mnt/data
+
+# Base to support multiple ACRs. This is for regcreds initially. Will be
+# expanded to the flask docker lookup in a second instance
+acrs:
+  - url:
+    password:
+    username:
+    email:
 
 storage:
   azure:
