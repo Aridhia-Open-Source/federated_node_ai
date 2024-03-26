@@ -30,7 +30,7 @@ services:
       - db
     environment:
       KC_HEALTH_ENABLED: true
-      KC_DB_URL_HOST: ${PGHOST}
+      KC_DB_URL_HOST: db
       KC_DB: postgres
       KC_DB_URL_PORT: ${PGPORT}
       KC_DB_URL_DATABASE: ${PGDATABASE}
@@ -77,8 +77,6 @@ services:
       PGPASSWORD:
       PYTHONPATH: /app
       ACR_URL:
-      ACR_USERNAME:
-      ACR_PASSWORD:
       RESULTS_PATH:
       TASK_POD_RESULTS_PATH:
       KEYCLOAK_ADMIN:

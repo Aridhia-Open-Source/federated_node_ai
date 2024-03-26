@@ -1,0 +1,14 @@
+{{- define "acrList" }}
+{{- $content := dict -}}
+  {{- range $v := .Values.acrs -}}
+    {{ $content = merge $content (dict $v.url (dict "username" $v.username "password" $v.password "email" $v.email "auth" (printf "%s:%s" $v.username $v.password | b64enc))) }}
+  {{- end }}
+  acrlist.json: {{ $content | toJson | b64enc | quote }}
+{{- end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-acr-config-secret
+  namespace: {{ .Release.Namespace }}
+data:
+  {{ template "acrList" . }}

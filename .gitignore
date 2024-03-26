@@ -7,10 +7,10 @@ __pycache__/
 
 .env
 *.env
+k8s/federated_node/*.values.yaml
 *.crt
 *.key
-k8s/federated_node/dev.values.yaml
-dev_script.sh
 
 # Ingore helm charts archives
 artifacts/*.tgz
+webserver/app/acr/*.json

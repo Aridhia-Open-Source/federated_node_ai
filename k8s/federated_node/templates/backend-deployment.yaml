@@ -119,9 +119,17 @@ spec:
           volumeMounts:
             - name: respv
               mountPath: {{ .Values.federatedNode.volumes.results_path }}
+            - name: acr-list
+              mountPath: /app/acr/
       imagePullSecrets:
         - name: regcred
       volumes:
         - name: respv
           persistentVolumeClaim:
             claimName: flask-results-pv-volclaim
+        - name: acr-list
+          secret:
+            secretName: backend-acr-config-secret
+            items:
+            - key: acrlist.json
+              path: acrlist.json

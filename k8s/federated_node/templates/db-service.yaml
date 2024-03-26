@@ -1,3 +1,4 @@
+{{ if and (not .Values.db.secret) (not .Values.db.configMap) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,3 +12,4 @@ spec:
       protocol: TCP
   selector:
     app: postgres
+{{ end }}
