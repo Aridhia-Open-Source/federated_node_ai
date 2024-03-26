@@ -3,17 +3,17 @@
   {{- range $v := .Values.acrs -}}
     {{- $content = (printf "%s\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}," $content $v.url $v.username $v.password $v.email (printf "%s:%s" $v.username $v.password | b64enc)) -}}
   {{- end }}
-{{- printf "{\"auths\":{ %s }}" (trimSuffix "," $content) | b64enc -}}
+  .dockerconfigjson: {{ printf "{\"auths\":{ %s }}" (trimSuffix "," $content) | b64enc }}
 {{- end }}
 
-{{- range list .Release.Namespace .Values.namespaces.tasks }}
+{{- range list .Release.Namespace .Values.namespaces.tasks -}}
 kind: Secret
 apiVersion: v1
 metadata:
   name: regcred
   namespace: {{ . }}
 data:
-  .dockerconfigjson: {{ template "imagePullSecret" $ }}
+  {{ template "imagePullSecret" $ }}
 type: kubernetes.io/dockerconfigjson
 ---
-{{- end }}
+{{- end -}}

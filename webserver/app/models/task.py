@@ -80,7 +80,7 @@ class Task(db.Model, BaseModel):
         ds_id = data.get("tags", {}).get("dataset_id")
         data["dataset"] = db.session.get(Dataset, ds_id)
 
-        if not re.match(r'^((\w+|-)\/?\w+)+:(\w+(\.|-)?)+$', data["docker_image"]):
+        if not re.match(r'^((\w+|-|\.)\/?+)+:(\w+(\.|-)?)+$', data["docker_image"]):
             raise InvalidRequest(
                 f"{data["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
             )
@@ -92,14 +92,7 @@ class Task(db.Model, BaseModel):
         """
         Looks through the ACR if the image exists
         """
-        acr_url = os.getenv('ACR_URL')
-        acr_username = os.getenv('ACR_USERNAME')
-        acr_password = os.getenv('ACR_PASSWORD')
-        auth_config = {
-            "username": acr_username,
-            "password": acr_password
-        }
-        acr_client = ACRClient(url=acr_url, **auth_config)
+        acr_client = ACRClient()
         if not acr_client.has_image_metadata(docker_image):
             raise TaskImageException(f"Image {docker_image} not found on our repository")
 
