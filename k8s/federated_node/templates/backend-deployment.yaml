@@ -19,6 +19,12 @@ spec:
     spec:
       serviceAccountName: secret-backend-handler
       initContainers:
+        {{ template "createDBInitContainer" .}}
+          - name: NEW_DB
+            valueFrom:
+              configMapKeyRef:
+                name: backend-configmap
+                key: PGDATABASE
         - name: db-migrations
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           command: ["/bin/sh"]
@@ -133,3 +139,4 @@ spec:
             items:
             - key: acrlist.json
               path: acrlist.json
+        {{ template "dbInitVolume" . }}

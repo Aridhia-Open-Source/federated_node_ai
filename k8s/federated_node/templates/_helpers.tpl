@@ -60,3 +60,50 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Common db initializer, to use as element of initContainer
+Just need to append the NEW_DB env var
+*/}}
+{{- define "createDBInitContainer" -}}
+        - image: alpine
+          name: dbinit
+          command: [
+            'sh', '-c', '/scripts/dbinit.sh'
+          ]
+          volumeMounts:
+            - name: db-init
+              mountPath: /scripts/dbinit.sh
+              subPath: dbinit.sh
+          env:
+          - name: PGUSER
+            valueFrom:
+              configMapKeyRef:
+                name: keycloak-config
+                key: KC_DB_USERNAME
+          - name: PGHOST
+            valueFrom:
+              configMapKeyRef:
+                name: keycloak-config
+                key: KC_DB_URL_HOST
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                {{ if .Values.db.secret }}
+                name: {{.Values.db.secret.name}}
+                key: {{.Values.db.secret.key}}
+                {{ else }}
+                name: kc-secrets
+                key: KC_DB_PASSWORD
+                {{ end }}
+{{- end -}}
+
+{{- define "dbInitVolume" -}}
+        - name: db-init
+          configMap:
+            name: db-initializer-configmap
+            defaultMode: 0777
+            items:
+            - key: dbinit.sh
+              path: dbinit.sh
+{{- end -}}
