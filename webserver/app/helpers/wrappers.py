@@ -1,4 +1,4 @@
-import re
+import logging
 from functools import wraps
 from flask import request
 from sqlalchemy import text
@@ -8,6 +8,9 @@ from app.helpers.keycloak import Keycloak
 from app.helpers.exceptions import AuthenticationError, DBRecordNotFoundError
 from app.models.audit import Audit
 
+
+logger = logging.getLogger('wrappers')
+logger.setLevel(logging.INFO)
 
 def auth(scope:str, check_dataset=True):
     def auth_wrapper(func):
@@ -59,10 +62,9 @@ def audit(func):
     def _audit(*args, **kwargs):
 
         response_object, http_status = func(*args, **kwargs)
-
-        if 'HTTP_X_FORWARDED_FOR' in request.environ:
+        if 'HTTP_X_REAL_IP' in request.environ:
             # if behind a proxy
-            source_ip = request.environ['HTTP_X_FORWARDED_FOR']
+            source_ip = request.environ['HTTP_X_REAL_IP']
         else:
             source_ip = request.environ['REMOTE_ADDR']
 
