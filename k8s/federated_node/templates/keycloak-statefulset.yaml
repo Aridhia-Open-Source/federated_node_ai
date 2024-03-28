@@ -14,10 +14,17 @@ spec:
       labels:
         app: keycloak
     spec:
+      initContainers:
+        {{ template "createDBInitContainer" .}}
+          - name: NEW_DB
+            valueFrom:
+              configMapKeyRef:
+                name: keycloak-config
+                key: KC_DB_URL_DATABASE
       containers:
         - image: quay.io/keycloak/keycloak:23.0.4
           args: [
-            "start-dev",
+            "start",
             "--import-realm",
             "--features=preview",
             "--http-enabled=true",
@@ -65,6 +72,9 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /opt/keycloak/data/import/
+            - name: quarkus
+              mountPath: /opt/keycloak/conf/quarkus.properties
+              subPath: quarkus.properties
       volumes:
         - name: config
           configMap:
@@ -72,3 +82,16 @@ spec:
             items:
             - key: config.json
               path: config.json
+        - name: quarkus
+          configMap:
+            name: keycloak-start-config
+            items:
+            - key: quarkus.properties
+              path: quarkus.properties
+        - name: db-init
+          configMap:
+            name: keycloak-start-config
+            defaultMode: 0777
+            items:
+            - key: dbinit.sh
+              path: dbinit.sh
