@@ -66,11 +66,15 @@ jobs:
           registry: ${{ vars.DOCKER_ACR }}
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKER_TOKEN }}
-
+      - name: set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: webserver
           file: webserver/build/Dockerfile
-          tags: ${{ vars.DOCKER_ACR }}/${{ github.repository_owner }}/federated_node_run:${{ vars.VERSION }}
+          tags: ${{ vars.DOCKER_ACR }}/${{ env.OWNER_LC }}/federated_node_run:${{ vars.VERSION }}
           push: true
