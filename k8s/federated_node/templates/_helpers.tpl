@@ -107,3 +107,11 @@ Just need to append the NEW_DB env var
             - key: dbinit.sh
               path: dbinit.sh
 {{- end -}}
+
+{{- define "randomPass" -}}
+{{ randAlphaNum 24 | b64enc | quote }}
+{{- end -}}
+
+{{- define "randomSecret" -}}
+{{ randAlphaNum 24 | b64enc | quote }}
+{{- end -}}

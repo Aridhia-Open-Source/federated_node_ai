@@ -8,6 +8,8 @@ data:
 {{ .Files.Get "scripts/realms.json" | indent 4 }}
   setup_realm.py: |-
 {{ .Files.Get "scripts/job_init.py" | indent 4 }}
+  init_credentials.py: |-
+{{ .Files.Get "scripts/init_credentials.py" | indent 4 }}
   quarkus.properties: |-
     quarkus.transaction-manager.enable-recovery=true
   dbinit.sh: |-
