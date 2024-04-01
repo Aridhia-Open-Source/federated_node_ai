@@ -21,7 +21,8 @@ jobs:
     - name: Publish Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "artifacts/*.tgz"
+        artifacts: "federated_node-${{ vars.VERSION }}.tgz"
+        tag: ${{ vars.VERSION }}
     - name: Push to GitLab Package Artifact
       run: |
         curl --request POST \
