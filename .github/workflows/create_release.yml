@@ -4,6 +4,9 @@ on:
   push:
     tags:
     - '*'
+    # To remove before merging
+    branches:
+      - FN-5
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -18,3 +21,9 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         artifacts: "artifacts/*.tgz"
+    - name: Push to GitLab Package Artifact
+      run: |
+        curl --request POST \
+        --form 'chart=@federated_node-${{ vars.VERSION }}.tgz' \
+        --user r-casula:${{ secrets.HELM_TOKEN }} \
+        https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/api/devel/charts
