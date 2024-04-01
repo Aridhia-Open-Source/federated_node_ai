@@ -23,9 +23,11 @@ jobs:
       with:
         artifacts: "artifacts/federated_node-${{ vars.VERSION }}.tgz"
         tag: ${{ vars.VERSION }}
+        skipIfReleaseExists: true
     - name: Push to GitLab Package Artifact
       run: |
         curl --request POST \
-        --form 'chart=@artifacts/federated_node-${{ vars.VERSION }}.tgz' \
-        --user r-casula:${{ secrets.HELM_TOKEN }} \
-        https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/api/devel/charts
+          --form 'chart=@artifacts/federated_node-${{ vars.VERSION }}.tgz' \
+          --user r-casula:${{ secrets.HELM_TOKEN }} \
+          https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/api/devel/charts
+        exit $?
