@@ -20,11 +20,8 @@ jobs:
         helm package . -d ../../artifacts/ --app-version ${{ vars.VERSION }}
     - name: Push to GitLab Package Artifact
       run: |
-        curl --request POST \
-          --form 'chart=@artifacts/federated-node-${{ vars.VERSION }}.tgz' \
-          --user r-casula:${{ secrets.HELM_TOKEN }} \
-          https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/api/devel/charts
-        exit $?
+        echo ${{ secrets.HELM_TOKEN }} | helm registry login -u ${{ vars.USER_HELM }} ${{ vars.HELM_REPO }} --password-stdin
+        helm push ../../artifacts/federated-node-${{ vars.VERSION }}.tgz oci://$CI_REGISTRY/aridhia/federated-node
     - name: Publish Release
       uses: ncipollo/release-action@v1
       with:
