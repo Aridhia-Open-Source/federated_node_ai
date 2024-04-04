@@ -18,10 +18,10 @@ class LogAndException(HTTPException):
             self.code = code
 
 class InvalidDBEntry(HTTPException):
-    code = 500
+    code = 400
 
 class DBError(HTTPException):
-    code = 500
+    code = 400
 
 class DBRecordNotFoundError(HTTPException):
     code = 404
