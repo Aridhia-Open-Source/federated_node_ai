@@ -28,13 +28,11 @@ class Task(db.Model, BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(256), nullable=False)
     docker_image = Column(String(256), nullable=False)
-    description = Column(String(2048))
-    status = Column(String(64), default='scheduled')
+    description = Column(String(4096))
+    status = Column(String(256), default='scheduled')
     created_at = Column(DateTime(timezone=False), server_default=func.now())
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
-
-    # This will be a FK or a Keycloak UUID. Something to track a user
-    requested_by = Column(String(64), nullable=False)
+    requested_by = Column(String(256), nullable=False)
     dataset_id = Column(Integer, ForeignKey(Dataset.id, ondelete='CASCADE'))
     dataset = relationship("Dataset")
 
