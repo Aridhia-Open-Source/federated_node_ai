@@ -1,15 +1,16 @@
 name: Releases
 
 on:
-  # push:
-  #   tags:
-  #   - '*'
-  #   # To remove before merging
+  push:
+    tags:
+    - '*'
+    # To remove before merging
   #   branches:
   #     - FN-5
   workflow_run:
     workflows:
-      "Build Docker Image"
+      Build Docker Image
+    # To remove before merging
     branches:
       FN-5
     types:
