@@ -27,7 +27,7 @@ jobs:
     - name: Push to GitLab Package Artifact
       run: |
         echo ${{ secrets.HELM_TOKEN }} | helm registry login -u ${{ vars.USER_HELM }} ${{ vars.HELM_REPO }} --password-stdin
-        helm push artifacts/federated-node-${{ vars.VERSION }}.tgz oci://$CI_REGISTRY/aridhia/federated-node
+        helm push artifacts/federated-node-${{ vars.VERSION }}.tgz oci://${{ vars.HELM_REPO }}/aridhia/federated-node
     - name: Publish Release
       uses: ncipollo/release-action@v1
       with:
