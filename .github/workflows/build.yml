@@ -72,10 +72,17 @@ jobs:
           echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
         env:
           OWNER: '${{ github.repository_owner }}'
-      - name: Build and push
+      - name: Build and push Flask image
         uses: docker/build-push-action@v5
         with:
           context: webserver
           file: webserver/build/Dockerfile
           tags: ${{ vars.DOCKER_ACR }}/${{ env.OWNER_LC }}/federated_node_run:${{ vars.VERSION }}
+          push: true
+      - name: Build and push Keycloak image
+        uses: docker/build-push-action@v5
+        with:
+          context: build/keycloak
+          file: build/keycloak/keycloak.Dockerfile
+          tags: ${{ vars.DOCKER_ACR }}/${{ env.OWNER_LC }}/federated_keycloak:${{ vars.VERSION }}
           push: true
