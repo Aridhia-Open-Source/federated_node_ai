@@ -14,3 +14,6 @@ dashboard:
 
 chart:
 	helm package k8s/federated_node -d artifacts/
+
+build_keycloak:
+	docker build build/keycloak -f build/keycloak/keycloak.Dockerfile -t ghcr.io/arihdia-federated-node/federated_keycloak:0.0.1

@@ -6,7 +6,7 @@
   .dockerconfigjson: {{ printf "{\"auths\":{ %s }}" (trimSuffix "," $content) | b64enc }}
 {{- end }}
 
-{{- range list .Release.Namespace .Values.namespaces.tasks -}}
+{{- range list .Release.Namespace .Values.namespaces.tasks .Values.namespaces.keycloak -}}
 kind: Secret
 apiVersion: v1
 metadata:

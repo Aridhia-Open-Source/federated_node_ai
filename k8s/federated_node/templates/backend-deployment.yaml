@@ -128,7 +128,7 @@ spec:
             - name: acr-list
               mountPath: /app/acr/
       imagePullSecrets:
-        - name: regcred
+        - name: {{ .Values.imagePullSecrets }}
       volumes:
         - name: respv
           persistentVolumeClaim:
