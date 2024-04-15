@@ -86,7 +86,7 @@ class ACRClient:
             "image_no_org": image_name.split("/")[1] if "/" in image_name else image_name
         }
 
-    def has_image_metadata(self, image:str) -> bool:
+    def find_image_repo(self, image:str) -> bool:
         """
         Works as an existence check. If the tag for the image
         has the requested tag in the list of available tags
@@ -117,8 +117,9 @@ class ACRClient:
         if not tags_list:
             return False
 
+        full_image = f"{acr}/{image}"
         if "results" in tags_list:
-            return tag in [t["name"] for t in tags_list["results"]]
+            return full_image if tag in [t["name"] for t in tags_list["results"]] else False
         elif "tags" not in tags_list:
-            return tag in [t for tags in tags_list for t in tags["metadata"]["container"]["tags"]]
-        return tag in tags_list["tags"]
+            return full_image if tag in [t for tags in tags_list for t in tags["metadata"]["container"]["tags"]] else False
+        return full_image if tag in tags_list["tags"] else False

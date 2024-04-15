@@ -163,7 +163,7 @@ def acr_client(mocker):
         'app.models.task.ACRClient',
         return_value=Mock(
             login=Mock(return_value="access_token"),
-            has_image_metadata=Mock(return_value=True)
+            find_image_repo=Mock(return_value=True)
         )
     )
 
@@ -193,7 +193,7 @@ def acr_client_404(mocker):
         'app.models.task.ACRClient',
         return_value=Mock(
             login=Mock(return_value="access_token"),
-            has_image_metadata=Mock(return_value=False)
+            find_image_repo=Mock(return_value=False)
         )
     )
 @pytest.fixture

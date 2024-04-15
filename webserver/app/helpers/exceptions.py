@@ -27,7 +27,7 @@ class DBRecordNotFoundError(HTTPException):
     code = 404
 
 class InvalidRequest(HTTPException):
-    code = 500
+    code = 400
 
 class AuthenticationError(LogAndException):
     code = 401
