@@ -82,17 +82,20 @@ class Task(db.Model, BaseModel):
             raise InvalidRequest(
                 f"{data["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
             )
-        cls.can_image_be_found(data["docker_image"])
+        data["docker_image"] = cls.get_image_with_repo(data["docker_image"])
         return data
 
     @classmethod
-    def can_image_be_found(cls, docker_image):
+    def get_image_with_repo(cls, docker_image):
         """
-        Looks through the ACR if the image exists
+        Looks through the ACRs for the image and if exists,
+        returns the full image name with the repo prefixing the image.
         """
         acr_client = ACRClient()
-        if not acr_client.has_image_metadata(docker_image):
+        full_docker_image_name = acr_client.find_image_repo(docker_image)
+        if not full_docker_image_name:
             raise TaskImageException(f"Image {docker_image} not found on our repository")
+        return full_docker_image_name
 
     def pod_name(self):
         return f"{self.name.lower().replace(' ', '-')}-{self.requested_by}"
@@ -229,6 +232,8 @@ class Task(db.Model, BaseModel):
             v1.delete_pod(job_pod.metadata.name)
             v1_batch.delete_job(job_name)
         except ApiException as e:
+            if 'job_pod' in locals() and self.get_current_pod(job_pod.metadata.name):
+                v1_batch.delete_job(job_name)
             logger.error(getattr(e, 'reason'))
             raise InvalidRequest(f"Failed to run pod: {e.reason}")
         except urllib3.exceptions.MaxRetryError:

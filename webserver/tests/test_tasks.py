@@ -368,7 +368,7 @@ def test_get_results_job_creation_failure(
         f'/tasks/{response.json["task_id"]}/results',
         headers=simple_admin_header
     )
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert response.json["error"] == 'Failed to run pod: Something went wrong'
 
 def test_get_task_status_running_and_waiting(
