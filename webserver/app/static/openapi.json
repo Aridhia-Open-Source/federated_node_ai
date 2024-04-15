@@ -45,7 +45,10 @@
         "summary": "List all datasets available to the user",
         "responses": {
           "200":{
-            "$ref": "#/components/responses/DatasetList"
+            "$ref": "#/components/responses/InvalidBody"
+          },
+          "400":{
+            "$ref": "#/components/responses/Unauthorized"
           },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
@@ -74,6 +77,9 @@
         "responses":{
           "201":{
             "$ref": "#/components/responses/DatasetPost"
+          },
+          "400":{
+            "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
@@ -227,6 +233,9 @@
           "201":{
             "$ref": "#/components/responses/TransferTokenPost"
           },
+          "400":{
+            "$ref": "#/components/responses/InvalidBody"
+          },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
           },
@@ -336,6 +345,9 @@
           "201":{
             "$ref": "#/components/responses/TaskPost"
           },
+          "400":{
+            "$ref": "#/components/responses/InvalidBody"
+          },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
           },
@@ -368,6 +380,9 @@
         "responses":{
           "201":{
             "$ref": "#/components/responses/SimpleOk"
+          },
+          "400":{
+            "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
@@ -723,6 +738,9 @@
       },
       "NotFound": {
         "description": "Not found."
+      },
+      "InvalidBody": {
+        "description": "The request body cannot be parsed or is missing required values."
       },
       "Unauthorized": {
         "description": "Unauthorized."
