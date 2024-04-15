@@ -34,10 +34,6 @@ db:
 
 federatedNode:
   port: 5000
-  acr_url: ''
-  acr_username: ''
-  acr_password: ''
-  acr_email: ''
   volumes:
     results_path: /mnt/results
     task_pod_results_path: /mnt/data

@@ -173,7 +173,7 @@ def acr_http(mocker):
     # with responses.RequestsMock() as rsps:
     # Mock the request in the order they are submitted.
     # Unfortunately the match param doesn't detect form data
-    url = os.getenv("ACR_URL")
+    url = "test.acrio.com"
     image = "example"
     rsps.add(
         responses.GET,
