@@ -77,9 +77,6 @@ services:
       PGUSER:
       PGPASSWORD:
       PYTHONPATH: /app
-      ACR_URL: test.acr.com
-      ACR_USERNAME: test
-      ACR_PASSWORD: pass
       RESULTS_PATH: /tmp/results
       TASK_POD_RESULTS_PATH: /mnt/data
       KEYCLOAK_ADMIN:
