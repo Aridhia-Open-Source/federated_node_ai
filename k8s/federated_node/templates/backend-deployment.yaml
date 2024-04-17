@@ -113,16 +113,6 @@ spec:
               secretKeyRef:
                 name: kc-secrets
                 key: KEYCLOAK_ADMIN_PASSWORD
-          - name: ACR_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: ACR_PASSWORD
-          - name: ACR_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: ACR_USERNAME
           volumeMounts:
             - name: respv
               mountPath: {{ .Values.federatedNode.volumes.results_path }}
