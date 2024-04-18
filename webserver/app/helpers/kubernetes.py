@@ -52,7 +52,8 @@ class KubernetesBase:
             name=pod_spec["name"],
             image=pod_spec["image"],
             env=self.create_env_from_dict(pod_spec.get("environment", {})),
-            volume_mounts=[vol_mount]
+            volume_mounts=[vol_mount],
+            resources = pod_spec.get("resources", {})
         )
         if pod_spec["command"]:
             container.command = pod_spec["command"]

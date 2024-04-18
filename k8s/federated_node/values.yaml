@@ -42,9 +42,13 @@ federatedNode:
 # expanded to the flask docker lookup in a second instance
 acrs:
   - url:
-    password:
-    username:
-    email:
+    secret:
+      name:
+      userKey:
+      passKey:
+    # password:
+    # username:
+    # email:
 
 storage:
   azure:
