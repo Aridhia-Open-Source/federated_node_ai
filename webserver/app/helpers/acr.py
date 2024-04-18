@@ -2,6 +2,10 @@ from base64 import b64encode
 import requests
 import json
 import os
+import logging
+
+logger = logging.getLogger('acr_handler')
+logger.setLevel(logging.INFO)
 
 # this might be in a config map, so we can handle this dynamically
 URLS = {
@@ -104,14 +108,18 @@ class ACRClient:
                 continue
 
             url_key = self.map_registry_to_url(acr)
-
-            response_metadata = requests.get(
-                URLS[url_key]["tags"]["url"] % self.get_url_string_params(acr, image_name),
-                headers={"Authorization": f"Bearer {token}"}
-            )
-            if response_metadata.ok:
-                tags_list = response_metadata.json()
-                break
+            try:
+                response_metadata = requests.get(
+                    URLS[url_key]["tags"]["url"] % self.get_url_string_params(acr, image_name),
+                    headers={"Authorization": f"Bearer {token}"}
+                )
+                if response_metadata.ok:
+                    tags_list = response_metadata.json()
+                    break
+                else:
+                    logger.info(response_metadata.text)
+            except ConnectionError as ce:
+                logger.info(ce.strerror)
 
         # Try for open repos?
         if not tags_list:
