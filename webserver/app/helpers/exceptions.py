@@ -1,12 +1,18 @@
 from werkzeug.exceptions import HTTPException
 from werkzeug.sansio.response import Response
 import logging
+import traceback
 
 logger = logging.getLogger('exception_handler')
 logger.setLevel(logging.INFO)
 
 def exception_handler(e:HTTPException):
     return {"error": e.description}, getattr(e, 'code', 500)
+
+# Special case, just so we won't return stacktraces
+def unknown_exception_handler(e:Exception):
+    logger.error("\n".join(traceback.format_exception(e)))
+    return {"error": "Internal Error"}, 500
 
 class LogAndException(HTTPException):
     code = 500
