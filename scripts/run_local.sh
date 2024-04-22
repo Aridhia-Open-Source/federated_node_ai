@@ -45,7 +45,7 @@ if [[ "$LOCAL_CLUSTER" == "minikube" ]]; then
     echo "minikube -p $CLUSTER_NAME image load <image_name>"
 else
     echo "docker save <image_name> > fn.tar"
-    echp "microk8s ctr image import fn.tar"
+    echo "microk8s ctr image import fn.tar"
 fi
 NGINX_NAMESPACE=$(grep -oP '(?<=nginx:\s).*' k8s/federated-node/dev.values.yaml)
 
