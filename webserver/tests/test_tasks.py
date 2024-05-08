@@ -8,13 +8,13 @@ from tests.helpers.kubernetes import MockKubernetesClient
 
 
 @pytest.fixture(scope='function')
-def task_body(dataset):
+def task_body(dataset, image_name):
     return {
         "name": "Test Task",
         "requested_by": "das9908-as098080c-9a80s9",
         "executors": [
             {
-                "image": "example:latest",
+                "image": image_name,
                 "command": ["R", "-e", "df <- as.data.frame(installed.packages())[,c('Package', 'Version')];write.csv(df, file='/mnt/data/packages.csv', row.names=FALSE);Sys.sleep(10000)\""],
                 "env": {
                     "VARIABLE_UNIQUE": 123,
@@ -319,6 +319,8 @@ def test_get_results(
     pod_mock = Mock()
     pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
     pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
+    pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
+    pod_mock.status.container_statuses = [Mock(ready=True)]
     k8s_client.return_value.list_namespaced_pod.return_value.items = [pod_mock]
 
     mocker.patch(
@@ -363,6 +365,17 @@ def test_get_results_job_creation_failure(
     # Get results - creating a job fails
     k8s_batch = mocker.patch('app.models.task.KubernetesBatchClient')
     k8s_batch.return_value.create_namespaced_job.side_effect = ApiException(status=500, reason="Something went wrong")
+
+    k8s_client = mocker.patch(
+        'app.models.task.KubernetesClient',
+        return_value=Mock(list_namespaced_pod=Mock())
+    )
+    pod_mock = Mock()
+    pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
+    pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
+    pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
+    pod_mock.status.container_statuses = [Mock(ready=True)]
+    k8s_client.return_value.list_namespaced_pod.return_value.items = [pod_mock]
 
     response = client.get(
         f'/tasks/{response.json["task_id"]}/results',

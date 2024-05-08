@@ -7,12 +7,10 @@ from kubernetes.stream import stream
 from kubernetes.client.exceptions import ApiException
 
 from app.helpers.exceptions import InvalidRequest, KubernetesException
+from app.helpers.const import TASK_NAMESPACE
 
 logger = logging.getLogger('kubernetes_helper')
 logger.setLevel(logging.INFO)
-
-TASK_NAMESPACE = os.getenv("TASK_NAMESPACE")
-
 
 class KubernetesBase:
     def __init__(self) -> None:
@@ -24,12 +22,19 @@ class KubernetesBase:
             config.load_kube_config()
         super().__init__()
 
+    def create_from_env_object(self, secret_name) -> list[client.V1EnvFromSource]:
+        """
+        From a secret name, setup a EnvFrom object
+        """
+        return [client.V1EnvFromSource(secret_ref=client.V1SecretEnvSource(name=secret_name))]
+
     def create_env_from_dict(self, env_dict) -> list[client.V1EnvVar]:
         """
         Kubernetes library accepts env vars as a V1EnvVar
         object. This method converts a dict into V1EnvVar
         """
         env = []
+        client.V1ContainerState
         for k, v in env_dict.items():
             env.append(client.V1EnvVar(name=k, value=str(v)))
         return env
@@ -48,10 +53,12 @@ class KubernetesBase:
             sub_path=pod_spec['labels']['task_id'],
             name="data"
         )
+
         container = client.V1Container(
             name=pod_spec["name"],
             image=pod_spec["image"],
             env=self.create_env_from_dict(pod_spec.get("environment", {})),
+            env_from=pod_spec["env_from"],
             volume_mounts=[vol_mount],
             resources = pod_spec.get("resources", {})
         )
