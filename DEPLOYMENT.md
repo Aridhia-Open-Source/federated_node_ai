@@ -1,0 +1,111 @@
+# Federated Node Deployment Instructions
+
+### Prerequisite
+The federated node is deployed as an Helm Chart, so helm should be installed in your system.
+
+See their installation instructions [here](https://helm.sh/docs/intro/install/).
+
+### Setup helm repo
+Until v1.0 a set of credentials will need to be required to pull docker images and the helm chart. These credentials will be set in a shared note in LastPass, called `FN setup notes`.
+
+Set the two env vars `$username` and `$password`, based on the note above.
+```sh
+helm repo add --username $username --password $token federated_node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/stable
+```
+
+Now you should be all set to pull the chart from gitLab.
+
+### Pre-existing Secrets (optional)
+In order to not store credentials in plain text within the `values.yaml` file, there is an option to pre-populate secrets in a safe matter.
+
+The secrets to be created are:
+- Db credentials for the FN webserver to use (not where the dataset is)
+- ACR credentials (provided in the same LastPass note)
+- Azure storage account credentials
+
+#### cli
+In general, to create a k8s secret you run a command like the following:
+```sh
+kubectl create secret generic $secret_name \
+    --from-literal=username=(echo $username | base64) \
+    --from-literal=password=(echo $password | base64)
+```
+#### yaml
+or using the yaml template:
+```yaml
+apiVersion: v1
+kind: Secret
+data:
+  password:
+  username:
+type: Opaque
+```
+In this example the password and username field has to hold a base64 encoded string
+```sh
+echo "value" | base64
+```
+then you can apply this secret with the command:
+```sh
+kubectl apply -f file.yaml
+```
+replace file.yaml with the name of the file you created above.
+
+### Copying existing secrets
+If the secret(s) exist in another namespace, you can "copy" them with this command:
+```sh
+kubectl get secret $secretname  --namespace=$old_namespace -oyaml | grep -v '^\s*namespace:\s' | kubectl apply --namespace=$new_namespace -f -
+```
+
+### Values.yaml
+In order to deploy a `yaml` file is needed to customize certain configurations for the FN to adapt to its new environment. A template that resembles the DRE deployment will be attached to the LastPass note.
+
+Download it in your working folder (the one you're going to run the deployment command, see below) and change values as needed.
+
+Once the secrets have been created use their names as follows:
+#### db creds
+```yaml
+db:
+  host: <host name>
+  name: federated_node_db
+  user: <DB username>
+  secret:
+    key: value
+    name: <secret name here>
+```
+
+#### azure storage account
+```yaml
+storage:
+  azure:
+    secretName: <secret name here>
+    shareName: files
+```
+
+#### acrs
+```yaml
+acrs:
+# env specific
+  - url: .azurecr.io
+    email: ''
+    secret:
+      name: <secret name here>
+      userKey: username
+      passKey: password
+# from the lastpass note
+  - url: ghcr.io
+    secret:
+      name: <secret name here>
+      userKey: username
+      passKey: password
+    email: ''
+```
+
+
+### Deployment command
+```sh
+helm install federatednode federated-node -f <custom_value.yaml>
+```
+If you don't want to install it in the default namespace:
+```sh
+helm install federatednode federated-node -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
+```
