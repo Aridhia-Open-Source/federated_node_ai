@@ -1,57 +1,33 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  namespace: {{ .Release.Namespace }}
   name: backend-role
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
-  verbs: ["get", "watch", "list", "create"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: {{ .Release.Namespace }}
-  name: task-role
-rules:
+  verbs: ["get", "list", "create"]
+- apiGroups: ["", "batch"]
+  resources: ["pods", "persistentvolumes", "persistentvolumeclaims", "jobs", "pods/exec"]
+  verbs: ["*"]
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: backend-role
-  namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
+    namespace: {{ .Release.Namespace }}
     name: secret-backend-handler
-    namespace: {{ .Release.Namespace }}
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: backend-role
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: task-role
-  namespace: {{ .Release.Namespace }}
-subjects:
-  - kind: ServiceAccount
-    name: task-pod-handler
-    namespace: {{ .Release.Namespace }}
-roleRef:
-  kind: Role
-  name: task-role
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: secret-backend-handler
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: task-pod-handler
+  namespace: {{ .Release.Namespace }}

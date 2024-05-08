@@ -8,6 +8,8 @@ from app.helpers.keycloak import Keycloak
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
+TASK_NAMESPACE = os.getenv("TASK_NAMESPACE")
+
 class Dataset(db.Model, BaseModel):
     __tablename__ = 'datasets'
     # No duplicated name/host entries
@@ -15,8 +17,8 @@ class Dataset(db.Model, BaseModel):
     #     UniqueConstraint('name', 'host'),
     # )
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), unique=True, nullable=False)
-    host = Column(String(120), nullable=False)
+    name = Column(String(256), unique=True, nullable=False)
+    host = Column(String(256), nullable=False)
     port = Column(Integer, default=5432)
 
     def __init__(self, name:str, host:str, username:str, password:str, port:int=5432):
@@ -42,7 +44,8 @@ class Dataset(db.Model, BaseModel):
         body.metadata = {'name': self.get_creds_secret_name()}
         body.type = 'Opaque'
         try:
-            v1.create_namespaced_secret('default', body=body, pretty='true')
+            for ns in ["default", TASK_NAMESPACE]:
+                v1.create_namespaced_secret(ns, body=body, pretty='true')
         except ApiException as e:
             if e.status == 409:
                 pass
@@ -50,7 +53,8 @@ class Dataset(db.Model, BaseModel):
                 raise InvalidRequest(e.reason)
 
     def get_creds_secret_name(self):
-        return f"{re.sub('http(s)*://', '', self.host)}-{self.name.lower().replace(' ', '-')}-creds"
+        cleaned_up_host = re.sub('http(s)*://', '', self.host)
+        return f"{cleaned_up_host}-{self.name.lower().replace(' ', '-')}-creds"
 
     def get_credentials(self) -> tuple:
         if os.getenv('KUBERNETES_SERVICE_HOST'):

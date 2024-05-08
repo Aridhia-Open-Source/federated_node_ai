@@ -12,7 +12,8 @@ from app import main, admin_api, datasets_api, tasks_api, requests_api
 from app.helpers.db import build_sql_uri, db
 from app.helpers.exceptions import (
     InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,
-    AuthenticationError, KeycloakError, TaskImageException, exception_handler
+    AuthenticationError, KeycloakError, TaskImageException, TaskExecutionException,
+    KubernetesException, exception_handler, unknown_exception_handler
 )
 logging.basicConfig(level=logging.WARN)
 
@@ -36,6 +37,9 @@ def create_app():
     app.register_error_handler(AuthenticationError, exception_handler)
     app.register_error_handler(KeycloakError, exception_handler)
     app.register_error_handler(TaskImageException, exception_handler)
+    app.register_error_handler(TaskExecutionException, exception_handler)
+    app.register_error_handler(KubernetesException, exception_handler)
+    app.register_error_handler(Exception, unknown_exception_handler)
 
     # Need to register the exception handler this way as we need access
     # to the db session

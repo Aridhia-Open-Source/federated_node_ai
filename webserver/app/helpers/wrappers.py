@@ -9,7 +9,7 @@ from app.helpers.exceptions import AuthenticationError, DBRecordNotFoundError
 from app.models.audit import Audit
 
 
-def auth(scope:str):
+def auth(scope:str, check_dataset=True):
     def auth_wrapper(func):
         @wraps(func)
         def _auth(*args, **kwargs):
@@ -20,26 +20,21 @@ def auth(scope:str):
             session = db.session
             resource = 'endpoints'
             ds_id = None
-            is_ds_related = None
-            path = request.path.split('/')
-            try:
-                is_ds_related = path.index('datasets')
-            except ValueError:
-                # not in list
-                pass
+            if check_dataset:
+                path = request.path.split('/')
 
-            if is_ds_related:
-                ds_id = path[is_ds_related + 1]
-            elif request.headers.get('Content-Type'):
-                ds_id = request.json.get("dataset_id")
+                if 'datasets' in path:
+                    ds_id = path[path.index('datasets') + 1]
+                elif request.headers.get('Content-Type'):
+                    ds_id = request.json.get("dataset_id")
 
-            if ds_id and re.match(r'^\d+$', str(ds_id)):
-                q = session.execute(text("SELECT * FROM datasets WHERE id=:ds_id"), dict(ds_id=ds_id)).all()
-                if not q:
-                    raise DBRecordNotFoundError(f"Dataset with id {ds_id} does not exist")
-                ds = q[0]._mapping
-                if ds is not None:
-                    resource = f"{ds["id"]}-{ds["name"]}"
+                if ds_id and check_dataset:
+                    q = session.execute(text("SELECT * FROM datasets WHERE id=:ds_id"), dict(ds_id=ds_id)).all()
+                    if not q:
+                        raise DBRecordNotFoundError(f"Dataset with id {ds_id} does not exist")
+                    ds = q[0]._mapping
+                    if ds is not None:
+                        resource = f"{ds["id"]}-{ds["name"]}"
             requested_project = request.headers.get("project-name")
             client = 'global'
             token_type = 'refresh_token'
@@ -71,7 +66,7 @@ def audit(func):
         else:
             source_ip = request.environ['REMOTE_ADDR']
 
-        token = Keycloak().decode_token(Keycloak.get_token_from_headers(request.headers))
+        token = Keycloak().decode_token(Keycloak.get_token_from_headers())
         http_method = request.method
         http_endpoint = request.path
         api_function = func.__name__

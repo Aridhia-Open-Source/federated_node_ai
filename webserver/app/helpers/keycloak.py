@@ -3,13 +3,15 @@ import os
 import random
 import requests
 from base64 import b64encode
+from flask import request
 from app.helpers.exceptions import AuthenticationError, KeycloakError
 from app.helpers.const import PASS_GENERATOR_SET
 
 logger = logging.getLogger('keycloak_helper')
 logger.setLevel(logging.INFO)
 
-KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://keycloak.keycloak.svc.cluster.local:8080")
+KEYCLOAK_NAMESPACE = os.getenv("KEYCLOAK_NAMESPACE")
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", f"http://keycloak.{KEYCLOAK_NAMESPACE}.svc.cluster.local:8080")
 REALM = os.getenv("KEYCLOAK_REALM", "FederatedNode")
 KEYCLOAK_CLIENT = os.getenv("KEYCLOAK_CLIENT", "global")
 KEYCLOAK_SECRET = os.getenv("KEYCLOAK_SECRET")
@@ -44,11 +46,11 @@ class Keycloak:
         self.client_secret = self._get_client_secret()
 
     @classmethod
-    def get_token_from_headers(cls, header) -> str:
+    def get_token_from_headers(cls) -> str:
         """
         Public method for generalize the token fetching from an HTTP header
         """
-        return header['Authorization'].replace('Bearer ', '')
+        return request.headers['Authorization'].replace('Bearer ', '')
 
     def _post_json_headers(self) -> dict:
         """

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-app
+  name: backend
   namespace: {{ .Release.Namespace }}
   labels:
     app: flask
@@ -19,6 +19,12 @@ spec:
     spec:
       serviceAccountName: secret-backend-handler
       initContainers:
+        {{ template "createDBInitContainer" .}}
+          - name: NEW_DB
+            valueFrom:
+              configMapKeyRef:
+                name: backend-configmap
+                key: PGDATABASE
         - name: db-migrations
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           command: ["/bin/sh"]
@@ -31,10 +37,26 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-configmap
+            {{ if .Values.db.configMap }}
+            - configMapRef:
+                name: {{ .Values.db.configMap }}
+            {{ end }}
+          env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                {{ if .Values.db.secret }}
+                name: {{.Values.db.secret.name}}
+                key: {{.Values.db.secret.key}}
+                {{else}}
+                name: backend-secrets
+                key: PGPASSWORD
+                {{ end }}
       containers:
         - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          name: flask-app
+          name: backend
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{ include "nonRootSC" . }}
           resources:
             limits:
               memory: 200Mi
@@ -60,9 +82,27 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-configmap
+            {{ if .Values.db.configMap }}
+            - configMapRef:
+                name: {{ .Values.db.configMap }}
+            {{ end }}
             - configMapRef:
                 name: keycloak-config
           env:
+          - name: RESULTS_PATH
+            value: {{ .Values.federatedNode.volumes.results_path }}
+          - name: TASK_POD_RESULTS_PATH
+            value: {{ .Values.federatedNode.volumes.task_pod_results_path }}
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                {{ if .Values.db.secret }}
+                name: {{.Values.db.secret.name}}
+                key: {{.Values.db.secret.key}}
+                {{else}}
+                name: backend-secrets
+                key: PGPASSWORD
+                {{ end }}
           - name: KEYCLOAK_SECRET
             valueFrom:
               secretKeyRef:
@@ -73,15 +113,21 @@ spec:
               secretKeyRef:
                 name: kc-secrets
                 key: KEYCLOAK_ADMIN_PASSWORD
-          - name: ACR_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: ACR_PASSWORD
-          - name: ACR_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: backend-secrets
-                key: ACR_USERNAME
+          volumeMounts:
+            - name: respv
+              mountPath: {{ .Values.federatedNode.volumes.results_path }}
+            - name: acr-list
+              mountPath: /app/acr/
       imagePullSecrets:
-        - name: regcred
+        - name: {{ .Values.imagePullSecrets }}
+      volumes:
+        - name: respv
+          persistentVolumeClaim:
+            claimName: flask-results-pv-volclaim
+        - name: acr-list
+          secret:
+            secretName: backend-acr-config-secret
+            items:
+            - key: acrlist.json
+              path: acrlist.json
+        {{ template "dbInitVolume" . }}

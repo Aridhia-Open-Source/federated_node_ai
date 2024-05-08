@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: federated_node_run
+  repository: ghcr.io/arihdia-federated-node/federated_node_run
   tag: 0.0.1
   pullPolicy: IfNotPresent
 
@@ -17,22 +17,56 @@ namespaces:
   nginx: ingress-nginx
   tasks: tasks
 
+# token:
+#   life:
+
 db:
-  user: admin
-  password: asdfASpjpi!asd12
-  name: federated_node_db
+  user:
+  password:
+  name:
+  host:
+  # If a configmap with host user exists, use that
+  configMap:
+  # If a secret with password exists, use that
+  secret:
+    name:
+    key:
 
 federatedNode:
   port: 5000
-  acr_url: ''
-  acr_username: ''
-  acr_password: ''
+  volumes:
+    results_path: /mnt/results
+    task_pod_results_path: /mnt/data
+
+# Base to support multiple ACRs. This is for regcreds initially. Will be
+# expanded to the flask docker lookup in a second instance
+acrs:
+  - url:
+    secret:
+      name:
+      userKey:
+      passKey:
+    # password:
+    # username:
+    # email:
+
+storage:
+  azure:
+    # secretName:
+    # storageAccountName:
+    # storageAccountKey:
+    # shareName:
+  nfs:
+    # provisioner:
+    # url:
+    # path:
+  local:
+    # path:
 
 token:
   life:
 
-imagePullSecrets:
-  - name: regcred
+imagePullSecrets: regcred
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -53,8 +87,6 @@ podSecurityContext: {}
 
 securityContext: {}
 
-# populate it with cat ~/.docker/config.json | base64
-dockerjsonconfig: ewogICJhdXRocyI6IHsKICAgICJhY3JhdXNlYXN0YXRkZXYuYXp1cmVjci5pbyI6IHt9LAogICAgImFjcmNhbmNlbnRyYWxhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYWNycnNhbm9ydGhhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYWNydWtzb3V0aGF0ZGV2LmF6dXJlY3IuaW8iOiB7fSwKICAgICJhY3J1a3NvdXRoaHdzYW5hbHl0aXhhZ2lsaXR5LmF6dXJlY3IuaW8iOiB7fSwKICAgICJhY3J1c3dlc3RhdGRldi5henVyZWNyLmlvIjoge30sCiAgICAiYXJpZGhpYXNjYW5yZXBvLmF6dXJlY3IuaW8iOiB7fSwKICAgICJkb2NrZXItZGV2LmFyaWRoaWEubmV0Ijoge30sCiAgICAiZG9ja2VyLmFyaWRoaWEubmV0Ijoge30sCiAgICAiZW1wdHlxY2Fjci5henVyZWNyLmlvIjoge30sCiAgICAibG9jYWxob3N0OjUwMDAiOiB7fQogIH0sCiAgImNyZWRzU3RvcmUiOiAiZGVza3RvcC5leGUiCn0K
 # ingress:
 #   enabled: false
 #   className: ""

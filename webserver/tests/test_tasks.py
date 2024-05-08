@@ -1,17 +1,76 @@
 import json
 import pytest
-from app.models.dataset import Dataset
+from kubernetes.client.exceptions import ApiException
+from unittest.mock import Mock
+from app.helpers.exceptions import InvalidRequest
+from app.models.task import Task
+from tests.helpers.kubernetes import MockKubernetesClient
 
 
 @pytest.fixture(scope='function')
-def task_body():
+def task_body(dataset, image_name):
     return {
-        "title": "Test Task",
-        "docker_image": "example:latest",
+        "name": "Test Task",
         "requested_by": "das9908-as098080c-9a80s9",
+        "executors": [
+            {
+                "image": image_name,
+                "command": ["R", "-e", "df <- as.data.frame(installed.packages())[,c('Package', 'Version')];write.csv(df, file='/mnt/data/packages.csv', row.names=FALSE);Sys.sleep(10000)\""],
+                "env": {
+                    "VARIABLE_UNIQUE": 123,
+                    "USERNAME": "test"
+                }
+            }
+        ],
         "description": "First task ever!",
-        "use_query": "SELECT * FROM patients LIMIT 10;"
+        "tags": {
+            "dataset_id": dataset.id,
+            "test_tag": "some content"
+        },
+        "inputs":{},
+        "outputs":{},
+        "resources": {},
+        "volumes": {},
     }
+
+@pytest.fixture
+def running_state():
+    return Mock(
+        state=Mock(
+            running=Mock(
+                started_at="1/1/2024"
+            ),
+            waiting=None,
+            terminated=None
+        )
+    )
+
+@pytest.fixture
+def waiting_state():
+    return Mock(
+        state=Mock(
+            waiting=Mock(
+                started_at="1/1/2024"
+            ),
+            running=None,
+            terminated=None
+        )
+    )
+
+@pytest.fixture
+def terminated_state():
+    return Mock(
+        state=Mock(
+            terminated=Mock(
+                started_at="1/1/2024",
+                finished_at="1/1/2024",
+                reason="Completed successfully!",
+                exit_code=0,
+            ),
+            running=None,
+            waiting=None
+        )
+    )
 
 def test_get_list_tasks(
         client,
@@ -40,10 +99,9 @@ def test_get_list_tasks_base_user(
     assert response.status_code == 401
 
 def test_create_task(
-        docker_client,
+        acr_client,
+        k8s_client_task,
         post_json_admin_header,
-        query_validator,
-        dataset,
         client,
         task_body
     ):
@@ -51,7 +109,6 @@ def test_create_task(
     Tests task creation returns 201
     """
     data = task_body
-    data["dataset_id"] = dataset.id
 
     response = client.post(
         '/tasks/',
@@ -61,10 +118,8 @@ def test_create_task(
     assert response.status_code == 201
 
 def test_create_task_with_non_existing_dataset(
-        docker_client,
+        acr_client,
         post_json_admin_header,
-        user_uuid,
-        query_validator,
         client,
         task_body
     ):
@@ -83,10 +138,9 @@ def test_create_task_with_non_existing_dataset(
     assert response.json == {"error": "Dataset with id 123456 does not exist"}
 
 def test_create_unauthorized_task(
-        docker_client,
+        acr_client,
         post_json_user_header,
         dataset,
-        query_validator,
         client,
         task_body
     ):
@@ -104,66 +158,36 @@ def test_create_unauthorized_task(
     assert response.status_code == 401
 
 def test_create_task_image_not_found(
-        docker_client_404,
+        acr_client_404,
         post_json_admin_header,
-        dataset,
-        query_validator,
         client,
         task_body
     ):
     """
     Tests task creation returns 500 with a requested docker image is not found
     """
-    data = task_body
-    data["dataset_id"] = dataset.id
-
     response = client.post(
         '/tasks/',
-        data=json.dumps(data),
+        data=json.dumps(task_body),
         headers=post_json_admin_header
     )
     assert response.status_code == 500
-    assert response.json == {"error": "An error occurred with the Task"}
-
-def test_create_task_with_invalid_query(
-        post_json_admin_header,
-        dataset,
-        query_invalidator,
-        client,
-        task_body
-    ):
-    """
-    Tests task creation return 500 with an invalid query
-    """
-    data = task_body
-    data["dataset_id"] = dataset.id
-    data["use_query"] = "Not a real query"
-
-    response = client.post(
-        '/tasks/',
-        data=json.dumps(data),
-        headers=post_json_admin_header
-    )
-    assert response.status_code == 500
+    assert response.json == {"error": f"Image {task_body["executors"][0]["image"]} not found on our repository"}
 
 def test_cancel_task(
         client,
-        docker_client,
-        dataset,
+        acr_client,
+        k8s_client_task,
         simple_admin_header,
         post_json_admin_header,
-        task_body,
-        query_validator
+        task_body
     ):
     """
     Test that an admin can cancel an existing task
     """
-    data = task_body
-    data["dataset_id"] = dataset.id
-
     response = client.post(
         '/tasks/',
-        data=json.dumps(data),
+        data=json.dumps(task_body),
         headers=post_json_admin_header
     )
     assert response.status_code == 201
@@ -189,26 +213,420 @@ def test_cancel_404_task(
 
 def test_validate_task(
         client,
-        simple_admin_header
+        task_body,
+        acr_client,
+        post_json_admin_header
     ):
     """
     Test the validation endpoint can be used by admins returns 201
     """
     response = client.post(
         '/tasks/validate',
-        headers=simple_admin_header
+        data=json.dumps(task_body),
+        headers=post_json_admin_header
     )
     assert response.status_code == 200
 
 def test_validate_task_basic_user(
         client,
-        simple_user_header
+        task_body,
+        acr_client,
+        post_json_user_header
     ):
     """
     Test the validation endpoint can be used by non-admins returns 201
     """
     response = client.post(
         '/tasks/validate',
-        headers=simple_user_header
+        data=json.dumps(task_body),
+        headers=post_json_user_header
     )
     assert response.status_code == 200
+
+def test_docker_image_regex(
+        task_body,
+        acr_client,
+        mocker,
+        client
+):
+    """
+    Tests that the docker image is in an expected format
+        <namespace?/image>:<tag>
+    """
+    data = task_body
+    valid_image_formats = [
+        "image:3.21",
+        "namespace/image:3.21",
+        "namespace/image:3.21-alpha"
+    ]
+    invalid_image_formats = [
+        "not_valid/",
+        "/not-valid:",
+        "/not-valid:2.31",
+        "image",
+        "namespace//image:3.21",
+        "/image"
+    ]
+    mocker.patch(
+        'app.models.task.Keycloak',
+        return_value=Mock()
+    )
+    for im_format in valid_image_formats:
+        data["executors"][0]["image"] = im_format
+        Task.validate(data)
+
+    for im_format in invalid_image_formats:
+        data["executors"][0]["image"] = im_format
+        with pytest.raises(InvalidRequest):
+            Task.validate(data)
+
+def test_get_results(
+    acr_client,
+    post_json_admin_header,
+    simple_admin_header,
+    client,
+    task_body,
+    mocker
+):
+    """
+    A simple test with mocked PVs to test a successful result
+    fetch
+    """
+    # Create a new task
+    data = task_body
+    # The mock has to be done manually rather than use the fixture
+    # as it complains about the return value of the list_pod method
+    mocker.patch(
+        'app.models.task.KubernetesClient',
+        return_value=MockKubernetesClient()
+    )
+    mocker.patch('app.models.task.uuid4', return_value="1dc6c6d1-417f-409a-8f85-cb9d20f7c741")
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 201
+
+    # Get results
+    mocker.patch(
+        'app.models.task.KubernetesBatchClient'
+    )
+    k8s_client = mocker.patch(
+        'app.models.task.KubernetesClient',
+        return_value=Mock(list_namespaced_pod=Mock())
+    )
+    pod_mock = Mock()
+    pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
+    pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
+    pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
+    pod_mock.status.container_statuses = [Mock(ready=True)]
+    k8s_client.return_value.list_namespaced_pod.return_value.items = [pod_mock]
+
+    mocker.patch(
+        'app.models.task.Task.get_status',
+        return_value={"running": {}}
+    )
+
+    response = client.get(
+        f'/tasks/{response.json["task_id"]}/results',
+        headers=simple_admin_header
+    )
+    assert response.status_code == 200
+    assert response.content_type == "application/x-tar"
+
+def test_get_results_job_creation_failure(
+    acr_client,
+    post_json_admin_header,
+    simple_admin_header,
+    client,
+    task_body,
+    mocker
+):
+    """
+    Tests that the job creation to fetch results from a PV returns a 500
+    error code
+    """
+    # Create a new task
+    data = task_body
+    # The mock has to be done manually rather than use the fixture
+    # as it complains about the return value of the list_pod method
+    mocker.patch(
+        'app.models.task.KubernetesClient',
+        return_value=MockKubernetesClient()
+    )
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(data),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 201
+
+    # Get results - creating a job fails
+    k8s_batch = mocker.patch('app.models.task.KubernetesBatchClient')
+    k8s_batch.return_value.create_namespaced_job.side_effect = ApiException(status=500, reason="Something went wrong")
+
+    k8s_client = mocker.patch(
+        'app.models.task.KubernetesClient',
+        return_value=Mock(list_namespaced_pod=Mock())
+    )
+    pod_mock = Mock()
+    pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
+    pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
+    pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
+    pod_mock.status.container_statuses = [Mock(ready=True)]
+    k8s_client.return_value.list_namespaced_pod.return_value.items = [pod_mock]
+
+    response = client.get(
+        f'/tasks/{response.json["task_id"]}/results',
+        headers=simple_admin_header
+    )
+    assert response.status_code == 400
+    assert response.json["error"] == 'Failed to run pod: Something went wrong'
+
+def test_get_task_status_running_and_waiting(
+    acr_client,
+    k8s_client_task,
+    running_state,
+    waiting_state,
+    post_json_admin_header,
+    client,
+    task_body,
+    mocker
+):
+    """
+    Test to verify the correct task status when it's
+    waiting or Running on k8s. Output would be similar
+    """
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(task_body),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 201
+
+    mocker.patch(
+        'app.models.task.Task.get_current_pod',
+        return_value=Mock(
+            status=Mock(
+                container_statuses=[running_state]
+            )
+        )
+    )
+
+    response_id = client.get(
+        f'/tasks/{response.json["task_id"]}',
+        data=json.dumps(task_body),
+        headers=post_json_admin_header
+    )
+    assert response_id.status_code == 200
+    assert response_id.json["status"] == {'running': {'started_at': '1/1/2024'}}
+
+    mocker.patch(
+        'app.models.task.Task.get_current_pod',
+        return_value=Mock(
+            status=Mock(
+                container_statuses=[waiting_state]
+            )
+        )
+    )
+
+    response_id = client.get(
+        f'/tasks/{response.json["task_id"]}',
+        data=json.dumps(task_body),
+        headers=post_json_admin_header
+    )
+    assert response_id.status_code == 200
+    assert response_id.json["status"] == {'waiting': {'started_at': '1/1/2024'}}
+
+def test_get_task_status_terminated(
+    acr_client,
+    k8s_client_task,
+    terminated_state,
+    post_json_admin_header,
+    client,
+    task_body,
+    mocker
+):
+    """
+    Test to verify the correct task status when it's terminated on k8s
+    """
+    response = client.post(
+        '/tasks/',
+        data=json.dumps(task_body),
+        headers=post_json_admin_header
+    )
+    assert response.status_code == 201
+
+    mocker.patch(
+        'app.models.task.Task.get_current_pod',
+        return_value=Mock(
+            status=Mock(
+                container_statuses=[terminated_state]
+            )
+        )
+    )
+
+    response_id = client.get(
+        f'/tasks/{response.json["task_id"]}',
+        data=json.dumps(task_body),
+        headers=post_json_admin_header
+    )
+    assert response_id.status_code == 200
+    expected_status = {
+        'terminated': {
+            'started_at': '1/1/2024',
+            'finished_at': '1/1/2024',
+            'reason': 'Completed successfully!',
+            'exit_code': 0
+        }
+    }
+    assert response_id.json["status"] == expected_status
+
+class TestResourceValidators:
+    def test_valid_values(
+            self,
+            mocker,
+            user_uuid,
+            acr_client,
+            task_body
+        ):
+        """
+        Tests that the expected resource values are accepted
+        """
+        task_body["resources"] = {
+            "limits": {
+                "cpu": "100m",
+                "memory": "100Mi"
+            },
+            "requests": {
+                "cpu": "0.1",
+                "memory": "100Mi"
+            }
+        }
+        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
+                     return_value="")
+        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
+                     return_value={"sub": user_uuid})
+        Task.validate(task_body)
+
+    def test_invalid_memory_values(
+            self,
+            mocker,
+            user_uuid,
+            acr_client,
+            task_body
+        ):
+        """
+        Tests that the unexpected memory values are not accepted
+        """
+        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
+                     return_value="")
+        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
+                     return_value={"sub": user_uuid})
+
+        invalid_values = ["hundredMi", "100ki", "100mi", "0.1Ki", "Mi100"]
+        for in_val in invalid_values:
+            task_body["resources"] = {
+                "limits": {
+                    "cpu": "100m",
+                    "memory": "100Mi"
+                },
+                "requests": {
+                    "cpu": "0.1",
+                    "memory": in_val
+                }
+            }
+            with pytest.raises(InvalidRequest) as ir:
+                Task.validate(task_body)
+            assert ir.value.description == f'Memory resource value {in_val} not valid.'
+
+    def test_invalid_cpu_values(
+            self,
+            mocker,
+            user_uuid,
+            acr_client,
+            task_body
+        ):
+        """
+        Tests that the unexpected cpu values are not accepted
+        """
+        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
+                     return_value="")
+        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
+                     return_value={"sub": user_uuid})
+
+        invalid_values = ["5.24.1", "hundredm", "100Ki", "100mi", "0.1m"]
+
+        for in_val in invalid_values:
+            task_body["resources"] = {
+                "limits": {
+                    "cpu": in_val,
+                    "memory": "100Mi"
+                },
+                "requests": {
+                    "cpu": "0.1",
+                    "memory": "100Mi"
+                }
+            }
+            with pytest.raises(InvalidRequest) as ir:
+                Task.validate(task_body)
+            assert ir.value.description == f'Cpu resource value {in_val} not valid.'
+
+    def test_mem_limit_lower_than_request_fails(
+            self,
+            mocker,
+            user_uuid,
+            acr_client,
+            task_body
+        ):
+        """
+        Tests that the unexpected cpu values are not accepted
+        """
+        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
+                     return_value="")
+        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
+                     return_value={"sub": user_uuid})
+
+        task_body["resources"] = {
+            "limits": {
+                "cpu": "100m",
+                "memory": "100Mi"
+            },
+            "requests": {
+                "cpu": "0.1",
+                "memory": "200000Ki"
+            }
+        }
+        with pytest.raises(InvalidRequest) as ir:
+            Task.validate(task_body)
+        assert ir.value.description == 'Memory limit cannot be lower than request'
+
+    def test_cpu_limit_lower_than_request_fails(
+            self,
+            mocker,
+            user_uuid,
+            acr_client,
+            task_body
+        ):
+        """
+        Tests that the unexpected cpu values are not accepted
+        """
+        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
+                     return_value="")
+        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
+                     return_value={"sub": user_uuid})
+
+        task_body["resources"] = {
+            "limits": {
+                "cpu": "100m",
+                "memory": "100Mi"
+            },
+            "requests": {
+                "cpu": "0.2",
+                "memory": "100Mi"
+            }
+        }
+        with pytest.raises(InvalidRequest) as ir:
+            Task.validate(task_body)
+        assert ir.value.description == 'Cpu limit cannot be lower than request'

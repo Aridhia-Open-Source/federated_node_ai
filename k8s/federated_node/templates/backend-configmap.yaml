@@ -4,11 +4,17 @@ metadata:
   name: backend-configmap
   namespace: {{ .Release.Namespace }}
 data:
-  FLASK_APP: "."
-  PGHOST: "db"
-  PGPORT: "5432"
+  FLASK_APP: "/app"
+  PGHOST: {{ .Values.db.host | default "db" | quote }}
+  PGPORT: {{ .Values.db.port | default "5432" | quote }}
   PGDATABASE: {{ .Values.db.name | default "fndb" | quote }}
   PGUSER: {{ .Values.db.user | default "admin" | quote }}
-  PGPASSWORD: {{ .Values.db.password | default "password123" | quote }}
-  ACR_URL: {{ .Values.federatedNode.acr_url }}
-  KEYCLOAK_URL: "http://keycloak.keycloak.svc.cluster.local:8080"
+  KEYCLOAK_URL: "http://keycloak.{{ .Values.namespaces.keycloak }}.svc.cluster.local:8080"
+  DEFAULT_NAMESPACE: {{ .Release.Namespace }}
+  KEYCLOAK_NAMESPACE: {{ .Values.namespaces.keycloak }}
+  TASK_NAMESPACE: {{ .Values.namespaces.tasks }}
+{{ if .Values.storage.azure }}
+  AZURE_STORAGE_ENABLED: "true"
+  AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/results
+  AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+{{ end }}

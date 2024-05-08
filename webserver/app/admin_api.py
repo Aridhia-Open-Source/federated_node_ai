@@ -17,7 +17,7 @@ session_factory = sessionmaker(bind=engine)
 session = scoped_session(session_factory)
 
 @bp.route('/audit', methods=['GET'])
-@auth(scope='can_do_admin')
+@auth(scope='can_do_admin', check_dataset=False)
 def get_audit_logs():
     """
     GET /audit endpoint.
