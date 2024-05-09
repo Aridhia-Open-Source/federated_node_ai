@@ -822,12 +822,14 @@
           "name": {
             "type": "string",
             "description": "Human-readable name for the dataset",
-            "example": "Blood cancer database"
+            "example": "Blood cancer database",
+            "maxLength": 256
           },
           "host": {
             "type": "string",
             "description": "Url where the database is hosted at",
-            "example": "http://somewhere"
+            "example": "http://somewhere",
+            "maxLength": 256
           },
           "port": {
             "type": "number",
