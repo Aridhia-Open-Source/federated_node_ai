@@ -45,16 +45,13 @@
         "summary": "List all datasets available to the user",
         "responses": {
           "200":{
-            "$ref": "#/components/responses/InvalidBody"
+            "$ref": "#/components/responses/DatasetList"
           },
           "400":{
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
-          },
-          "404":{
-            "$ref": "#/components/responses/NotFound"
           },
           "500":{
             "$ref": "#/components/responses/InternalError"
@@ -102,6 +99,13 @@
             "name": "id",
             "schema":{"type": "integer"},
             "required": true
+          },
+          {
+            "in": "header",
+            "name": "project_name",
+            "schema":{"type": "string"},
+            "required": false,
+            "description": "Used by non admin users. The value should match the project decalred on the roken_transfer endpoint"
           }
         ],
         "tags": ["Datasets"],
@@ -131,6 +135,13 @@
             "name": "id",
             "schema":{"type": "integer"},
             "required": true
+          },
+          {
+            "in": "header",
+            "name": "project_name",
+            "schema":{"type": "string"},
+            "required": false,
+            "description": "Used by non admin users. The value should match the project decalred on the roken_transfer endpoint"
           }
         ],
         "tags": ["Datasets"],
@@ -160,6 +171,13 @@
             "name": "id",
             "schema":{"type": "integer"},
             "required": true
+          },
+          {
+            "in": "header",
+            "name": "project_name",
+            "schema":{"type": "string"},
+            "required": false,
+            "description": "Used by non admin users. The value should match the project decalred on the roken_transfer endpoint"
           }
         ],
         "tags": ["Datasets"],
@@ -195,6 +213,13 @@
             "name": "table_name",
             "schema":{"type": "string"},
             "required": true
+          },
+          {
+            "in": "header",
+            "name": "project_name",
+            "schema":{"type": "string"},
+            "required": false,
+            "description": "Used by non admin users. The value should match the project decalred on the roken_transfer endpoint"
           }
         ],
         "tags": ["Datasets"],
@@ -238,9 +263,6 @@
           },
           "401":{
             "$ref": "#/components/responses/Unauthorized"
-          },
-          "404":{
-            "$ref": "#/components/responses/NotFound"
           },
           "500":{
             "$ref": "#/components/responses/InternalError"
@@ -861,10 +883,10 @@
           "created_at": {"type": "string", "example": "Mon, 19 Feb 2024 10:00:45 GMT"},
           "updated_at": {"type": "string", "example": "Mon, 19 Feb 2024 10:00:45 GMT"},
           "dataset_id": {"type": "integer", "example": 1},
-          "description": {"type": "string", "maxLength": 2048, "example": "Blood Analysis results"},
-          "field_name": {"type": "string", "maxLength": 50, "example": "glucose_perc"},
-          "table_name": {"type": "string", "maxLength": 50, "example": "analysis"},
-          "label": {"type": "string", "maxLength": 64}
+          "description": {"type": "string", "maxLength": 4096, "example": "Blood Analysis results"},
+          "field_name": {"type": "string", "maxLength": 256, "example": "glucose_perc"},
+          "table_name": {"type": "string", "maxLength": 256, "example": "analysis"},
+          "label": {"type": "string", "maxLength": 256}
         }
       },
       "CataloguePostBody": {
@@ -875,7 +897,7 @@
             "example": "Catalogue 1"
           },
           "description": {
-            "maxLength": 2048,
+            "maxLength": 4096,
             "example": ""
           }
         }
@@ -886,11 +908,11 @@
           "type": "object",
           "properties": {
             "table_name":{
-              "maxLength": 50,
+              "maxLength": 256,
               "example": "patient"
             },
 			      "description": {
-              "maxLength": 2048,
+              "maxLength": 4096,
               "example": "Patients' general information"
             }
           }
@@ -901,11 +923,12 @@
         "properties": {
           "title": {
             "type": "string",
+            "maxLength": 256,
             "example": "Data Access Request 1"
           },
           "project_name": {
             "type": "string",
-            "maxLength": 64,
+            "maxLength": 256,
             "example": "eu_research_2024"
           },
           "requested_by": {
@@ -913,14 +936,15 @@
             "properties": {
               "email": {
                 "type": "string",
-                "maxLength": 64,
+                "maxLength": 256,
                 "example": "user@email.com"
               }
-            }
+            },
+            "required": ["email"]
           },
           "description": {
             "type": "string",
-            "maxLength": 2048,
+            "maxLength": 4096,
             "description": "Project/Data access request description"
           },
           "proj_start": {
@@ -935,7 +959,16 @@
             "type": "string",
             "example": "1"
           }
-        }
+        },
+        "required": [
+          "title",
+          "project_name",
+          "requested_by",
+          "description",
+          "dataset_id",
+          "proj_start",
+          "proj_end"
+        ]
       },
       "BeaconPostBody": {
         "type": "object",
@@ -948,7 +981,10 @@
             "type": "integer",
             "example": 1
           }
-        }
+        },
+        "required": [
+          "query", "dataset_id"
+        ]
       },
       "LoginBody": {
         "type": "object",
@@ -965,7 +1001,7 @@
         "type": "object",
         "properties": {
           "name": { "type": "string", "maxLength": 256},
-          "description": { "type": "string", "maxLength": 2048},
+          "description": { "type": "string", "maxLength": 4096},
           "executors": {
             "type": "object",
             "properties": {
@@ -985,7 +1021,8 @@
                   "PARAMETER1": 2
                 }
               }
-            }
+            },
+            "required": ["image"]
           },
           "tags": {
             "type": "object",
