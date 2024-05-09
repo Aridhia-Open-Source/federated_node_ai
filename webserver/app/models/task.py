@@ -264,11 +264,8 @@ class Task(db.Model, BaseModel):
         """
         try:
             status_obj = self.get_current_pod(is_running=False).status.container_statuses
-            retries = 5
-            while retries:
-                status_obj = self.get_current_pod(is_running=False).status.container_statuses
-                retries -= 1
-                time.sleep(1)
+            if status_obj is None:
+                return self.status
 
             status_obj = status_obj[0].state
 
@@ -342,8 +339,7 @@ class Task(db.Model, BaseModel):
             v1 = KubernetesClient()
             job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
 
-            while not getattr(job_pod.status.container_statuses[0].state, 'running', None):
-                job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
+            v1.is_pod_ready(label=f"job-name={job_name}")
 
             res_file = v1.cp_from_pod(job_pod.metadata.name, TASK_POD_RESULTS_PATH, f"{RESULTS_PATH}/{self.id}")
             v1.delete_pod(job_pod.metadata.name)
