@@ -194,7 +194,7 @@ class Task(db.Model, BaseModel):
 
         command=None
         if len(self.executors):
-            self.executors[0]["command"]
+            command=self.executors[0].get("command", '')
 
         body = v1.create_pod_spec({
             "name": self.pod_name(),
@@ -263,7 +263,15 @@ class Task(db.Model, BaseModel):
             :str: if the pod is not found or deleted
         """
         try:
-            status_obj = self.get_current_pod(pod_name).status.container_statuses[0].state
+            status_obj = self.get_current_pod(is_running=False).status.container_statuses
+            retries = 5
+            while retries:
+                status_obj = self.get_current_pod(is_running=False).status.container_statuses
+                retries -= 1
+                time.sleep(1)
+
+            status_obj = status_obj[0].state
+
             for status in ['running', 'waiting', 'terminated']:
                 st = getattr(status_obj, status)
                 if st is not None:
@@ -334,7 +342,7 @@ class Task(db.Model, BaseModel):
             v1 = KubernetesClient()
             job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
 
-            while not job_pod.status.container_statuses[0].ready:
+            while not getattr(job_pod.status.container_statuses[0].state, 'running', None):
                 job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
 
             res_file = v1.cp_from_pod(job_pod.metadata.name, TASK_POD_RESULTS_PATH, f"{RESULTS_PATH}/{self.id}")
