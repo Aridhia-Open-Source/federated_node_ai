@@ -10,7 +10,7 @@ Until v1.0 a set of credentials will need to be required to pull docker images a
 
 Set the two env vars `$username` and `$password`, based on the note above.
 ```sh
-helm repo add --username $username --password $token federated_node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/stable
+helm repo add --username $username --password $token federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/stable
 ```
 
 Now you should be all set to pull the chart from gitLab.
@@ -23,20 +23,27 @@ The secrets to be created are:
 - ACR credentials (provided in the same LastPass note)
 - Azure storage account credentials
 
-#### cli
+If you plan to deploy on a dedicated namespace, create it manually first or the secrets creation will fail
+```sh
+kubectl create namespace <new namespace name>
+```
+
+The following examples aims to setup container registries (ACRs) credentials.
+
+#### acrs
 In general, to create a k8s secret you run a command like the following:
 ```sh
 kubectl create secret generic $secret_name \
     --from-literal=username=(echo $username | base64) \
     --from-literal=password=(echo $password | base64)
 ```
-#### yaml
 or using the yaml template:
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-    name: kc-secrets
+    # set a name of your choosing
+    name:
     # use the namespace name in case you plan to deploy in a non-default one.
     # Otherwise you can set to default, or not use the next field altogether
     namespace:
@@ -54,6 +61,50 @@ then you can apply this secret with the command:
 kubectl apply -f file.yaml
 ```
 replace file.yaml with the name of the file you created above.
+
+#### db
+In case you want to set DB secrets the structure is slightly different:
+
+```sh
+kubectl create secret generic $secret_name \
+    --from-literal=value=(echo $password | base64)
+```
+or using the yaml template:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+    # set a name of your choosing
+    name:
+    # use the namespace name in case you plan to deploy in a non-default one.
+    # Otherwise you can set to default, or not use the next field altogether
+    namespace:
+data:
+  value:
+type: Opaque
+```
+
+#### azure storage
+```sh
+kubectl create secret generic $secret_name \
+    --from-literal=azurestorageaccountkey=(echo $accountkey | base64) \
+    --from-literal=azurestorageaccountname=(echo $accountname | base64)
+```
+or using the yaml template:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+    # set a name of your choosing
+    name:
+    # use the namespace name in case you plan to deploy in a non-default one.
+    # Otherwise you can set to default, or not use the next field altogether
+    namespace:
+data:
+  azurestorageaccountkey:
+  azurestorageaccountname:
+type: Opaque
+```
 
 ### Copying existing secrets
 If the secret(s) exist in another namespace, you can "copy" them with this command:
@@ -108,9 +159,9 @@ acrs:
 
 ### Deployment command
 ```sh
-helm install federatednode federated-node -f <custom_value.yaml>
+helm install federatednode federated-node/federated-node -f <custom_value.yaml>
 ```
 If you don't want to install it in the default namespace:
 ```sh
-helm install federatednode federated-node -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
+helm install federatednode federated-node/federated-node -f <custom_value.yaml> --create-namespace --namespace=$namespace_name
 ```
