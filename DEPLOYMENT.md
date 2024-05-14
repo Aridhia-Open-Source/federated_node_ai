@@ -35,6 +35,11 @@ or using the yaml template:
 ```yaml
 apiVersion: v1
 kind: Secret
+metadata:
+    name: kc-secrets
+    # use the namespace name in case you plan to deploy in a non-default one.
+    # Otherwise you can set to default, or not use the next field altogether
+    namespace:
 data:
   password:
   username:
