@@ -291,9 +291,6 @@
           "401":{
             "$ref": "#/components/responses/Unauthorized"
           },
-          "404":{
-            "$ref": "#/components/responses/NotFound"
-          },
           "500":{
             "$ref": "#/components/responses/InternalError"
           }
@@ -409,19 +406,25 @@
           "401":{
             "$ref": "#/components/responses/Unauthorized"
           },
-          "404":{
-            "$ref": "#/components/responses/NotFound"
-          },
           "500":{
             "$ref": "#/components/responses/InternalError"
           }
         }
       }
     },
-    "/tasks/cancel": {
+    "/tasks/{id}/cancel": {
       "post": {
         "operationId": "cancel_task",
         "tags": ["Tasks"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Unique task identifier",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
         "summary": "Cancel a running task",
         "responses":{
           "201":{
@@ -485,7 +488,7 @@
           }
         },
         "responses":{
-          "200":{
+          "201":{
             "$ref": "#/components/responses/TransferTokenPost"
           },
           "401":{
