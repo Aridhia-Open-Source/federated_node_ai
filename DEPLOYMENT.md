@@ -54,7 +54,7 @@ type: Opaque
 ```
 In this example the password and username field has to hold a base64 encoded string
 ```sh
-echo "value" | base64
+echo -n "value" | base64
 ```
 then you can apply this secret with the command:
 ```sh
