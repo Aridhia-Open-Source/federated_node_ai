@@ -123,7 +123,18 @@ kubectl get secret $secretname  --namespace=$old_namespace -oyaml | grep -v '^\s
 ### Values.yaml
 In order to deploy a `yaml` file is needed to customize certain configurations for the FN to adapt to its new environment. A template that resembles the DRE deployment will be attached to the LastPass note.
 
-Download it in your working folder (the one you're going to run the deployment command, see below) and change values as needed.
+Download it in your working folder (the one you're going to run the deployment command from, see below) and change values as needed.
+
+If you want to use develop images, you can set
+`image.tag` for the flask backend
+`keycloak.tag` for the keycloak service
+
+e.g.
+```yaml
+keycloak:
+  tag: 0.0.1-617710
+```
+will use `ghcr.io/arihdia-federated-node/federated_keycloak:0.0.1-617710` in the statefulset.
 
 Once the secrets have been created use their names as follows:
 #### db creds
