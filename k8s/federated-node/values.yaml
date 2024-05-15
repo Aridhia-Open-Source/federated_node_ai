@@ -91,6 +91,7 @@ securityContext: {}
 
 ingress:
   host:
+  on_aks: false
   whitelist:
     enabled: false
     ips: []

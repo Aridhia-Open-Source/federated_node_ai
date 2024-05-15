@@ -121,6 +121,13 @@ kubectl get secret $secretname  --namespace=$old_namespace -oyaml | grep -v '^\s
 ```
 
 ### Values.yaml
+Few conventions to begin with. Some nested field will be referred by a dot-path notation. An example would be:
+```yaml
+main:
+  field: value
+```
+will be referenced as `main.field`.
+
 In order to deploy a `yaml` file is needed to customize certain configurations for the FN to adapt to its new environment. A template that resembles the DRE deployment will be attached to the LastPass note.
 
 Download it in your working folder (the one you're going to run the deployment command from, see below) and change values as needed.
@@ -135,6 +142,8 @@ keycloak:
   tag: 0.0.1-617710
 ```
 will use `ghcr.io/arihdia-federated-node/federated_keycloak:0.0.1-617710` in the statefulset.
+
+__IMPORTANT NOTE__: If deploying on Azure AKS, set `ingress.on_aks` to `true`. This will make dedicated configuration active to run properly on that platform.
 
 Once the secrets have been created use their names as follows:
 #### db creds
