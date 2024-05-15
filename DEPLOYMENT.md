@@ -12,6 +12,10 @@ Set the two env vars `$username` and `$password`, based on the note above.
 ```sh
 helm repo add --username $username --password $token federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/stable
 ```
+If you want to run a development chart
+```sh
+helm repo add --username $username --password $token federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/develop
+```
 
 Now you should be all set to pull the chart from gitLab.
 
@@ -28,9 +32,16 @@ If you plan to deploy on a dedicated namespace, create it manually first or the 
 kubectl create namespace <new namespace name>
 ```
 
+__Please keep in mind that every secret value has to be a base64 encoded string.__ It can be achieved with the following command:
+```sh
+echo -n "value" | base64
+```
+
+
+
+#### Container Registries
 The following examples aims to setup container registries (ACRs) credentials.
 
-#### acrs
 In general, to create a k8s secret you run a command like the following:
 ```sh
 kubectl create secret generic $secret_name \
@@ -52,17 +63,14 @@ data:
   username:
 type: Opaque
 ```
-In this example the password and username field has to hold a base64 encoded string
-```sh
-echo -n "value" | base64
-```
+
 then you can apply this secret with the command:
 ```sh
 kubectl apply -f file.yaml
 ```
 replace file.yaml with the name of the file you created above.
 
-#### db
+#### Database
 In case you want to set DB secrets the structure is slightly different:
 
 ```sh
@@ -84,7 +92,7 @@ data:
 type: Opaque
 ```
 
-#### azure storage
+#### Azure Storage
 ```sh
 kubectl create secret generic $secret_name \
     --from-literal=azurestorageaccountkey=(echo $accountkey | base64) \

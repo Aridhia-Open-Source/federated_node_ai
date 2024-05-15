@@ -1,5 +1,5 @@
 name: Releases
-
+run-name: Build and push helm chart
 on:
   push:
     tags:
@@ -36,12 +36,8 @@ jobs:
         curl --request POST \
           --form 'chart=@artifacts/federated-node-${{ vars.VERSION }}.tgz' \
           --user ${{ vars.USER_HELM }}:${{ secrets.HELM_TOKEN }} \
-          https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/api/${{ env.HELM_CHANNEL }}/charts
+          ${{ vars.HELM_REPO }}/helm/api/${{ env.HELM_CHANNEL }}/charts
 
-    # - name: Push to GitLab Package Artifact
-    #   run: |
-    #     echo ${{ secrets.HELM_TOKEN }} | helm registry login -u ${{ vars.USER_HELM }} ${{ vars.HELM_REPO }} --password-stdin
-    #     helm push artifacts/federated-node-${{ vars.VERSION }}.tgz oci://${{ vars.HELM_REPO }}/aridhia/federated-node
     - name: Publish Release
       uses: ncipollo/release-action@v1
       with:
