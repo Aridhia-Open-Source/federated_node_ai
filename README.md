@@ -22,7 +22,13 @@ Minikube is required.
 
 This will launch a Minikube cluster called `federatednode`, and apply the helm chart with the default `values.yaml`.
 
-Open the service port with
+Open the nginx port with
 ```sh
-make expose_api
+kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 443
+```
+Also add the custom host url to the hosts list
+On Windows: `C:\WINDOWS\System32\drivers\etc\hosts`
+On WSL/Linux: `/etc/hosts`
+```
+127.0.0.1 host-url
 ```

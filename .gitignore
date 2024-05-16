@@ -8,8 +8,8 @@ __pycache__/
 .env
 *.env
 k8s/*/*.values.yaml
-*.key
 *.crt
+*.key
 
 # Ingore helm charts archives
 artifacts/*.tgz
