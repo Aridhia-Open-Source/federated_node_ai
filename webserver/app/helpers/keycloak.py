@@ -4,7 +4,7 @@ import random
 import requests
 from base64 import b64encode
 from flask import request
-from app.helpers.exceptions import AuthenticationError, KeycloakError
+from app.helpers.exceptions import AuthenticationError, UnauthorizedError, KeycloakError
 from app.helpers.const import PASS_GENERATOR_SET
 
 logger = logging.getLogger('keycloak_helper')
@@ -303,7 +303,7 @@ class Keycloak:
         )
         if not request_perm.ok:
             logger.info(request_perm.content.decode())
-            raise AuthenticationError("User is not authorized")
+            raise UnauthorizedError("User is not authorized")
         return True
 
     def get_role(self, role_name:str) -> dict:

@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.helpers.db import db, engine
 from app.helpers.keycloak import Keycloak
-from app.helpers.exceptions import AuthenticationError, DBRecordNotFoundError
+from app.helpers.exceptions import AuthenticationError, UnauthorizedError, DBRecordNotFoundError
 from app.models.audit import Audit
 
 
@@ -47,7 +47,7 @@ def auth(scope:str, check_dataset=True):
             if Keycloak(client).is_token_valid(token, scope, resource, token_type):
                 return func(*args, **kwargs)
             else:
-                raise AuthenticationError("Token is not valid, or the user has not enough permissions.")
+                raise UnauthorizedError("Token is not valid, or the user has not enough permissions.")
         return _auth
     return auth_wrapper
 
