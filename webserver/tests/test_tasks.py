@@ -96,7 +96,7 @@ def test_get_list_tasks_base_user(
         '/tasks/',
         headers=simple_user_header
     )
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 def test_create_task(
         acr_client,
@@ -155,7 +155,7 @@ def test_create_unauthorized_task(
         data=json.dumps(data),
         headers=post_json_user_header
     )
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 def test_create_task_image_not_found(
         acr_client_404,

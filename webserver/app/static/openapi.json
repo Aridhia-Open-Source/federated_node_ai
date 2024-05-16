@@ -51,6 +51,9 @@
             "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "500":{
@@ -79,6 +82,9 @@
             "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -115,6 +121,9 @@
             "$ref": "#/components/responses/DatasetById"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -151,6 +160,9 @@
             "$ref": "#/components/responses/DatasetCatalogue"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -187,6 +199,9 @@
             "$ref": "#/components/responses/DatasetDictionary"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -229,10 +244,13 @@
             "$ref": "#/components/responses/DatasetDictionaryTable"
           },
           "401":{
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Unauthenticated"
           },
           "404":{
             "$ref": "#/components/responses/NotFound"
+          },
+          "403":{
+            "$ref": "#/components/responses/Unauthorized"
           },
           "500":{
             "$ref": "#/components/responses/InternalError"
@@ -256,12 +274,15 @@
         },
         "responses":{
           "201":{
-            "$ref": "#/components/responses/TransferTokenPost"
+            "$ref": "#/components/responses/TokenResponse"
           },
           "400":{
             "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "500":{
@@ -289,10 +310,10 @@
             "$ref": "#/components/responses/SelectBeaconPost"
           },
           "401":{
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Unauthenticated"
           },
-          "404":{
-            "$ref": "#/components/responses/NotFound"
+          "403":{
+            "$ref": "#/components/responses/Unauthorized"
           },
           "500":{
             "$ref": "#/components/responses/InternalError"
@@ -319,6 +340,9 @@
             "$ref": "#/components/responses/Task"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -340,6 +364,9 @@
             "$ref": "#/components/responses/TaskList"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -371,6 +398,9 @@
             "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -407,10 +437,10 @@
             "$ref": "#/components/responses/InvalidBody"
           },
           "401":{
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Unauthenticated"
           },
-          "404":{
-            "$ref": "#/components/responses/NotFound"
+          "403":{
+            "$ref": "#/components/responses/Unauthorized"
           },
           "500":{
             "$ref": "#/components/responses/InternalError"
@@ -418,16 +448,28 @@
         }
       }
     },
-    "/tasks/cancel": {
+    "/tasks/{id}/cancel": {
       "post": {
         "operationId": "cancel_task",
         "tags": ["Tasks"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Unique task identifier",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
         "summary": "Cancel a running task",
         "responses":{
           "201":{
             "$ref": "#/components/responses/SimpleOk"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -458,6 +500,9 @@
             "$ref": "#/components/responses/TaskResults"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           },
           "404":{
@@ -485,11 +530,11 @@
           }
         },
         "responses":{
-          "200":{
-            "$ref": "#/components/responses/TransferTokenPost"
+          "201":{
+            "$ref": "#/components/responses/TokenResponse"
           },
           "401":{
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/Unauthenticated"
           }
         }
       }
@@ -530,6 +575,9 @@
             "$ref": "#/components/responses/AuditList"
           },
           "401":{
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403":{
             "$ref": "#/components/responses/Unauthorized"
           }
         }
@@ -697,7 +745,7 @@
           }
         }
       },
-      "TransferTokenPost": {
+      "TokenResponse": {
         "description": "Token created",
         "content": {
           "application/json":{
@@ -763,6 +811,9 @@
       },
       "InvalidBody": {
         "description": "The request body cannot be parsed or is missing required values."
+      },
+      "Unauthenticated": {
+        "description": "Unauthenticated."
       },
       "Unauthorized": {
         "description": "Unauthorized."

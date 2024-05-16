@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: federated-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    {{- if .Values.ingress.whitelist.enabled }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: {{ join "," .Values.ingress.whitelist.ips | quote }}
+    {{- end }}
+    {{- if .Values.ingress.blacklist.enabled }}
+    nginx.ingress.kubernetes.io/denylist-source-range: {{ join "," .Values.ingress.blacklist.ips | quote }}
+    {{- end }}
+spec:
+  ingressClassName: fn-nginx
+  tls:
+  - hosts:
+    - {{ .Values.ingress.host }}
+    {{ if .Values.ingress.tls }}
+    secretName: {{ .Values.ingress.tls.secretName | default "tls"}}
+    {{ end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  name: http
