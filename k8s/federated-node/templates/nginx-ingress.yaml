@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: federated-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$1/$3
     {{- if .Values.ingress.whitelist.enabled }}
     nginx.ingress.kubernetes.io/whitelist-source-range: {{ join "," .Values.ingress.whitelist.ips | quote }}
     {{- end }}
@@ -22,7 +22,14 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /
+          - path: /(.*[^/])
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  name: http
+          - path: /(.*[^/])(/)(.*)
             pathType: Prefix
             backend:
               service:

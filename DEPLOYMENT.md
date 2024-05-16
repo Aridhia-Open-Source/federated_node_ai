@@ -6,7 +6,9 @@ The federated node is deployed as an Helm Chart, so helm should be installed in 
 See their installation instructions [here](https://helm.sh/docs/intro/install/).
 
 ### Setup helm repo
-Until v1.0 a set of credentials will need to be required to pull docker images and the helm chart. These credentials will be set in a shared note in LastPass, called `FN setup notes`.
+__Until v1.0__ a set of credentials will need to be required to pull docker images and the helm chart. These credentials will be set in a shared note in LastPass, called `FN setup notes`. If you don't have access to it, ask [@r-casula](https://github.com/r-casula) to manually provide them beforehand.
+
+__From v1.0__ there will be no need for credentials as the helm repo will be public.
 
 Set the two env vars `$username` and `$password`, based on the note above.
 ```sh
@@ -24,8 +26,8 @@ In order to not store credentials in plain text within the `values.yaml` file, t
 
 The secrets to be created are:
 - Db credentials for the FN webserver to use (not where the dataset is)
-- ACR credentials (provided in the same LastPass note)
-- Azure storage account credentials
+- ACR credentials (for the basic ghcr.io repo, you can create a personal access token with the `repo` and `write:packages` permissions. Use the generated token as password, and your github username)
+- Azure storage account credentials (if used)
 
 If you plan to deploy on a dedicated namespace, create it manually first or the secrets creation will fail
 ```sh
@@ -37,16 +39,14 @@ __Please keep in mind that every secret value has to be a base64 encoded string.
 echo -n "value" | base64
 ```
 
-
-
 #### Container Registries
 The following examples aims to setup container registries (ACRs) credentials.
 
 In general, to create a k8s secret you run a command like the following:
 ```sh
 kubectl create secret generic $secret_name \
-    --from-literal=username=(echo $username | base64) \
-    --from-literal=password=(echo $password | base64)
+    --from-literal=username=(echo -n $username | base64) \
+    --from-literal=password=(echo -n $password | base64)
 ```
 or using the yaml template:
 ```yaml
@@ -75,7 +75,7 @@ In case you want to set DB secrets the structure is slightly different:
 
 ```sh
 kubectl create secret generic $secret_name \
-    --from-literal=value=(echo $password | base64)
+    --from-literal=value=(echo -n $password | base64)
 ```
 or using the yaml template:
 ```yaml
@@ -95,8 +95,8 @@ type: Opaque
 #### Azure Storage
 ```sh
 kubectl create secret generic $secret_name \
-    --from-literal=azurestorageaccountkey=(echo $accountkey | base64) \
-    --from-literal=azurestorageaccountname=(echo $accountname | base64)
+    --from-literal=azurestorageaccountkey=(echo -n $accountkey | base64) \
+    --from-literal=azurestorageaccountname=(echo -n $accountname | base64)
 ```
 or using the yaml template:
 ```yaml
