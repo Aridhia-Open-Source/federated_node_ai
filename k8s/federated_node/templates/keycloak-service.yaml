@@ -11,3 +11,12 @@ spec:
       protocol: TCP
   selector:
     app: keycloak
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: keycloak
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: ExternalName
+  externalName: keycloak.{{ .Values.namespaces.keycloak }}
