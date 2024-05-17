@@ -28,6 +28,7 @@ def get_service_info():
     return "WIP", 200
 
 @bp.route('/', methods=['GET'])
+@bp.route('', methods=['GET'])
 @audit
 @auth(scope='can_admin_task')
 def get_tasks():
@@ -69,6 +70,7 @@ def cancel_tasks(task_id):
     return task.terminate_pod(), 201
 
 @bp.route('/', methods=['POST'])
+@bp.route('', methods=['POST'])
 @audit
 @auth(scope='can_exec_task')
 def post_tasks():
