@@ -26,7 +26,7 @@ def auth(scope:str, check_dataset=True):
             if check_dataset:
                 path = request.path.split('/')
 
-                if 'datasets' in path:
+                if 'datasets' in path and len(path) > 2:
                     ds_id = path[path.index('datasets') + 1]
                 elif request.headers.get('Content-Type'):
                     ds_id = request.json.get("dataset_id")

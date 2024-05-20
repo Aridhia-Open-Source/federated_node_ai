@@ -13,9 +13,6 @@ build_docker:
 build_docker_dev:
 	docker build . -f build/Dockerfile -t ghcr.io/arihdia-federated-node/federated_node_run:${VERSION}-dev
 
-pylint:
-	pylint app
-
 tests_local:
 	./run_tests.sh
 
