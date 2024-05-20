@@ -12,14 +12,14 @@ COPY alembic.ini /
 WORKDIR /app
 
 # hadolint detects pipenv as another invocation of pip
-# hadolint ignore=DL3013
+# hadolint ignore=DL3013,DL3008
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y \
+    && apt-get install --no-install-recommends -y \
         libpq-dev \
         python3-dev \
         gcc \
-    && pip install --upgrade pip \
+    && pip install --no-cache-dir --upgrade pip \
     && PATH=$(which pg_config):$PATH \
     && python3 -m pip install --no-cache-dir pipenv \
     && pipenv lock \

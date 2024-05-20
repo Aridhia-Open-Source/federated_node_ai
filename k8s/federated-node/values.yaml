@@ -1,4 +1,4 @@
-# Default values for federated_node.
+# Default values for federated-node.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -8,6 +8,9 @@ image:
   repository: ghcr.io/arihdia-federated-node/federated_node_run
   tag: 0.0.1
   pullPolicy: IfNotPresent
+
+keycloak:
+  tag: 0.0.1
 
 autoscaling:
   enabled: false
@@ -26,11 +29,11 @@ db:
   name:
   host:
   # If a configmap with host user exists, use that
-  configMap:
+  # configMap:
   # If a secret with password exists, use that
-  secret:
-    name:
-    key:
+  # secret:
+  #   name:
+  #   key:
 
 federatedNode:
   port: 5000
@@ -88,6 +91,7 @@ securityContext: {}
 
 ingress:
   host:
+  on_aks: false
   whitelist:
     enabled: false
     ips: []
