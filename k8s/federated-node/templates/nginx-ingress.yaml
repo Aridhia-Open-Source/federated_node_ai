@@ -23,19 +23,12 @@ spec:
       http:
         paths:
         - path: /keycloak/(.*)
-        pathType: Prefix
-        backend:
-          service:
-            name: keycloak
-            port:
-              number: 8080
-        - path: /([^keycloak].*[^/])
           pathType: Prefix
           backend:
             service:
-              name: backend
+              name: keycloak
               port:
-                name: http
+                number: 8080
         - path: /(.*)
           pathType: Prefix
           backend:

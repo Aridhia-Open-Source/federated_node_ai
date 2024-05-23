@@ -8,7 +8,7 @@ spec:
   accessModes:
     - ReadWriteMany
   capacity:
-    storage: 100Mi
+    storage: 1Gi
   # This should be changed to some more reliable destination
   {{ if .Values.storage.local }}
   local:
