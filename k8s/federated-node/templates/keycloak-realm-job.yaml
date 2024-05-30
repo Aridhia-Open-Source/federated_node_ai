@@ -1,3 +1,5 @@
+# TODO: argoCD still executes this as pre install
+{{ if 0 }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -36,3 +38,4 @@ spec:
             items:
             - key: setup_realm.py
               path: setup_realm.py
+{{ end }}
