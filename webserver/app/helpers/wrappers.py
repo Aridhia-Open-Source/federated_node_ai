@@ -79,21 +79,24 @@ def audit(func):
 
         details = None
         # details should include the request body. If a json
-        if request.json:
+        if request.is_json:
             details = request.json
             # Remove any of the following fields that contain
             # sensitive data, so far only username and password on dataset POST
             for field in ["username", "password"]:
-                find_and_delete_key(details, field)
+                find_and_redact_key(details, field)
             details = str(details)
         elif request.data:
             details = request.data.decode()
 
-        token = Keycloak().decode_token(Keycloak.get_token_from_headers())
+        requested_by = ""
+        if "Authorization" in request.headers:
+            token = Keycloak().decode_token(Keycloak.get_token_from_headers())
+            requested_by = token.get('sub')
+
         http_method = request.method
         http_endpoint = request.path
         api_function = func.__name__
-        requested_by = token.get('sub')
         to_save = Audit(source_ip, http_method, http_endpoint, requested_by, http_status, api_function, details)
         to_save.add()
         return response_object, http_status
@@ -101,10 +104,29 @@ def audit(func):
 
 def find_and_delete_key(obj: dict, key: str):
     """
-    Given a dictionary, tries to find a (nested) key and pop it
+    Given a dictionary, tries to find a (nested) key and pops it
+    """
+    copy_obj = obj.copy()
+    for k, v in copy_obj.items():
+        if isinstance(v, dict):
+            find_and_delete_key(v, key)
+        elif isinstance(v, list):
+            for item in obj[k]:
+                if isinstance(item, dict):
+                    find_and_delete_key(item, key)
+        elif k == key:
+            obj.pop(key, None)
+
+def find_and_redact_key(obj: dict, key: str):
+    """
+    Given a dictionary, tries to find a (nested) key and redact its value
     """
     for k, v in obj.items():
         if isinstance(v, dict):
-            find_and_delete_key(v, key)
+            find_and_redact_key(v, key)
+        elif isinstance(v, list):
+            for item in obj[k]:
+                if isinstance(item, dict):
+                    find_and_redact_key(item, key)
         elif k == key:
-            obj.pop(key, None)
+            obj[k] = '*****'
