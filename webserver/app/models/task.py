@@ -239,7 +239,7 @@ class Task(db.Model, BaseModel):
         v1 = KubernetesClient()
         running_pods = v1.list_namespaced_pod(
             TASK_NAMESPACE,
-            label_selector=f"task_id={self.id},dataset_id={self.dataset_id},requested_by={self.requested_by}"
+            label_selector=f"task_id={self.id}"
         )
         try:
             running_pods.items.sort(key=lambda x: x.metadata.creation_timestamp, reverse=True)
@@ -325,7 +325,7 @@ class Task(db.Model, BaseModel):
                 }
             ],
             "labels": {
-                "task_id": str(self.id),
+                "result_task_id": str(self.id),
                 "requested_by": self.requested_by
             }
         })
