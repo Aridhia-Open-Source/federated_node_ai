@@ -337,9 +337,9 @@ class Task(db.Model, BaseModel):
             )
             # Get the job's pod
             v1 = KubernetesClient()
-            job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
-
             v1.is_pod_ready(label=f"job-name={job_name}")
+
+            job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
 
             res_file = v1.cp_from_pod(job_pod.metadata.name, TASK_POD_RESULTS_PATH, f"{RESULTS_PATH}/{self.id}")
             v1.delete_pod(job_pod.metadata.name)
