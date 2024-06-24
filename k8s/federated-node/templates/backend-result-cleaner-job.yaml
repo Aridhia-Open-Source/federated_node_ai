@@ -16,13 +16,15 @@ spec:
             env:
             - name: RESULTS_PATH
               value: {{ .Values.federatedNode.volumes.results_path }}
+            - name: CLEANUP_AFTER_DAYS
+              value: "{{ .Values.cleanupTime }}"
             volumeMounts:
             - name: respv
               mountPath: {{ .Values.federatedNode.volumes.results_path }}
             command:
             - /bin/sh
             - -c
-            - find ${RESULTS_PATH} -type f -mtime +3 -name '*' -print0 | xargs -r0 rm --
+            - find ${RESULTS_PATH} -type d -mtime +${CLEANUP_AFTER_DAYS} -name '*' -print0 | xargs -r0 rm -r --
           restartPolicy: Never
           volumes:
           - name: respv
