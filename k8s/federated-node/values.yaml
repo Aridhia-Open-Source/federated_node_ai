@@ -64,7 +64,10 @@ storage:
     # url:
     # path:
   local:
+    # Local storage that will be shared with the backend
     # path:
+    # Local storage that will be shared with the db
+    # dbpath: /data/db
 
 token:
   life:

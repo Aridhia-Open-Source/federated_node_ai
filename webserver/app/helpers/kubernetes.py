@@ -5,7 +5,7 @@ from tempfile import TemporaryFile
 from kubernetes import client, config
 from kubernetes.stream import stream
 from kubernetes.client.exceptions import ApiException
-
+from kubernetes.watch import Watch
 from app.helpers.exceptions import InvalidRequest, KubernetesException
 from app.helpers.const import TASK_NAMESPACE
 
@@ -299,7 +299,22 @@ class KubernetesBase:
         return results_file_archive
 
 class KubernetesClient(KubernetesBase, client.CoreV1Api):
-    pass
+    def is_pod_ready(self, label):
+        """
+        By getting a label, checks if the pod is in ready state.
+        Once this happens the method will return
+        """
+        watcher = Watch()
+        for event in watcher.stream(
+            func=self.list_namespaced_pod,
+            namespace=TASK_NAMESPACE,
+            label_selector=label,
+            timeout_seconds=60
+        ):
+            if event["object"].status.phase == "Running":
+                watcher.stop()
+                return
+            logger.info(f"Pod is in state {event["object"].status.phase}")
 
 class KubernetesBatchClient(KubernetesBase, client.BatchV1Api):
     pass

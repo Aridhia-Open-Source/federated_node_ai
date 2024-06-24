@@ -2,6 +2,8 @@ import json
 import pytest
 from kubernetes.client.exceptions import ApiException
 from unittest.mock import Mock
+
+from app.helpers.db import db
 from app.helpers.exceptions import InvalidRequest
 from app.models.task import Task
 from tests.helpers.kubernetes import MockKubernetesClient
@@ -173,6 +175,86 @@ def test_create_task_image_not_found(
     )
     assert response.status_code == 500
     assert response.json == {"error": f"Image {task_body["executors"][0]["image"]} not found on our repository"}
+
+def test_get_task_by_id_admin(
+        acr_client,
+        k8s_client_task,
+        post_json_admin_header,
+        post_json_user_header,
+        simple_admin_header,
+        client,
+        task_body
+    ):
+    """
+    If an admin wants to check a specific task they should be allowed regardless
+    of who requested it
+    """
+    resp = client.post(
+        '/tasks/',
+        data=json.dumps(task_body),
+        headers=post_json_user_header
+    )
+    assert resp.status_code == 201
+    task_id = resp.json["task_id"]
+
+    resp = client.get(
+        f'/tasks/{task_id}',
+        headers=simple_admin_header
+    )
+    assert resp.status_code == 200
+
+def test_get_task_by_id_non_admin_owner(
+        acr_client,
+        k8s_client_task,
+        simple_user_header,
+        post_json_user_header,
+        client,
+        task_body
+    ):
+    """
+    If a user wants to check a specific task they should be allowed if they did request it
+    """
+    resp = client.post(
+        '/tasks/',
+        data=json.dumps(task_body),
+        headers=post_json_user_header
+    )
+    assert resp.status_code == 201
+    task_id = resp.json["task_id"]
+
+    resp = client.get(
+        f'/tasks/{task_id}',
+        headers=simple_user_header
+    )
+    assert resp.status_code == 200
+
+def test_get_task_by_id_non_admin_non_owner(
+        acr_client,
+        k8s_client_task,
+        post_json_user_header,
+        simple_user_header,
+        client,
+        task_body
+    ):
+    """
+    If a user wants to check a specific task they should not be allowed if they did not request it
+    """
+    resp = client.post(
+        '/tasks/',
+        data=json.dumps(task_body),
+        headers=post_json_user_header
+    )
+    assert resp.status_code == 201
+    task_id = resp.json["task_id"]
+
+    task_obj = db.session.get(Task, task_id)
+    task_obj.requested_by = "some random uuid"
+
+    resp = client.get(
+        f'/tasks/{task_id}',
+        headers=simple_user_header
+    )
+    assert resp.status_code == 403
 
 def test_cancel_task(
         client,
