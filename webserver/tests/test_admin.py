@@ -66,7 +66,8 @@ class TestAudits:
         self,
         client,
         post_json_admin_header,
-        dataset_post_body
+        dataset_post_body,
+        k8s_client
     ):
         """
         Tests that sensitive information are not included in the audit logs details
