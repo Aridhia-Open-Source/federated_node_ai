@@ -179,6 +179,25 @@ class Keycloak:
             raise AuthenticationError("Failed to login")
         return response_auth.json()[token_type]
 
+    def is_user_admin(self, token:str) -> bool:
+        """
+        Given a token checks if the owner is an Admin or SuperAdmin
+        """
+        response_auth = requests.post(
+            URLS["validate"],
+            data={
+                "client_secret": self.client_secret,
+                "client_id": self.client_name,
+                "token": token
+            },
+            headers = {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        )
+        if not response_auth.ok:
+            logger.info(response_auth.content.decode())
+            raise AuthenticationError("Failed to login")
+        return "Administrator" in response_auth.json()["realm_access"]["roles"]
 
     def get_admin_token_global(self) -> str:
         """
