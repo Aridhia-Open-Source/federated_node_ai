@@ -90,3 +90,10 @@ jobs:
           file: build/keycloak/keycloak.Dockerfile
           tags: ${{ vars.DOCKER_ACR }}/${{ env.OWNER_LC }}/federated_keycloak:${{ env.TAG }}
           push: true
+      - name: Check for vulnerabilities
+        run: |
+          docker run --entrypoint /bin/sh \
+            -v ./webserver/app:/app \
+            -v ./webserver/vuln.sh:/vuln.sh \
+            ${{ vars.DOCKER_ACR }}/${{ env.OWNER_LC }}/federated_node_run:${{ env.TAG }} \
+            /vuln.sh
