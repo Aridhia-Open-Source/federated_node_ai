@@ -15,6 +15,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: result-cleaner
+  namespace: {{ .Release.Namespace }}
 spec:
   schedule: "0 12 * * *"
   jobTemplate:
