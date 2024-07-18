@@ -11,6 +11,37 @@ data:
     kubectl delete pvc -n ${NAMESPACE} -l "delete_by=$(date +%Y%m%d)"
     kubectl delete pv -n ${NAMESPACE} -l "delete_by=$(date +%Y%m%d)"
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cleaner-role
+rules:
+- apiGroups: ["", "batch"]
+  resources: ["pods", "persistentvolumes", "persistentvolumeclaims", "jobs", "pods/exec"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cleaner-role
+subjects:
+  - kind: ServiceAccount
+    namespace: {{ .Release.Namespace }}
+    name: task-cleaner-handler
+roleRef:
+  kind: ClusterRole
+  name: cleaner-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: task-cleaner-handler
+  namespace: {{ .Release.Namespace }}
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -23,6 +54,7 @@ spec:
       ttlSecondsAfterFinished: 60
       template:
         spec:
+          serviceAccountName: task-cleaner-handler
           containers:
           - name: result-cleaner
             image: alpine/k8s:1.29.4
