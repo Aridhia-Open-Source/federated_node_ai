@@ -45,7 +45,7 @@ headers = {
 }
 
 response = requests.post(
-    f"{KEYCLOAK_URL}/realms/master/protocol/openid-connect/token",
+    f"{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/token",
     headers=headers,
     data=payload
 )
