@@ -67,7 +67,7 @@ spec:
               protocol: TCP
           readinessProbe:
             httpGet:
-              path: /health_check
+              path: /ready_check
               port: http
             initialDelaySeconds: 30
             periodSeconds: 180
