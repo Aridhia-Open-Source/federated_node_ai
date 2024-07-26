@@ -6,7 +6,8 @@ KC_OLD_PASS = os.getenv("KEYCLOAK_ADMIN_PASSWORD")
 KC_OLD_SECRET = os.getenv("KEYCLOAK_GLOBAL_CLIENT_SECRET")
 KC_NEW_PASS = os.getenv("NEW_KEYCLOAK_ADMIN_PASSWORD")
 KC_NEW_SECRET = os.getenv("NEW_KEYCLOAK_GLOBAL_CLIENT_SECRET")
-KC_URL = "http://keycloak:8080"
+KEYCLOAK_NAMESPACE = os.getenv("KEYCLOAK_NAMESPACE")
+KC_URL = os.getenv("KEYCLOAK_URL", f"http://keycloak.{KEYCLOAK_NAMESPACE}.svc.cluster.local")
 
 def login():
     print("Logging in...")
@@ -45,7 +46,7 @@ def get_client_id(headers):
     if not response.ok:
         print(response.json())
         exit(1)
-    return [cl["id"] for cl in response.json() if cl["name"].lower() == "global"][0]
+    return [cl["id"] for cl in response.json() if cl.get("name", '').lower() == "global"][0]
 
 def set_new_client_secret(client_id, headers):
     url = f"{KC_URL}/admin/realms/FederatedNode/clients/{client_id}"
