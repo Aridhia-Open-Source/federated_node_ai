@@ -125,3 +125,13 @@ Just need to append the NEW_DB env var
             capabilities:
               drop: [ "ALL" ]
 {{- end -}}
+
+# In case of updating existing entities in hooks, use these default labels/annotations
+# so helm knows they are part of this chart on future updates
+{{- define "defaultLabels" -}}
+    app.kubernetes.io/managed-by: Helm
+{{- end -}}
+{{- define "defaultAnnotations" -}}
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+{{- end -}}
