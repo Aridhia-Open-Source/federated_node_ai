@@ -13,7 +13,7 @@ def login():
     print("Logging in...")
     url = f"{KC_URL}/realms/master/protocol/openid-connect/token"
     headers = {
-    'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded'
     }
 
     response = requests.post(url, headers=headers, data={
