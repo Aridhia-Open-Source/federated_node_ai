@@ -5,9 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/arihdia-federated-node/federated_node_run
+  repository: ghcr.io/aridhia-open-source/federated_node_run
   tag:
-  pullPolicy: IfNotPresent
 
 keycloak:
   tag:
