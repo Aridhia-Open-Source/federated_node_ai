@@ -50,11 +50,11 @@ def get_client_id(headers):
 
 def set_new_client_secret(client_id, headers):
     url = f"{KC_URL}/admin/realms/FederatedNode/clients/{client_id}"
-    payload = json.dumps({
-        "secret": KC_NEW_SECRET
-    })
 
-    response = requests.put(url, headers=headers, data=payload)
+    response_get = requests.get(url, headers=headers)
+    body = response_get.json()
+    body["secret"] = KC_NEW_SECRET
+    response = requests.put(url, headers=headers, data=json.dumps(body))
     if not response.ok:
         print(response.json())
         exit(1)
