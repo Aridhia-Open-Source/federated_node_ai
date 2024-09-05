@@ -49,7 +49,8 @@ class Task(db.Model, BaseModel):
                  outputs:dict = {},
                  volumes:dict = {},
                  description:str = '',
-                 created_at:datetime=datetime.now()
+                 created_at:datetime=datetime.now(),
+                 **kwargs
                  ):
         self.name = name
         self.status = 'scheduled'
