@@ -116,6 +116,10 @@ Just need to append the NEW_DB env var
 {{ randAlphaNum 24 | b64enc | quote }}
 {{- end -}}
 
+{{- define "rollMe" -}}
+{{ randAlphaNum 5 | quote }}
+{{- end -}}
+
 {{- define "nonRootSC" -}}
           securityContext:
             allowPrivilegeEscalation: false

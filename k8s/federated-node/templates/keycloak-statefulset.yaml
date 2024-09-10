@@ -13,12 +13,12 @@ spec:
   template:
     metadata:
       annotations:
-        rollme: {{ randAlphaNum 5 | quote }}
+        rollme: {{ template "rollMe" . }}
       labels:
         app: keycloak
     spec:
       initContainers:
-        {{ template "createDBInitContainer" .}}
+        {{ template "createDBInitContainer" . }}
           - name: NEW_DB
             valueFrom:
               configMapKeyRef:
