@@ -128,7 +128,7 @@ In order to deploy a `yaml` file is needed to customize certain configurations f
 Download it in your working folder (the one you're going to run the deployment command from, see below) and change values as needed.
 
 If you want to use develop images, you can set
-`image.tag` for the flask backend
+`backend.tag` for the flask backend
 `keycloak.tag` for the keycloak service
 
 e.g.

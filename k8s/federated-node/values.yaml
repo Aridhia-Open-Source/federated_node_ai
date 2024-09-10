@@ -4,8 +4,7 @@
 
 replicaCount: 1
 
-image:
-  repository: ghcr.io/aridhia-open-source/federated_node_run
+backend:
   tag:
 
 keycloak:
@@ -75,6 +74,7 @@ token:
   life:
 
 imagePullSecrets: regcred
+pullPolicy: Always
 
 serviceAccount:
   # Specifies whether a service account should be created
