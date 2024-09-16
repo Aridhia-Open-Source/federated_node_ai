@@ -7,11 +7,11 @@ See their installation instructions [here](https://helm.sh/docs/intro/install/).
 
 ### Setup helm repo
 ```sh
-helm repo add federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/stable
+helm repo add federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/stable
 ```
 If you want to run a development chart
 ```sh
-helm repo add federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated_node/packages/helm/develop
+helm repo add federated-node https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/develop
 ```
 
 Now you should be all set to pull the chart from gitLab.
