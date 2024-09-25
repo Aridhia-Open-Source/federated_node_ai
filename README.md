@@ -6,7 +6,7 @@ PHEMS (short for “Pediatric Hospitals as European drivers for multi-party comp
 
 > ...aims to revolutionize the way health data is managed and utilized across Europe. This project is particularly focused on addressing the challenges posed by privacy >concerns and the complexity of data sharing due to varying interpretations of the EU General Data Protection Regulation (GDPR). By developing a decentralized and open >health data ecosystem, PHEMS strives to facilitate easier access to health data, thereby advancing federated health data analysis and creating services for generating >shareable synthetic datasets.
 
-As a technical partner of the project Aridhia has developed the Federated Node an open source component for running federated tasks 
+As a technical partner of the project Aridhia has developed the Federated Node an open source component for running federated tasks.
 
 
 # Deployment
