@@ -1,4 +1,4 @@
-![phems_logo](https://github.com/aridhia/federated-node/assets/94359606/d95796b0-6fad-4dfb-b0c6-5b3e17ac4846)
+![phems_logo](https://github.com/Aridhia-Open-Source/PHEMS_federated_node/blob/readme_update/images/phems_logo_RGB_color.jpg)
 
 ## The PHEMS Federated Node
 
