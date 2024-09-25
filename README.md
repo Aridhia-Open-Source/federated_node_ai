@@ -1,6 +1,13 @@
 ![phems_logo](https://github.com/aridhia/federated-node/assets/94359606/d95796b0-6fad-4dfb-b0c6-5b3e17ac4846)
-## Federated Node service for PHEMS project
-The development of the PHEMS ecosystem will entail the design and implementation of federated analytics, algorithms, governance framework and an implementation playbook.
+
+## The PHEMS Federated Node
+
+PHEMS (short for “Pediatric Hospitals as European drivers for multi-party computation and synthetic data generation capabilities across clinical specialities and data types”) is a Europe-wide consortium of paediatric hospitals that:
+
+> ...aims to revolutionize the way health data is managed and utilized across Europe. This project is particularly focused on addressing the challenges posed by privacy >concerns and the complexity of data sharing due to varying interpretations of the EU General Data Protection Regulation (GDPR). By developing a decentralized and open >health data ecosystem, PHEMS strives to facilitate easier access to health data, thereby advancing federated health data analysis and creating services for generating >shareable synthetic datasets.
+
+As a technical partner of the project Aridhia has developed the Federated Node an open source component for running federated tasks 
+
 
 # Deployment
 
