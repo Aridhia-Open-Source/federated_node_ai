@@ -6,7 +6,6 @@ def test_cr_login_failed(
 ):
     """
     Test that the ContainerRegistryClient behaves as expected when the login fails.
-        This should be an ContainerRegistryException
     """
     image = 'testimage'
     with responses.RequestsMock() as rsps:
