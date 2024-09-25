@@ -75,7 +75,7 @@ services:
       PGUSER:
       PGPASSWORD:
       PYTHONPATH: /app
-      ACR_URL:
+      REGISTRY_URL:
       RESULTS_PATH:
       TASK_POD_RESULTS_PATH:
       KEYCLOAK_ADMIN:
