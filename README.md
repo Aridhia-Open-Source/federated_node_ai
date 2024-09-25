@@ -1,5 +1,4 @@
-![phems_logo](https://github.com/Aridhia-Open-Source/PHEMS_federated_node/blob/readme_update/images/phems_logo_RGB_color.jpg)
-
+![phems_logo](https://github.com/Aridhia-Open-Source/PHEMS_federated_node/blob/readme_update/images/phems_logo_RGB_color_cropped_left%20align.JPG)
 ## The PHEMS Federated Node
 
 PHEMS (short for “Pediatric Hospitals as European drivers for multi-party computation and synthetic data generation capabilities across clinical specialities and data types”) is a Europe-wide consortium of paediatric hospitals that:
