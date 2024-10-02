@@ -9,7 +9,6 @@ metadata:
     {{ include "defaultLabels" . }}
   annotations:
     {{ include "defaultAnnotations" . }}
-    helm.sh/hook: pre-upgrade
     helm.sh/hook-weight: "-4"
     helm.sh/resource-policy: keep
 spec:
