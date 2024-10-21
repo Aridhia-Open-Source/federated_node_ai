@@ -47,6 +47,18 @@ class TestAudits:
         response = client.get("/audit", headers=simple_user_header)
         assert response.status_code == 403
 
+    def test_audit_ignore_empty_json(
+            self,
+            post_json_admin_header,
+            client
+        ):
+        """
+        Test that a GET request with the content type set to json
+        won't fail with an empty body
+        """
+        response = client.get("/datasets", headers=post_json_admin_header)
+        assert response.status_code == 200
+
     def test_get_filtered_audit_events(
             self,
             simple_admin_header,
