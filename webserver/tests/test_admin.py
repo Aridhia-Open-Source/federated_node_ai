@@ -58,6 +58,8 @@ class TestAudits:
         """
         response = client.get("/datasets", headers=post_json_admin_header)
         assert response.status_code == 200
+        log = Audit.query.filter(Audit.endpoint == '/datasets').one_or_none()
+        assert log.details is None
 
     def test_get_filtered_audit_events(
             self,
