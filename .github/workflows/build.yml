@@ -2,6 +2,8 @@ name: Build Docker Image
 run-name: Building images
 on:
   push:
+    tags:        
+      - '**'
     branches:
       - main
     paths-ignore:
