@@ -12,10 +12,13 @@ on:
         required: false
         type: string
       dryRun:
-        description: 'New tag the docker images are going to use'
+        description: 'Dry run, no changes committed. Shows the new Chart.yaml contents'
         required: false
         type: boolean
         default: true
+
+permissions:
+  contents: write
 
 jobs:
   bump:
@@ -23,21 +26,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Update Version
         working-directory: k8s/federated-node
         env:
           CHART_VERSION: ${{ inputs.chartVersion }}
           APP_VERSION: ${{ inputs.appVersion }}
         run: |
+          if [[ ! $(grep '${CHART_VERSION}' Chart.yaml) ]]; then
+            echo "Nothing to change. Exiting early"
+            exit 0
+          fi
           sed -i "s/version: .*/version: ${CHART_VERSION}/" Chart.yaml
 
-          if [[ -z "${APP_VERSION}" ]]; then
+          if [[ -n "${APP_VERSION}" ]]; then
             sed -i "s/version: .*/appVersion: \"${APP_VERSION}\"/" Chart.yaml
           fi
 
           cat Chart.yaml
 
           if [[ "${{ inputs.dryRun }}" == "false" ]]; then
+            git config user.email "phemsbot@phems.com"
+            git config user.name "PHEMS bot"
+
             git add Chart.yaml
             git commit -m "Version bump to ${CHART_VERSION}"
             git push
