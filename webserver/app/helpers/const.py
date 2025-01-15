@@ -14,6 +14,7 @@ PASS_GENERATOR_SET = string.ascii_letters + string.digits + "!$@#.-_"
 DEFAULT_NAMESPACE = os.getenv("DEFAULT_NAMESPACE")
 PUBLIC_URL = os.getenv("PUBLIC_URL")
 TASK_NAMESPACE = os.getenv("TASK_NAMESPACE")
+DEFAULT_NAMESPACE = os.getenv("DEFAULT_NAMESPACE")
 # Pod resource validation constants
 CPU_RESOURCE_REGEX = r'^\d*(m|\.\d+){0,1}$'
 MEMORY_RESOURCE_REGEX = r'^\d*(e\d|(E|P|T|G|M|K)(i*)|k|m)*$'
@@ -35,3 +36,4 @@ MEMORY_UNITS = {
 CLEANUP_AFTER_DAYS = int(os.getenv("CLEANUP_AFTER_DAYS"))
 TASK_POD_RESULTS_PATH = os.getenv("TASK_POD_RESULTS_PATH")
 RESULTS_PATH = os.getenv("RESULTS_PATH")
+PUBLIC_URL = os.getenv("PUBLIC_URL")
