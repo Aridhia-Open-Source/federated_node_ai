@@ -1,133 +1,146 @@
 from base64 import b64encode
 import requests
-import json
-import os
 import logging
+
+from app.helpers.kubernetes import KubernetesClient
+
 
 logger = logging.getLogger('registries_handler')
 logger.setLevel(logging.INFO)
 
-# this might be in a config map, so we can handle this dynamically
-URLS = {
-    "hub.docker.com": {
-        "login": {"url": "https://hub.docker.com/v2/users/login/", "auth_type": "json", "token_field": "token"},
-        "tags": {"url": "https://hub.docker.com/v2/repositories/%(image)s/tags"}
-    },
-    "azurecr.io": {
-        "login": {"url": "https://%(service)s/oauth2/token?service=%(service)s&scope=repository:%(repo)s:metadata_read", "auth_type": "basic", "token_field": "access_token"},
-        "tags": {"url": "https://%(service)s/v2/%(image)s/tags/list"}
-    },
-    "ghcr.io": {
-        "login": {},
-        "tags": {"url": "https://api.github.com/orgs/%(organization)s/packages/container/%(image_no_org)s/versions"}
-    }
-}
 
-class ContainerRegistryClient:
-    """
-    Class to handle a set of registries actions
-    """
-    def __init__(self) -> None:
-        self.registries = json.load(open(os.getenv('FLASK_APP') + '/registries/registries-list.json'))
-        for registry in self.registries.keys():
-            self.registries[registry]["login"] = self.needs_auth(registry)
-            url_key = self.map_registry_to_url(registry)
-            if URLS[url_key]["login"].get("auth_type") == "basic":
-                self.registries[registry]["auth"] = b64encode(f"{self.registries[registry]['username']}:{self.registries[registry]['password']}".encode()).decode()
-            elif URLS[url_key]["login"].get("auth_type") == "json":
-                self.registries[registry]["auth"] = {"username": self.registries[registry]['username'], "password": self.registries[registry]['password']}
-            else:
-                self.registries[registry]["auth"] = self.registries[registry]["password"]
+class BaseRegistry:
+    token_field = None
+    login_url = None
+    repo_login_url = None
+    creds = None
+    organization = ''
+    request_args = {}
 
-    def login(self, registry_url:str, registry_cred:str, image:str):
+    def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
+        self.registry = registry
+        self.secret_name = secret_name
+        self.creds = creds
+        if secret_name is not None:
+            self.creds = self.get_secret()
+
+    def get_secret(self) -> dict[str,str]:
         """
-        Get an access token from the CR, works on Azure, should be double checked
-        on other services
+        Get the registry-related secret
         """
-        url_key = self.map_registry_to_url(registry_url)
-        request_args = {
-            "url": URLS[url_key]["login"]["url"] % {"service": registry_url, "repo": image}
+        v1 = KubernetesClient()
+        secret = v1.read_namespaced_secret(self.secret_name, 'default', pretty='pretty')
+        return {
+            "user": KubernetesClient.decode_secret_value(secret.data['USER']),
+            "token": KubernetesClient.decode_secret_value(secret.data['TOKEN'])
         }
-        if URLS[url_key]["login"]["auth_type"] == "basic":
-            request_args["headers"] = {"Authorization": f"Basic {registry_cred}"}
-        else:
-            request_args["headers"] = {"Content-Type": "application/json"}
-            request_args["json"] = registry_cred
 
-        response_auth = requests.get(**request_args)
+    def login(self, image=None) -> str:
+        """
+        Check that credentials are valid (if image is None)
+            else, exchanges credentials for a token with the image or repo scope
+        """
+        response_auth = requests.get(
+            self.repo_login_url % self.get_url_string_params(image),
+            **self.request_args
+        )
 
         if not response_auth.ok:
-            return False
+            return None
 
-        return response_auth.json()[URLS[url_key]["login"]["token_field"]]
+        return response_auth.json()[self.token_field]
 
-    def map_registry_to_url(self, registry):
-        """
-        """
-        return list(filter(lambda x: x in registry, URLS.keys()))[0]
-
-    def needs_auth(self, registry):
-        """
-        Some services do not need authentication in the form of Basic user:pass base64 token
-        """
-        url_key = self.map_registry_to_url(registry)
-        return URLS[url_key]["login"] != {}
-
-    def parse_image_and_tag(self, image:str):
-        """
-        Simple string parse, to split the image name from the tag
-        if tag doesn't exist, return latest
-        """
-        if ":" in image:
-            return image.split(":")
-        return image, "latest"
-
-    def get_url_string_params(self, registry:str, image_name:str):
+    def get_url_string_params(self, image:str) -> dict[str,str]:
         return {
-            "service": registry,
-            "image": image_name,
-            "organization": image_name.split("/")[0] if "/" in image_name else image_name,
-            "image_no_org": image_name.split("/")[1] if "/" in image_name else image_name
+            "service": self.registry,
+            "image": image.name if image else '',
+            "organization": self.organization
         }
 
-    def find_image_repo(self, image:str) -> bool:
+    def find_image_repo(self, image) -> bool:
         """
         Works as an existence check. If the tag for the image
         has the requested tag in the list of available tags
         return True.
         This should work on any docker Registry v2 as it's a standard
         """
-        image_name, tag = self.parse_image_and_tag(image)
+        token = self.login(image)
         tags_list = []
-        for registry in self.registries.keys():
-            if self.registries[registry]["login"]:
-                token = self.login(registry, self.registries[registry]['auth'], image_name)
+        if not token:
+            raise
+
+        try:
+            response_metadata = requests.get(
+                self.tags_url % self.get_url_string_params(image),
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response_metadata.ok:
+                tags_list = response_metadata.json()
             else:
-                token = self.registries[registry]['auth']
-            if not token:
-                continue
+                logger.info(response_metadata.text)
+        except ConnectionError as ce:
+            logger.info(ce.strerror)
 
-            url_key = self.map_registry_to_url(registry)
-            try:
-                response_metadata = requests.get(
-                    URLS[url_key]["tags"]["url"] % self.get_url_string_params(registry, image_name),
-                    headers={"Authorization": f"Bearer {token}"}
-                )
-                if response_metadata.ok:
-                    tags_list = response_metadata.json()
-                    break
-                else:
-                    logger.info(response_metadata.text)
-            except ConnectionError as ce:
-                logger.info(ce.strerror)
+        return tags_list
 
-        # Try for open repos?
+
+class AzureRegistry(BaseRegistry):
+    login_url = "https://%(service)s/oauth2/token?service=%(service)s"
+    repo_login_url = "https://%(service)s/oauth2/token?service=%(service)s&scope=repository:%(image)s:metadata_read"
+    tags_url = "https://%(service)s/v2/%(image)s/tags/list"
+    token_field = "access_token"
+    needs_auth = True
+
+    def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
+        super().__init__(registry, secret_name, creds)
+
+        self.auth = b64encode(f"{self.creds['user']}:{self.creds['token']}".encode()).decode()
+        self.request_args["headers"] = {"Authorization": f"Basic {self.auth}"}
+
+    def find_image_repo(self, image) -> bool:
+        tags_list = super().find_image_repo(image)
         if not tags_list:
             return False
 
-        full_image = f"{registry}/{image}"
-        if "results" in tags_list:
-            return full_image if tag in [t["name"] for t in tags_list["results"]] else False
-        elif "tags" not in tags_list:
-            return full_image if tag in [t for tags in tags_list for t in tags["metadata"]["container"]["tags"]] else False
-        return full_image if tag in tags_list["tags"] else False
+        if tags_list.get("tags"):
+            return image.tag in [t for t in tags_list.get("tags", [])]
+
+
+class DockerRegistry(BaseRegistry):
+    login_url = "https://hub.docker.com/v2/users/login/"
+    tags_url = "https://hub.docker.com/v2/repositories/%(image)s/tags"
+    token_field = "token"
+    needs_auth = True
+
+    def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
+        super().__init__(registry, secret_name, creds)
+
+        self.request_args["json"] = {"username": self.creds['user'], "password": self.creds['token']}
+        self.request_args["headers"] = {"Content-Type": "application/json"}
+
+    def find_image_repo(self, image:str) -> bool:
+        tags_list = super().find_image_repo(image)
+
+        return image.tag in [t["name"] for t in tags_list["results"]]
+
+
+class GitHubRegistry(BaseRegistry):
+    login_url = None
+    tags_url = "https://api.github.com/orgs/%(organization)s/packages/container/%(image)s/versions"
+    needs_auth = False
+
+    def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
+        super().__init__(registry, secret_name, creds)
+
+        self.auth = self.creds['token']
+        self.request_args["headers"] = {}
+        self.organization = registry.split('/')[1]
+
+    def login(self, image) -> str:
+        logging.info("Auth on github skipped, an organization name is needed")
+        return self.auth
+
+    def find_image_repo(self, image) -> bool:
+        tags_list = super().find_image_repo(image)
+
+        return image.tag in [t for tags in tags_list for t in tags["metadata"]["container"]["tags"]]

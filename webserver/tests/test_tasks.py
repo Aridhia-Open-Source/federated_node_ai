@@ -14,13 +14,13 @@ from app.models.task import Task
 
 
 @pytest.fixture(scope='function')
-def task_body(dataset, image_name):
+def task_body(dataset, container):
     return deepcopy({
         "name": "Test Task",
         "requested_by": "das9908-as098080c-9a80s9",
         "executors": [
             {
-                "image": image_name,
+                "image": container.full_image_name(),
                 "command": ["R", "-e", "df <- as.data.frame(installed.packages())[,c('Package', 'Version')];write.csv(df, file='/mnt/data/packages.csv', row.names=FALSE);Sys.sleep(10000)\""],
                 "env": {
                     "VARIABLE_UNIQUE": 123,
@@ -109,6 +109,7 @@ def test_create_task(
         k8s_client,
         post_json_admin_header,
         client,
+        registry_client,
         task_body
     ):
     """
@@ -126,6 +127,7 @@ def test_create_task_invalid_output_field(
         k8s_client,
         post_json_admin_header,
         client,
+        registry_client,
         task_body
     ):
     """
@@ -146,6 +148,7 @@ def test_create_task_no_output_field_reverts_to_default(
         k8s_client,
         post_json_admin_header,
         client,
+        registry_client,
         task_body
     ):
     """
@@ -169,6 +172,7 @@ def test_create_task_with_ds_name(
         k8s_client,
         post_json_admin_header,
         client,
+        registry_client,
         dataset,
         task_body
     ):
@@ -191,6 +195,7 @@ def test_create_task_with_ds_name_and_id(
         k8s_client,
         post_json_admin_header,
         client,
+        registry_client,
         dataset,
         task_body
     ):
@@ -322,6 +327,7 @@ def test_get_task_by_id_admin(
         post_json_user_header,
         simple_admin_header,
         client,
+        registry_client,
         task_body
     ):
     """
@@ -350,6 +356,7 @@ def test_get_task_by_id_non_admin_owner(
         simple_user_header,
         post_json_user_header,
         client,
+        registry_client,
         task_body
     ):
     """
@@ -377,6 +384,7 @@ def test_get_task_by_id_non_admin_non_owner(
         post_json_user_header,
         simple_user_header,
         client,
+        registry_client,
         task_body
     ):
     """
@@ -403,6 +411,7 @@ def test_cancel_task(
         client,
         cr_client,
         k8s_client,
+        registry_client,
         simple_admin_header,
         post_json_admin_header,
         task_body
@@ -440,6 +449,7 @@ def test_validate_task(
         client,
         task_body,
         cr_client,
+        registry_client,
         post_json_admin_header
     ):
     """
@@ -456,6 +466,7 @@ def test_validate_task_basic_user(
         client,
         task_body,
         cr_client,
+        registry_client,
         post_json_user_header
     ):
     """
@@ -468,48 +479,12 @@ def test_validate_task_basic_user(
     )
     assert response.status_code == 200
 
-def test_docker_image_regex(
-        task_body,
-        cr_client,
-        mocker,
-        client
-):
-    """
-    Tests that the docker image is in an expected format
-        <namespace?/image>:<tag>
-    """
-    data = task_body
-    valid_image_formats = [
-        "image:3.21",
-        "namespace/image:3.21",
-        "namespace/image:3.21-alpha"
-    ]
-    invalid_image_formats = [
-        "not_valid/",
-        "/not-valid:",
-        "/not-valid:2.31",
-        "image",
-        "namespace//image:3.21",
-        "/image"
-    ]
-    mocker.patch(
-        'app.models.task.Keycloak',
-        return_value=Mock()
-    )
-    for im_format in valid_image_formats:
-        data["executors"][0]["image"] = im_format
-        Task.validate(data)
-
-    for im_format in invalid_image_formats:
-        data["executors"][0]["image"] = im_format
-        with pytest.raises(InvalidRequest):
-            Task.validate(data)
-
 
 class TestTaskResults:
     def test_get_results(
         self,
         cr_client,
+        registry_client,
         post_json_admin_header,
         simple_admin_header,
         client,
@@ -555,6 +530,7 @@ class TestTaskResults:
     def test_get_results_job_creation_failure(
         self,
         cr_client,
+        registry_client,
         post_json_admin_header,
         simple_admin_header,
         client,
@@ -621,6 +597,7 @@ class TestTaskResults:
 
 def test_get_task_status_running_and_waiting(
     cr_client,
+    registry_client,
     k8s_client,
     running_state,
     waiting_state,
@@ -677,6 +654,7 @@ def test_get_task_status_running_and_waiting(
 def test_get_task_status_terminated(
     cr_client,
     k8s_client,
+    registry_client,
     terminated_state,
     post_json_admin_header,
     client,
@@ -723,6 +701,7 @@ class TestResourceValidators:
             self,
             mocker,
             user_uuid,
+            registry_client,
             cr_client,
             task_body
         ):
@@ -750,6 +729,7 @@ class TestResourceValidators:
             mocker,
             user_uuid,
             cr_client,
+            registry_client,
             task_body
         ):
         """
@@ -781,6 +761,7 @@ class TestResourceValidators:
             mocker,
             user_uuid,
             cr_client,
+            registry_client,
             task_body
         ):
         """
@@ -813,6 +794,7 @@ class TestResourceValidators:
             mocker,
             user_uuid,
             cr_client,
+            registry_client,
             task_body
         ):
         """
@@ -842,6 +824,7 @@ class TestResourceValidators:
             mocker,
             user_uuid,
             cr_client,
+            registry_client,
             task_body
         ):
         """

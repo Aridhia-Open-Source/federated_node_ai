@@ -9,7 +9,10 @@ import logging
 from flask import Flask
 from flask_swagger_ui import get_swaggerui_blueprint
 from sqlalchemy import exc
-from app import main, admin_api, datasets_api, tasks_api, requests_api
+from app import (
+    main, admin_api, datasets_api, tasks_api, requests_api,
+    containers_api, registries_api
+)
 from app.helpers.db import build_sql_uri, db
 from app.helpers.exceptions import (
     InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,
@@ -41,6 +44,8 @@ def create_app():
     app.register_blueprint(requests_api.bp)
     app.register_blueprint(tasks_api.bp)
     app.register_blueprint(admin_api.bp)
+    app.register_blueprint(containers_api.bp)
+    app.register_blueprint(registries_api.bp)
 
     app.register_error_handler(InvalidDBEntry, exception_handler)
     app.register_error_handler(DBError, exception_handler)

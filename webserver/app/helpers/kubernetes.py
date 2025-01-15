@@ -346,5 +346,30 @@ class KubernetesClient(KubernetesBase, client.CoreV1Api):
                 return
             logger.info(f"Pod is in state {event["object"].status.phase}")
 
+    def create_secret(self, name:str, values:dict[str, str], namespaces:list):
+        """
+        From a dict of values, encodes them,
+            and creates a secret in a given list of namespace
+            keeping the same structure as values
+        """
+        body = client.V1Secret()
+        body.api_version = 'v1'
+        for key in values.keys():
+            values[key] = KubernetesClient.encode_secret_value(values[key])
+
+        body.data = values
+        body.kind = 'Secret'
+        body.metadata = {'name': name}
+        body.type = 'Opaque'
+        for ns in namespaces:
+            try:
+                self.create_namespaced_secret(ns, body=body, pretty='true')
+            except ApiException as e:
+                if e.status == 409:
+                    pass
+                else:
+                    raise InvalidRequest(e.reason)
+
+
 class KubernetesBatchClient(KubernetesBase, client.BatchV1Api):
     pass
