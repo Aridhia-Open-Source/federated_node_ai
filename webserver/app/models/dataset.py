@@ -1,8 +1,8 @@
-import os
 import re
 import requests
 from sqlalchemy import Column, Integer, String
 from app.helpers.db import BaseModel, db
+from app.helpers.const import DEFAULT_NAMESPACE, TASK_NAMESPACE, PUBLIC_URL
 from app.helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from app.helpers.keycloak import Keycloak
 from app.helpers.kubernetes import KubernetesClient
@@ -10,9 +10,6 @@ from kubernetes import client
 from kubernetes.client.exceptions import ApiException
 
 
-TASK_NAMESPACE = os.getenv("TASK_NAMESPACE")
-DEFAULT_NAMESPACE = os.getenv("DEFAULT_NAMESPACE")
-PUBLIC_URL = os.getenv("PUBLIC_URL")
 SUPPORTED_TYPES = ["postgres", "mssql"]
 
 class Dataset(db.Model, BaseModel):
@@ -61,14 +58,14 @@ class Dataset(db.Model, BaseModel):
         body.kind = 'Secret'
         body.metadata = {'name': self.get_creds_secret_name()}
         body.type = 'Opaque'
-        try:
-            for ns in [DEFAULT_NAMESPACE, TASK_NAMESPACE]:
-                v1.create_namespaced_secret(ns, body=body, pretty='true')
-        except ApiException as e:
-            if e.status == 409:
-                pass
-            else:
-                raise InvalidRequest(e.reason)
+        for ns in [DEFAULT_NAMESPACE, TASK_NAMESPACE]:
+            try:
+                    v1.create_namespaced_secret(ns, body=body, pretty='true')
+            except ApiException as e:
+                if e.status == 409:
+                    pass
+                else:
+                    raise InvalidRequest(e.reason)
 
     def get_creds_secret_name(self, host=None, name=None):
         host = host or self.host
@@ -96,7 +93,7 @@ class Dataset(db.Model, BaseModel):
         This is not involved in the Task Execution Service
         """
         v1 = KubernetesClient()
-        secret = v1.read_namespaced_secret(self.get_creds_secret_name(), 'default', pretty='pretty')
+        secret = v1.read_namespaced_secret(self.get_creds_secret_name(), DEFAULT_NAMESPACE, pretty='pretty')
         # Doesn't matter which key it's being picked up, the value it's the same
         # in terms of *USER or *PASSWORD
         user = KubernetesClient.decode_secret_value(secret.data['PGUSER'])
