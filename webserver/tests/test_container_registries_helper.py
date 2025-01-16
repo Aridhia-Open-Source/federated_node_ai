@@ -39,7 +39,7 @@ def test_cr_metadata_empty(
             json=[],
             status=200
         )
-        assert not cr_class.find_image_repo(container)
+        assert not cr_class.get_image_tags(container.name)
 
 def test_cr_metadata_tag_not_in_api_response(
         container,
@@ -63,4 +63,4 @@ def test_cr_metadata_tag_not_in_api_response(
             json={"tags": ["1.2.3", "dev"]},
             status=200
         )
-        assert not cr_class.find_image_repo(container)
+        assert not cr_class.get_image_tags(container.name)

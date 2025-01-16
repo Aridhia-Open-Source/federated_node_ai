@@ -231,7 +231,7 @@ def cr_client(mocker):
         'app.helpers.container_registries.AzureRegistry',
         return_value=Mock(
             login=Mock(return_value="access_token"),
-            find_image_repo=Mock(return_value=True)
+            get_image_tags=Mock(return_value=True)
         )
     )
 
@@ -248,7 +248,7 @@ def cr_client_404(mocker):
         'app.models.registry.AzureRegistry',
         return_value=Mock(
             login=Mock(return_value="access_token"),
-            find_image_repo=Mock(return_value=False)
+            get_image_tags=Mock(return_value=False)
         )
     )
 @pytest.fixture

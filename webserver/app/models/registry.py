@@ -90,3 +90,11 @@ class Registry(db.Model, BaseModel):
                 return GitHubRegistry(**args)
             case _:
                 return DockerRegistry(**args)
+
+    def fetch_image_list(self) -> list[str]:
+        """
+        Simply returns a list of strings of all available
+            images (or repos) with their tags
+        """
+        _class = self.get_registry_class()
+        return _class.list_repos()

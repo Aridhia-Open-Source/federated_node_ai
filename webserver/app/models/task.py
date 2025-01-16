@@ -187,7 +187,7 @@ class Task(db.Model, BaseModel):
         if image is None:
             raise TaskExecutionException(f"Image {docker_image} could not be found")
         registry_client = image.registry.get_registry_class()
-        if not registry_client.find_image_repo(image):
+        if not registry_client.get_image_tags(image):
             raise TaskImageException(f"Image {docker_image} not found on our repository")
         return image.full_image_name()
 
