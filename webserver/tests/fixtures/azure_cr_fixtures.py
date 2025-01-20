@@ -7,18 +7,18 @@ from app.models.registry import Registry
 
 
 @pytest.fixture
-def azure_cr_name():
+def cr_name():
     return "acr.azurecr.io"
 
 @pytest.fixture
-def az_registry_client(mocker):
+def registry_client(mocker):
     mocker.patch(
         'app.models.registry.AzureRegistry',
         return_value=Mock()
     )
 
 @pytest.fixture
-def azure_cr_client(mocker):
+def cr_client(mocker):
     return mocker.patch(
         'app.helpers.container_registries.AzureRegistry',
         return_value=Mock(
@@ -28,7 +28,7 @@ def azure_cr_client(mocker):
     )
 
 @pytest.fixture
-def azure_cr_client_404(mocker):
+def cr_client_404(mocker):
     mocker.patch(
         'app.models.registry.AzureRegistry',
         return_value=Mock(
@@ -38,18 +38,18 @@ def azure_cr_client_404(mocker):
     )
 
 @pytest.fixture
-def az_cr_class(mocker, azure_cr_name, ):
-    return AzureRegistry(azure_cr_name, creds={"user": "", "token": ""})
+def cr_class(mocker, cr_name, ):
+    return AzureRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
-def registry_az(client, k8s_client, azure_cr_name) -> Registry:
-    reg = Registry(azure_cr_name, '', '')
+def registry(client, k8s_client, cr_name) -> Registry:
+    reg = Registry(cr_name, '', '')
     reg.add()
     return reg
 
 @pytest.fixture
-def container_az(client, k8s_client, registry_az, image_name) -> Container:
+def container(client, k8s_client, registry, image_name) -> Container:
     img, tag = image_name.split(':')
-    cont = Container(img, registry_az, tag, True)
+    cont = Container(img, registry, tag, True)
     cont.add()
     return cont

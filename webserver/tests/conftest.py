@@ -16,9 +16,6 @@ from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIEN
 from tests.helpers.keycloak import clean_kc
 from app.helpers.exceptions import KeycloakError
 
-from tests.fixtures.azure_cr_fixtures import *
-from tests.fixtures.github_cr_fixtures import *
-from tests.fixtures.dockerhub_cr_fixtures import *
 
 sample_ds_body = {
     "name": "TestDs",
@@ -36,6 +33,7 @@ sample_ds_body = {
         "description": "test description"
     }]
 }
+
 @pytest.fixture
 def image_name():
     return "example:latest"

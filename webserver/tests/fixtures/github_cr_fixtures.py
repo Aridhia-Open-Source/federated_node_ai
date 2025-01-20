@@ -10,18 +10,18 @@ GH_CLASS = 'app.models.registry.GitHubClient'
 
 
 @pytest.fixture
-def gh_cr_name():
+def cr_name():
     return "ghcr.io/somecr"
 
 @pytest.fixture
-def gh_registry_client(mocker):
+def registry_client(mocker):
     mocker.patch(
         GH_CLASS,
         return_value=Mock()
     )
 
 @pytest.fixture
-def gh_cr_client(mocker):
+def cr_client(mocker):
     return mocker.patch(
         'app.helpers.container_registries.GitHubClient',
         return_value=Mock(
@@ -31,11 +31,11 @@ def gh_cr_client(mocker):
     )
 
 @pytest.fixture
-def gh_cr_class(mocker, gh_cr_name, ):
-    return GitHubRegistry(gh_cr_name, creds={"user": "", "token": "sometoken"})
+def cr_class(mocker, cr_name, ):
+    return GitHubRegistry(cr_name, creds={"user": "", "token": "sometoken"})
 
 @pytest.fixture
-def gh_cr_client_404(mocker):
+def cr_client_404(mocker):
     mocker.patch(
         GH_CLASS,
         return_value=Mock(
@@ -45,14 +45,14 @@ def gh_cr_client_404(mocker):
     )
 
 @pytest.fixture
-def registry_gh(client, k8s_client, gh_cr_name) -> Registry:
-    reg = Registry(gh_cr_name, '', '')
+def registry(client, k8s_client, cr_name) -> Registry:
+    reg = Registry(cr_name, '', '')
     reg.add()
     return reg
 
 @pytest.fixture
-def container_gh(client, k8s_client, registry_gh, image_name) -> Container:
+def container(client, k8s_client, registry, image_name) -> Container:
     img, tag = image_name.split(':')
-    cont = Container(img, registry_gh, tag, True)
+    cont = Container(img, registry, tag, True)
     cont.add()
     return cont
