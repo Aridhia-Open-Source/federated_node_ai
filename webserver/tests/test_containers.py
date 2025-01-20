@@ -4,13 +4,14 @@ from unittest.mock import Mock
 
 from app.helpers.exceptions import InvalidRequest
 from app.models.container import Container
+from tests.fixtures.azure_cr_fixtures import *
 
 
 @pytest.fixture(scope='function')
-def container_body(registry_az):
+def container_body(registry):
     return deepcopy({
         "name": "",
-        "registry": registry_az.url,
+        "registry": registry.url,
         "tag": "1.2.3",
         "ml": True
     })
@@ -20,8 +21,8 @@ class TestContainers:
     def test_docker_image_regex(
         self,
         container_body,
-        azure_cr_client,
-        az_registry_client,
+        cr_client,
+        registry_client,
         mocker,
         client
     ):
