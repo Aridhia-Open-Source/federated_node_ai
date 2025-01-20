@@ -14,13 +14,13 @@ from app.models.task import Task
 
 
 @pytest.fixture(scope='function')
-def task_body(dataset, container):
+def task_body(dataset, container_az):
     return deepcopy({
         "name": "Test Task",
         "requested_by": "das9908-as098080c-9a80s9",
         "executors": [
             {
-                "image": container.full_image_name(),
+                "image": container_az.full_image_name(),
                 "command": ["R", "-e", "df <- as.data.frame(installed.packages())[,c('Package', 'Version')];write.csv(df, file='/mnt/data/packages.csv', row.names=FALSE);Sys.sleep(10000)\""],
                 "env": {
                     "VARIABLE_UNIQUE": 123,
@@ -105,11 +105,11 @@ def test_get_list_tasks_base_user(
     assert response.status_code == 403
 
 def test_create_task(
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         client,
-        registry_client,
+        az_registry_client,
         task_body
     ):
     """
@@ -123,11 +123,11 @@ def test_create_task(
     assert response.status_code == 201
 
 def test_create_task_invalid_output_field(
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         client,
-        registry_client,
+        az_registry_client,
         task_body
     ):
     """
@@ -144,11 +144,11 @@ def test_create_task_invalid_output_field(
     assert response.json == {"error": "\"outputs\" filed muct be a json object or dictionary"}
 
 def test_create_task_no_output_field_reverts_to_default(
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         client,
-        registry_client,
+        az_registry_client,
         task_body
     ):
     """
@@ -168,11 +168,11 @@ def test_create_task_no_output_field_reverts_to_default(
     assert pod_body.spec.containers[0].volume_mounts[0].mount_path == TASK_POD_RESULTS_PATH
 
 def test_create_task_with_ds_name(
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         client,
-        registry_client,
+        az_registry_client,
         dataset,
         task_body
     ):
@@ -191,11 +191,11 @@ def test_create_task_with_ds_name(
     assert response.status_code == 201
 
 def test_create_task_with_ds_name_and_id(
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         client,
-        registry_client,
+        az_registry_client,
         dataset,
         task_body
     ):
@@ -213,7 +213,7 @@ def test_create_task_with_ds_name_and_id(
     assert response.status_code == 201
 
 def test_create_task_with_conflicting_ds_name_and_id(
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         client,
@@ -236,7 +236,7 @@ def test_create_task_with_conflicting_ds_name_and_id(
     assert response.json["error"] == f"Dataset \"something else\" with id {dataset.id} does not exist"
 
 def test_create_task_with_non_existing_dataset(
-        cr_client,
+        azure_cr_client,
         post_json_admin_header,
         client,
         task_body
@@ -256,7 +256,7 @@ def test_create_task_with_non_existing_dataset(
     assert response.json == {"error": "Dataset 123456 does not exist"}
 
 def test_create_task_with_non_existing_dataset_name(
-        cr_client,
+        azure_cr_client,
         post_json_admin_header,
         client,
         dataset,
@@ -281,7 +281,7 @@ def test_create_task_with_non_existing_dataset_name(
 @mock.patch('app.helpers.wrappers.Keycloak.is_token_valid', return_value=False)
 def test_create_unauthorized_task(
         kc_valid_mock,
-        cr_client,
+        azure_cr_client,
         post_json_user_header,
         dataset,
         client,
@@ -302,7 +302,7 @@ def test_create_unauthorized_task(
     assert response.status_code == 403
 
 def test_create_task_image_not_found(
-        cr_client_404,
+        azure_cr_client_404,
         post_json_admin_header,
         client,
         task_body
@@ -321,13 +321,13 @@ def test_create_task_image_not_found(
 @mock.patch('app.helpers.wrappers.Keycloak.is_token_valid', return_value=True)
 def test_get_task_by_id_admin(
         token_valid_mock,
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_admin_header,
         post_json_user_header,
         simple_admin_header,
         client,
-        registry_client,
+        az_registry_client,
         task_body
     ):
     """
@@ -351,12 +351,12 @@ def test_get_task_by_id_admin(
 @mock.patch('app.helpers.wrappers.Keycloak.is_token_valid', return_value=True)
 def test_get_task_by_id_non_admin_owner(
         token_valid_mock,
-        cr_client,
+        azure_cr_client,
         k8s_client,
         simple_user_header,
         post_json_user_header,
         client,
-        registry_client,
+        az_registry_client,
         task_body
     ):
     """
@@ -379,12 +379,12 @@ def test_get_task_by_id_non_admin_owner(
 @mock.patch('app.helpers.wrappers.Keycloak.is_token_valid', return_value=True)
 def test_get_task_by_id_non_admin_non_owner(
         token_valid_mock,
-        cr_client,
+        azure_cr_client,
         k8s_client,
         post_json_user_header,
         simple_user_header,
         client,
-        registry_client,
+        az_registry_client,
         task_body
     ):
     """
@@ -409,9 +409,9 @@ def test_get_task_by_id_non_admin_non_owner(
 
 def test_cancel_task(
         client,
-        cr_client,
+        azure_cr_client,
         k8s_client,
-        registry_client,
+        az_registry_client,
         simple_admin_header,
         post_json_admin_header,
         task_body
@@ -448,8 +448,8 @@ def test_cancel_404_task(
 def test_validate_task(
         client,
         task_body,
-        cr_client,
-        registry_client,
+        azure_cr_client,
+        az_registry_client,
         post_json_admin_header
     ):
     """
@@ -465,8 +465,8 @@ def test_validate_task(
 def test_validate_task_basic_user(
         client,
         task_body,
-        cr_client,
-        registry_client,
+        azure_cr_client,
+        az_registry_client,
         post_json_user_header
     ):
     """
@@ -483,8 +483,8 @@ def test_validate_task_basic_user(
 class TestTaskResults:
     def test_get_results(
         self,
-        cr_client,
-        registry_client,
+        azure_cr_client,
+        az_registry_client,
         post_json_admin_header,
         simple_admin_header,
         client,
@@ -529,8 +529,8 @@ class TestTaskResults:
 
     def test_get_results_job_creation_failure(
         self,
-        cr_client,
-        registry_client,
+        azure_cr_client,
+        az_registry_client,
         post_json_admin_header,
         simple_admin_header,
         client,
@@ -596,8 +596,8 @@ class TestTaskResults:
         assert response.json["error"] == 'Tasks results are not available anymore. Please, run the task again'
 
 def test_get_task_status_running_and_waiting(
-    cr_client,
-    registry_client,
+    azure_cr_client,
+    az_registry_client,
     k8s_client,
     running_state,
     waiting_state,
@@ -652,9 +652,9 @@ def test_get_task_status_running_and_waiting(
     assert response_id.json["status"] == {'waiting': {'started_at': '1/1/2024'}}
 
 def test_get_task_status_terminated(
-    cr_client,
+    azure_cr_client,
     k8s_client,
-    registry_client,
+    az_registry_client,
     terminated_state,
     post_json_admin_header,
     client,
@@ -701,8 +701,8 @@ class TestResourceValidators:
             self,
             mocker,
             user_uuid,
-            registry_client,
-            cr_client,
+            az_registry_client,
+            azure_cr_client,
             task_body
         ):
         """
@@ -728,8 +728,8 @@ class TestResourceValidators:
             self,
             mocker,
             user_uuid,
-            cr_client,
-            registry_client,
+            azure_cr_client,
+            az_registry_client,
             task_body
         ):
         """
@@ -760,8 +760,8 @@ class TestResourceValidators:
             self,
             mocker,
             user_uuid,
-            cr_client,
-            registry_client,
+            azure_cr_client,
+            az_registry_client,
             task_body
         ):
         """
@@ -793,8 +793,8 @@ class TestResourceValidators:
             self,
             mocker,
             user_uuid,
-            cr_client,
-            registry_client,
+            azure_cr_client,
+            az_registry_client,
             task_body
         ):
         """
@@ -823,8 +823,8 @@ class TestResourceValidators:
             self,
             mocker,
             user_uuid,
-            cr_client,
-            registry_client,
+            azure_cr_client,
+            az_registry_client,
             task_body
         ):
         """

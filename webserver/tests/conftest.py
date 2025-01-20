@@ -3,21 +3,22 @@ import json
 import os
 import pytest
 import requests
-import responses
 from datetime import datetime as dt, timedelta
 from kubernetes.client import V1Pod
 from sqlalchemy.orm.session import close_all_sessions
 from unittest.mock import Mock
+
 from app import create_app
-from app.helpers.container_registries import AzureRegistry
 from app.helpers.db import db
-from app.models.container import Container
 from app.models.dataset import Dataset
-from app.models.registry import Registry
 from app.models.request import Request
 from app.helpers.keycloak import Keycloak, URLS, KEYCLOAK_SECRET, KEYCLOAK_CLIENT
 from tests.helpers.keycloak import clean_kc
 from app.helpers.exceptions import KeycloakError
+
+from tests.fixtures.azure_cr_fixtures import *
+from tests.fixtures.github_cr_fixtures import *
+from tests.fixtures.dockerhub_cr_fixtures import *
 
 sample_ds_body = {
     "name": "TestDs",
@@ -223,60 +224,6 @@ def k8s_client(mocker, pod_listed, v1_mock, v1_batch_mock, k8s_config):
     }
     all_clients["list_namespaced_pod_mock"].return_value = pod_listed
     return all_clients
-
-# CR mocking
-@pytest.fixture
-def cr_client(mocker):
-    return mocker.patch(
-        'app.helpers.container_registries.AzureRegistry',
-        return_value=Mock(
-            login=Mock(return_value="access_token"),
-            get_image_tags=Mock(return_value=True)
-        )
-    )
-
-@pytest.fixture
-def registry_client(mocker):
-    mocker.patch(
-        'app.models.registry.AzureRegistry',
-        return_value=Mock()
-    )
-
-@pytest.fixture
-def cr_client_404(mocker):
-    mocker.patch(
-        'app.models.registry.AzureRegistry',
-        return_value=Mock(
-            login=Mock(return_value="access_token"),
-            get_image_tags=Mock(return_value=False)
-        )
-    )
-@pytest.fixture
-def cr_name():
-    return "acr.azurecr.io"
-
-@pytest.fixture
-def cr_config(cr_name):
-    return {
-        cr_name: {"username": "user", "password": "pass"}
-    }
-
-@pytest.fixture
-def cr_class(mocker, cr_name, ):
-    return AzureRegistry(cr_name, creds={"user": "", "token": ""})
-
-@pytest.fixture
-def registry(client, k8s_client, cr_name, image_name) -> Container:
-    reg = Registry(cr_name, '', '')
-    reg.add()
-    return reg
-
-@pytest.fixture
-def container(client, k8s_client, cr_name, registry, image_name) -> Container:
-    img, tag = image_name.split(':')
-    cont = Container(img, registry, tag, True)
-    cont.add()
-    return cont
 
 # Dataset Mocking
 @pytest.fixture(scope='function')

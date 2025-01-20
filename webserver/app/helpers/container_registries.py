@@ -46,7 +46,7 @@ class BaseRegistry:
         """
         token = self.login()
         if not token:
-            raise
+            raise ContainerRegistryException("Could not login to the Registry")
         list_resp = requests.get(
             self.list_repo_url % {"service": self.registry, "organization": self.organization},
             headers={"Authorization": f"Bearer {token}"}
@@ -96,10 +96,10 @@ class BaseRegistry:
         This should work on any docker Registry v2 as it's a standard
         """
         token = self.login(image)
-        tags_list = []
         if not token:
-            raise
+            raise ContainerRegistryException("Could not login to the Registry")
 
+        tags_list = []
         try:
             response_metadata = requests.get(
                 self.tags_url % self.get_url_string_params(image),
@@ -145,6 +145,7 @@ class AzureRegistry(BaseRegistry):
         return images
 
 class DockerRegistry(BaseRegistry):
+    repo_login_url = "https://hub.docker.com/v2/users/login/"
     login_url = "https://hub.docker.com/v2/users/login/"
     tags_url = "https://hub.docker.com/v2/repositories/%(image)s/tags"
     list_repo_url = "https://hub.docker.com/v2/repositories/%(organization)s"

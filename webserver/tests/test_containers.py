@@ -7,10 +7,10 @@ from app.models.container import Container
 
 
 @pytest.fixture(scope='function')
-def container_body(registry):
+def container_body(registry_az):
     return deepcopy({
         "name": "",
-        "registry": registry.url,
+        "registry": registry_az.url,
         "tag": "1.2.3",
         "ml": True
     })
@@ -20,8 +20,8 @@ class TestContainers:
     def test_docker_image_regex(
         self,
         container_body,
-        cr_client,
-        registry_client,
+        azure_cr_client,
+        az_registry_client,
         mocker,
         client
     ):
