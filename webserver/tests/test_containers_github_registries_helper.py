@@ -9,9 +9,7 @@ class TestGitHubRegistry:
         This addressed the github case, where login is not
         strictly a separate action
     """
-    def test_create_registry_with_no_org_fails(
-            self
-    ):
+    def test_create_registry_with_no_org_fails(self):
         """
         GitHub Registry format is ghcr.io/organization
         without organization we shouldn't progress with init
@@ -63,3 +61,36 @@ class TestGitHubRegistry:
                 status=200
             )
             assert not cr_class.get_image_tags(container.name, "latest")
+
+    def test_list_repos(
+        self,
+        registry,
+        cr_class,
+        container
+    ):
+        """
+        Tests that the expected github request can be re-formatted
+        to the FN standard
+        """
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"https://api.github.com/orgs/{cr_class.organization}/packages?package_type=container",
+                json=[{
+                    "name": container.name
+                }],
+                status=200
+            )
+            rsps.add(
+                responses.GET,
+                f"https://api.github.com/orgs/{cr_class.organization}/packages/container/{container.name}/versions",
+                json=[{
+                    "metadata": {
+                        "container":{
+                            "tags": ["1.2.3", "dev"]
+                        }
+                    }
+                }],
+                status=200
+            )
+            assert cr_class.list_repos() == [{"name": container.name, "tags": ["1.2.3", "dev"]}]

@@ -108,10 +108,11 @@ class BaseRegistry:
                 self.tags_url % self.get_url_string_params(image),
                 headers={"Authorization": f"Bearer {token}"}
             )
-            if response_metadata.ok:
-                tags_list = response_metadata.json()
-            else:
+            if not response_metadata.ok:
                 logger.info(response_metadata.text)
+                raise ContainerRegistryException(f"Failed to fetch the list of tags for {image}")
+
+            return response_metadata.json()
         except ConnectionError as ce:
             logger.info(ce.strerror)
             raise ContainerRegistryException(

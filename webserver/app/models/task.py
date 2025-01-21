@@ -186,9 +186,11 @@ class Task(db.Model, BaseModel):
         image = Container.query.filter(Container.name==image_name, Container.tag==tag).one_or_none()
         if image is None:
             raise TaskExecutionException(f"Image {docker_image} could not be found")
+
         registry_client = image.registry.get_registry_class()
         if not registry_client.get_image_tags(image):
             raise TaskImageException(f"Image {docker_image} not found on our repository")
+
         return image.full_image_name()
 
     def pod_name(self):

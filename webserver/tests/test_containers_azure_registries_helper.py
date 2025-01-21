@@ -129,6 +129,36 @@ class TestAzureRegistry:
                 cr_class.get_image_tags(container.name)
             assert cre.value.description == f"Failed to fetch the list of tags from {registry.url}/{container.name}"
 
+    def test_cr_tags_request_fails(
+        self,
+        registry,
+        cr_name,
+        container,
+        cr_class
+    ):
+        """
+        Checks that we handle a ConnectionError
+        exception properly during the container tags list.
+        The exception should be re-raised as a custom one, so that
+        flask can return a formatted error
+        """
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"https://{cr_name}/v2/{container.name}/tags/list",
+                json={"error": "Something went wrong"},
+                status=400
+            )
+            rsps.add(
+                responses.GET,
+                f"https://{cr_name}/oauth2/token?service={cr_name}&scope=repository:{container.name}:metadata_read",
+                json={"access_token": "12345asdf"},
+                status=200
+            )
+            with pytest.raises(ContainerRegistryException) as cre:
+                cr_class.get_image_tags(container.name)
+            assert cre.value.description == f"Failed to fetch the list of tags for {container.name}"
+
     def test_cr_list_repo_connection_error(
         self,
         registry,
@@ -156,3 +186,32 @@ class TestAzureRegistry:
             with pytest.raises(ContainerRegistryException) as cre:
                 cr_class.list_repos()
             assert cre.value.description == f"Failed to fetch the list of available containers from {registry.url}"
+
+    def test_cr_list_repo_request_fails(
+        self,
+        registry,
+        cr_name,
+        cr_class
+    ):
+        """
+        Checks that we handle a ConnectionError
+        exception properly during the fetching of the container list.
+        The exception should be re-raised as a custom one, so that
+        flask can return a formatted error
+        """
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                f"https://{cr_name}/v2/_catalog",
+                json={"error": "Something went wrong"},
+                status=400
+            )
+            rsps.add(
+                responses.GET,
+                f"https://{cr_name}/oauth2/token?service={cr_name}&scope=registry:catalog:*",
+                json={"access_token": "12345asdf"},
+                status=200
+            )
+            with pytest.raises(ContainerRegistryException) as cre:
+                cr_class.list_repos()
+            assert cre.value.description == "Could not fetch the list of images"
