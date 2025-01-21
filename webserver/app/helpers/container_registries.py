@@ -45,19 +45,23 @@ class BaseRegistry:
             available images
         """
         token = self.login()
-        if not token:
-            raise ContainerRegistryException("Could not login to the Registry")
-        list_resp = requests.get(
-            self.list_repo_url % {"service": self.registry, "organization": self.organization},
-            headers={"Authorization": f"Bearer {token}"}
-        )
-        if not list_resp.ok:
-            logger.error(list_resp.text)
-            raise ContainerRegistryException("Could not fetch the list of images", 500)
-
+        try:
+            list_resp = requests.get(
+                self.list_repo_url % {"service": self.registry, "organization": self.organization},
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if not list_resp.ok:
+                logger.error(list_resp.text)
+                raise ContainerRegistryException("Could not fetch the list of images", 500)
+        except ConnectionError as ce:
+            logger.error(ce)
+            raise ContainerRegistryException(
+                f"Failed to fetch the list of available containers from {self.registry}",
+                500
+            )
         return list_resp.json()
 
-    def login(self, image=None) -> str:
+    def login(self, image:str=None) -> str:
         """
         Check that credentials are valid (if image is None)
             else, exchanges credentials for a token with the image or repo scope
@@ -70,7 +74,8 @@ class BaseRegistry:
             )
 
             if not response_auth.ok:
-                return None
+                logger.info(response_auth.text)
+                raise ContainerRegistryException("Could not authenticate against the registry", 400)
 
             return response_auth.json()[self.token_field]
         except ConnectionError as ce:
@@ -88,7 +93,7 @@ class BaseRegistry:
             "organization": self.organization
         }
 
-    def get_image_tags(self, image) -> bool:
+    def get_image_tags(self, image:str) -> bool:
         """
         Works as an existence check. If the tag for the image
         has the requested tag in the list of available tags
@@ -96,8 +101,6 @@ class BaseRegistry:
         This should work on any docker Registry v2 as it's a standard
         """
         token = self.login(image)
-        if not token:
-            raise ContainerRegistryException("Could not login to the Registry")
 
         tags_list = []
         try:
@@ -111,6 +114,10 @@ class BaseRegistry:
                 logger.info(response_metadata.text)
         except ConnectionError as ce:
             logger.info(ce.strerror)
+            raise ContainerRegistryException(
+                f"Failed to fetch the list of tags from {self.registry}/{image}",
+                500
+            )
 
         return tags_list
 
@@ -171,6 +178,15 @@ class GitHubRegistry(BaseRegistry):
     list_repo_url = "https://api.github.com/orgs/%(organization)s/packages?package_type=container"
 
     def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
+        destruct_reg = registry.split('/', maxsplit=1)
+
+        # Remove empty strings
+        if '' in destruct_reg:
+            destruct_reg.remove('')
+
+        if len(destruct_reg) <= 1:
+            raise ContainerRegistryException("For GitHub registry, provide the org name. i.e. ghcr.io/orgname")
+
         super().__init__(registry, secret_name, creds)
 
         self.auth = self.creds['token']

@@ -1,4 +1,5 @@
 import responses
+from app.helpers.exceptions import ContainerRegistryException
 from tests.fixtures.github_cr_fixtures import *
 
 
@@ -8,6 +9,19 @@ class TestGitHubRegistry:
         This addressed the github case, where login is not
         strictly a separate action
     """
+    def test_create_registry_with_no_org_fails(
+            self
+    ):
+        """
+        GitHub Registry format is ghcr.io/organization
+        without organization we shouldn't progress with init
+        """
+        invalid_names = ["ghcr.io", "ghcr.io/", "/ghcr.io"]
+        for name in invalid_names:
+            with pytest.raises(ContainerRegistryException) as cre:
+                GitHubRegistry(registry=name)
+            assert cre.value.description == "For GitHub registry, provide the org name. i.e. ghcr.io/orgname"
+
     def test_cr_metadata_empty(
             self,
             container,

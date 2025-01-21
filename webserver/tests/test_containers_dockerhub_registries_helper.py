@@ -1,5 +1,6 @@
 import responses
 from tests.fixtures.dockerhub_cr_fixtures import *
+from app.helpers.exceptions import ContainerRegistryException
 
 
 class TestDockerRegistry:
@@ -24,7 +25,9 @@ class TestDockerRegistry:
                 self.login_url,
                 status=401
             )
-            assert not cr_class.login(container.name)
+            with pytest.raises(ContainerRegistryException) as cre:
+                cr_class.login(container.name)
+            assert cre.value.description == "Could not authenticate against the registry"
 
     def test_cr_metadata_empty(
             self,

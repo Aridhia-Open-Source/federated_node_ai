@@ -5,7 +5,6 @@ from app.helpers.const import DEFAULT_NAMESPACE
 from app.helpers.container_registries import AzureRegistry, BaseRegistry, DockerRegistry, GitHubRegistry
 from app.helpers.db import BaseModel, db
 from app.helpers.kubernetes import KubernetesClient
-from app.helpers.exceptions import ContainerRegistryException
 
 
 class Registry(db.Model, BaseModel):
@@ -27,17 +26,20 @@ class Registry(db.Model, BaseModel):
         self.username = username
         self.password = password
 
+    def sanitized_dict(self):
+        san_dict = super().sanitized_dict()
+        keys = list(san_dict.keys())
+        for k in keys:
+            if k not in self._get_fields_name():
+                san_dict.pop(k, None)
+        return san_dict
+
     @classmethod
     def validate(cls, data:dict):
         data = super().validate(data)
 
         # Test credentials
         _class = cls(**data).get_registry_class()
-        if isinstance(_class, GitHubRegistry):
-            destruct_reg = _class.registry.split('/')
-            if len(destruct_reg) <= 1:
-                raise ContainerRegistryException("For GitHub registry, provide the org name. i.e. ghcr.io/orgname")
-
         _class.login()
         return data
 
