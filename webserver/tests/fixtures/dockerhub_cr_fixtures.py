@@ -1,4 +1,5 @@
 import pytest
+import responses
 from unittest.mock import Mock
 
 from app.helpers.container_registries import DockerRegistry
@@ -40,8 +41,15 @@ def cr_client_404(mocker):
     )
 
 @pytest.fixture
-def cr_class(mocker, cr_name, ):
-    return DockerRegistry(cr_name, creds={"user": "", "token": ""})
+def cr_class(cr_name, ):
+    with responses.RequestsMock() as rsps:
+        rsps.add(
+            responses.GET,
+            "https://hub.docker.com/v2/users/login/",
+            status=200,
+            json={"token": "12345asdf"}
+        )
+        return DockerRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
 def registry(client, k8s_client, cr_name) -> Registry:

@@ -86,7 +86,14 @@ def cr_client_404(mocker):
 
 @pytest.fixture
 def cr_class(mocker, cr_name, ):
-    return AzureRegistry(cr_name, creds={"user": "", "token": ""})
+    with responses.RequestsMock() as rsps:
+        rsps.add(
+            responses.GET,
+            f"https://{cr_name}/oauth2/token?service={cr_name}&scope=registry:catalog:*",
+            json={"access_token": "12345asdf"},
+            status=200
+        )
+        return AzureRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
 def registry(client, k8s_client, cr_name) -> Registry:

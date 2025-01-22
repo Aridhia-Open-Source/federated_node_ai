@@ -177,12 +177,6 @@ class TestAzureRegistry:
                 f"https://{cr_name}/v2/_catalog",
                 body=requests.ConnectionError("error")
             )
-            rsps.add(
-                responses.GET,
-                f"https://{cr_name}/oauth2/token?service={cr_name}&scope=registry:catalog:*",
-                json={"access_token": "12345asdf"},
-                status=200
-            )
             with pytest.raises(ContainerRegistryException) as cre:
                 cr_class.list_repos()
             assert cre.value.description == f"Failed to fetch the list of available containers from {registry.url}"
@@ -205,12 +199,6 @@ class TestAzureRegistry:
                 f"https://{cr_name}/v2/_catalog",
                 json={"error": "Something went wrong"},
                 status=400
-            )
-            rsps.add(
-                responses.GET,
-                f"https://{cr_name}/oauth2/token?service={cr_name}&scope=registry:catalog:*",
-                json={"access_token": "12345asdf"},
-                status=200
             )
             with pytest.raises(ContainerRegistryException) as cre:
                 cr_class.list_repos()

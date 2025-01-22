@@ -2,6 +2,7 @@ from base64 import b64encode
 import requests
 import logging
 from requests.exceptions import ConnectionError
+from typing import TYPE_CHECKING
 
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.exceptions import ContainerRegistryException
@@ -9,6 +10,9 @@ from app.helpers.exceptions import ContainerRegistryException
 
 logger = logging.getLogger('registries_handler')
 logger.setLevel(logging.INFO)
+
+if TYPE_CHECKING:
+    from app.models.container import Container
 
 
 class BaseRegistry:
@@ -19,6 +23,7 @@ class BaseRegistry:
     creds = None
     organization = ''
     request_args = {}
+    api_login = True
 
     def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
         self.registry = registry
@@ -26,6 +31,9 @@ class BaseRegistry:
         self.creds = creds
         if secret_name is not None:
             self.creds = self.get_secret()
+
+        if self.api_login:
+            self._token = self.login()
 
     def get_secret(self) -> dict[str,str]:
         """
@@ -44,11 +52,10 @@ class BaseRegistry:
             different api requests to get a list of
             available images
         """
-        token = self.login()
         try:
             list_resp = requests.get(
                 self.list_repo_url % {"service": self.registry, "organization": self.organization},
-                headers={"Authorization": f"Bearer {token}"}
+                headers={"Authorization": f"Bearer {self._token}"}
             )
             if not list_resp.ok:
                 logger.error(list_resp.text)
@@ -69,7 +76,7 @@ class BaseRegistry:
         url = self.repo_login_url if image else  self.login_url
         try:
             response_auth = requests.get(
-                url % self.get_url_string_params(image),
+                url % self.get_url_string_params(image_name=image),
                 **self.request_args
             )
 
@@ -86,10 +93,13 @@ class BaseRegistry:
                 500
             )
 
-    def get_url_string_params(self, image:str) -> dict[str,str]:
+    def get_url_string_params(self, image_obj:'Container'=None, image_name:str=None) -> dict[str,str]:
+        if image_obj:
+            image_name = image_obj.name
+
         return {
             "service": self.registry,
-            "image": image if image else '',
+            "image": image_name or '',
             "organization": self.organization
         }
 
@@ -102,10 +112,9 @@ class BaseRegistry:
         """
         token = self.login(image)
 
-        tags_list = []
         try:
             response_metadata = requests.get(
-                self.tags_url % self.get_url_string_params(image),
+                self.tags_url % self.get_url_string_params(image_name=image),
                 headers={"Authorization": f"Bearer {token}"}
             )
             if not response_metadata.ok:
@@ -119,8 +128,6 @@ class BaseRegistry:
                 f"Failed to fetch the list of tags from {self.registry}/{image}",
                 500
             )
-
-        return tags_list
 
 
 class AzureRegistry(BaseRegistry):
@@ -136,7 +143,7 @@ class AzureRegistry(BaseRegistry):
         self.auth = b64encode(f"{self.creds['user']}:{self.creds['token']}".encode()).decode()
         self.request_args["headers"] = {"Authorization": f"Basic {self.auth}"}
 
-    def get_image_tags(self, image, tag=None) -> bool:
+    def get_image_tags(self, image:str, tag=None) -> bool:
         tags_list = super().get_image_tags(image)
         if not tags_list:
             return False
@@ -175,6 +182,7 @@ class DockerRegistry(BaseRegistry):
 
 class GitHubRegistry(BaseRegistry):
     login_url = None
+    api_login = False
     tags_url = "https://api.github.com/orgs/%(organization)s/packages/container/%(image)s/versions"
     list_repo_url = "https://api.github.com/orgs/%(organization)s/packages?package_type=container"
 
@@ -190,13 +198,13 @@ class GitHubRegistry(BaseRegistry):
 
         super().__init__(registry, secret_name, creds)
 
-        self.auth = self.creds['token']
+        self._token = self.creds['token']
         self.request_args["headers"] = {}
         self.organization = registry.split('/')[1]
 
-    def login(self, image=None) -> str:
+    def login(self, image:str=None) -> str:
         logging.info("Auth on github skipped, an organization name is needed")
-        return self.auth
+        return self._token
 
     def get_image_tags(self, image:str, tag:str=None) -> bool:
         tags_list = super().get_image_tags(image)
