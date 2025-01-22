@@ -6,8 +6,9 @@ containers endpoints:
 
 from flask import Blueprint, request
 
+from app.helpers.exceptions import DBRecordNotFoundError
 from app.helpers.wrappers import audit, auth
-from .models.registry import Registry
+from app.models.registry import Registry
 
 
 bp = Blueprint('registries', __name__, url_prefix='/registries')
@@ -22,6 +23,19 @@ def list_registries():
     GET /registries endpoint.
     """
     return Registry.get_all(), 200
+
+
+@bp.route('/<int:registry_id>', methods=['GET'])
+@audit
+@auth(scope='can_admin_dataset')
+def registry_by_id(registry_id:int):
+    """
+    GET /registries endpoint.
+    """
+    registry = Registry.query.filter_by(id=registry_id).one_or_none()
+    if registry is None:
+        raise DBRecordNotFoundError("Registry not found")
+    return registry.sanitized_dict(), 200
 
 
 @bp.route('/', methods=['POST'])

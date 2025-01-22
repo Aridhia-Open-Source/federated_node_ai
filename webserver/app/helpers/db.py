@@ -35,7 +35,7 @@ class BaseModel():
         return cls.__table__.columns._all_columns
 
     @classmethod
-    def _get_fields_name(cls) -> list[Column]:
+    def _get_fields_name(cls) -> list[str]:
         return [col.name for col in cls._get_fields()]
 
     @classmethod
