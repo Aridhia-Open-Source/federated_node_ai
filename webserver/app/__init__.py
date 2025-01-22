@@ -9,11 +9,12 @@ import logging
 from flask import Flask
 from flask_swagger_ui import get_swaggerui_blueprint
 from sqlalchemy import exc
+from werkzeug.exceptions import NotFound
+
 from app import (
     main, admin_api, datasets_api, tasks_api, requests_api,
     containers_api, registries_api, users_api
 )
-from werkzeug.exceptions import NotFound
 from app.helpers.db import build_sql_uri, db
 from app.helpers.exceptions import (
     InvalidDBEntry, DBError, DBRecordNotFoundError, InvalidRequest,

@@ -2,7 +2,6 @@ from base64 import b64encode
 import requests
 import logging
 from requests.exceptions import ConnectionError
-from typing import TYPE_CHECKING
 
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.exceptions import ContainerRegistryException
@@ -10,9 +9,6 @@ from app.helpers.exceptions import ContainerRegistryException
 
 logger = logging.getLogger('registries_handler')
 logger.setLevel(logging.INFO)
-
-if TYPE_CHECKING:
-    from app.models.container import Container
 
 
 class BaseRegistry:
@@ -93,10 +89,7 @@ class BaseRegistry:
                 500
             )
 
-    def get_url_string_params(self, image_obj:'Container'=None, image_name:str=None) -> dict[str,str]:
-        if image_obj:
-            image_name = image_obj.name
-
+    def get_url_string_params(self, image_name:str=None) -> dict[str,str]:
         return {
             "service": self.registry,
             "image": image_name or '',

@@ -80,7 +80,10 @@ def patch_datasets_by_id_or_name(image_id:int=None):
     PATCH /image/id endpoint. Edits an existing container image with a given id
     """
     if not request.is_json:
-        raise InvalidRequest("Request body must be a valid json, or set the Content-Type to application/json", 400)
+        raise InvalidRequest(
+            "Request body must be a valid json, or set the Content-Type to application/json",
+            400
+        )
 
     data = request.json
     # validation, only ml and dashboard are allowed
@@ -115,11 +118,17 @@ def sync():
     for registry in Registry.query.order_by(Registry.id.desc()):
         for image in registry.fetch_image_list():
             for tag in image["tags"]:
-                if Container.query.filter(Container.name==image["name"], Container.tag==tag, Container.registry_id==registry.id).one_or_none():
+                if Container.query.filter_by(
+                    name=image["name"],
+                    tag=tag,
+                    registry_id=registry.id
+                ).one_or_none():
                     logger.info("Image %s already synched", image["name"])
                     continue
 
-                data = Container.validate({"name": image["name"], "registry": registry.url, "tag": tag})
+                data = Container.validate(
+                    {"name": image["name"], "registry": registry.url, "tag": tag}
+                )
                 cont = Container(**data)
                 cont.add(commit=False)
                 synched.append(cont.full_image_name())
