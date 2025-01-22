@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import Mock
 
 from app.helpers.exceptions import InvalidRequest
 from app.models.registry import Registry
@@ -57,10 +56,66 @@ class TestRegistriesApi:
         resp = client.get("/registries")
         assert resp.status_code == 401
 
+    def test_get_registry_by_id(
+        self,
+        registry,
+        client,
+        simple_admin_header
+    ):
+        """
+        Basic test to check that the registry
+        output is correct with appropriate permissions
+        """
+        resp = client.get(
+            f"registries/{registry.id}",
+            headers=simple_admin_header
+        )
+        assert resp.status_code == 200
+        assert resp.json == {
+            "id": registry.id,
+            "needs_auth": registry.needs_auth,
+            "url": registry.url
+        }
+
+
+    def test_get_registry_by_id_not_found(
+        self,
+        registry,
+        client,
+        simple_admin_header
+    ):
+        """
+        Basic test that a 404 is return with an
+        appropriate message
+        """
+        resp = client.get(
+            f"registries/{registry.id + 1}",
+            headers=simple_admin_header
+        )
+        assert resp.status_code == 404
+        assert resp.json["error"] == "Registry not found"
+
+    def test_get_registry_by_id_non_admin_403(
+        self,
+        registry,
+        client,
+        simple_user_header
+    ):
+        """
+        Basic test to ensure only admins can browse
+        by registry id
+        """
+        resp = client.get(
+            f"registries/{registry.id}",
+            headers=simple_user_header
+        )
+        assert resp.status_code == 403
+
     def test_create_registry_201(
         self,
         client,
-        post_json_admin_header
+        post_json_admin_header,
+        k8s_client
     ):
         """
         Basic POST request
