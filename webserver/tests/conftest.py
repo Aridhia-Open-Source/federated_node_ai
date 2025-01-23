@@ -1,3 +1,4 @@
+import base64
 import copy
 import json
 import os
@@ -222,6 +223,13 @@ def k8s_client(mocker, pod_listed, v1_mock, v1_batch_mock, k8s_config):
     }
     all_clients["list_namespaced_pod_mock"].return_value = pod_listed
     return all_clients
+
+@pytest.fixture
+def reg_k8s_client(k8s_client):
+    k8s_client["read_namespaced_secret_mock"].return_value.data.update({
+            ".dockerconfigjson": base64.b64encode("{\"auths\": {}}".encode()).decode()
+        })
+    return k8s_client
 
 # Dataset Mocking
 @pytest.fixture(scope='function')

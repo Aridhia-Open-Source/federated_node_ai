@@ -1,7 +1,3 @@
-import pytest
-
-from app.helpers.exceptions import InvalidRequest
-from app.models.registry import Registry
 from tests.fixtures.azure_cr_fixtures import *
 
 
@@ -31,7 +27,8 @@ class TestRegistriesApi:
         self,
         registry,
         client,
-        simple_user_header
+        simple_user_header,
+        reg_k8s_client
     ):
         """
         Basic test for the GET /registries endpoint
@@ -115,7 +112,7 @@ class TestRegistriesApi:
         self,
         client,
         post_json_admin_header,
-        k8s_client
+        reg_k8s_client
     ):
         """
         Basic POST request
@@ -189,3 +186,34 @@ class TestRegistriesApi:
         )
         assert resp.status_code == 400
         assert resp.json["error"] == 'Field "url" missing'
+
+    def test_create_duplicate(
+        self,
+        client,
+        registry,
+        post_json_admin_header
+    ):
+        """
+        Checks that creating a registry with the same
+        url as an existing one, fails
+        """
+        with responses.RequestsMock() as rsps:
+            rsps.add_passthru(KEYCLOAK_URL)
+            rsps.add(
+                responses.GET,
+                f"https://{registry.url}/oauth2/token?service={registry.url}&scope=registry:catalog:*",
+                json={"access_token": "12jio12buds89"},
+                status=200
+            )
+            resp = client.post(
+                "/registries",
+                json={
+                    "url": registry.url,
+                    "username": "blabla",
+                    "password": "secret"
+                },
+                headers=post_json_admin_header
+            )
+        assert resp.status_code == 400
+        assert resp.json["error"] == f"Registry {registry.url} already exist"
+        assert Registry.query.filter_by(url=registry.url).count() == 1

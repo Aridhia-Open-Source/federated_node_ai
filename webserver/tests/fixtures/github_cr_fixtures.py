@@ -21,7 +21,7 @@ def registry_client(mocker):
     )
 
 @pytest.fixture
-def cr_client(mocker):
+def cr_client(mocker, reg_k8s_client):
     return mocker.patch(
         'app.helpers.container_registries.GitHubClient',
         return_value=Mock(
@@ -45,7 +45,7 @@ def cr_client_404(mocker):
     )
 
 @pytest.fixture
-def registry(client, k8s_client, cr_name) -> Registry:
+def registry(client, reg_k8s_client, cr_name) -> Registry:
     reg = Registry(cr_name, '', '')
     reg.add()
     return reg

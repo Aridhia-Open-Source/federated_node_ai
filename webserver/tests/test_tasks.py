@@ -107,7 +107,6 @@ def test_get_list_tasks_base_user(
 
 def test_create_task(
         cr_client,
-        k8s_client,
         post_json_admin_header,
         client,
         registry_client,
@@ -125,7 +124,6 @@ def test_create_task(
 
 def test_create_task_invalid_output_field(
         cr_client,
-        k8s_client,
         post_json_admin_header,
         client,
         registry_client,
@@ -146,7 +144,7 @@ def test_create_task_invalid_output_field(
 
 def test_create_task_no_output_field_reverts_to_default(
         cr_client,
-        k8s_client,
+        reg_k8s_client,
         post_json_admin_header,
         client,
         registry_client,
@@ -163,14 +161,13 @@ def test_create_task_no_output_field_reverts_to_default(
         headers=post_json_admin_header
     )
     assert response.status_code == 201
-    k8s_client["create_namespaced_pod_mock"].assert_called()
-    pod_body = k8s_client["create_namespaced_pod_mock"].call_args.kwargs["body"]
+    reg_k8s_client["create_namespaced_pod_mock"].assert_called()
+    pod_body = reg_k8s_client["create_namespaced_pod_mock"].call_args.kwargs["body"]
     assert len(pod_body.spec.containers[0].volume_mounts) == 1
     assert pod_body.spec.containers[0].volume_mounts[0].mount_path == TASK_POD_RESULTS_PATH
 
 def test_create_task_with_ds_name(
         cr_client,
-        k8s_client,
         post_json_admin_header,
         client,
         registry_client,
@@ -193,7 +190,7 @@ def test_create_task_with_ds_name(
 
 def test_create_task_with_ds_name_and_id(
         cr_client,
-        k8s_client,
+
         post_json_admin_header,
         client,
         registry_client,
@@ -215,7 +212,7 @@ def test_create_task_with_ds_name_and_id(
 
 def test_create_task_with_conflicting_ds_name_and_id(
         cr_client,
-        k8s_client,
+
         post_json_admin_header,
         client,
         dataset,
@@ -323,7 +320,7 @@ def test_create_task_image_not_found(
 def test_get_task_by_id_admin(
         token_valid_mock,
         cr_client,
-        k8s_client,
+
         post_json_admin_header,
         post_json_user_header,
         simple_admin_header,
@@ -353,7 +350,7 @@ def test_get_task_by_id_admin(
 def test_get_task_by_id_non_admin_owner(
         token_valid_mock,
         cr_client,
-        k8s_client,
+
         simple_user_header,
         post_json_user_header,
         client,
@@ -381,7 +378,7 @@ def test_get_task_by_id_non_admin_owner(
 def test_get_task_by_id_non_admin_non_owner(
         token_valid_mock,
         cr_client,
-        k8s_client,
+
         post_json_user_header,
         simple_user_header,
         client,
@@ -411,7 +408,7 @@ def test_get_task_by_id_non_admin_non_owner(
 def test_cancel_task(
         client,
         cr_client,
-        k8s_client,
+
         registry_client,
         simple_admin_header,
         post_json_admin_header,
@@ -491,7 +488,7 @@ class TestTaskResults:
         client,
         task_body,
         mocker,
-        k8s_client
+        reg_k8s_client
     ):
         """
         A simple test with mocked PVs to test a successful result
@@ -514,7 +511,7 @@ class TestTaskResults:
         pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
         pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
         pod_mock.status.container_statuses = [Mock(ready=True)]
-        k8s_client["list_namespaced_pod_mock"].return_value.items = [pod_mock]
+        reg_k8s_client["list_namespaced_pod_mock"].return_value.items = [pod_mock]
 
         mocker.patch(
             'app.models.task.Task.get_status',
@@ -536,8 +533,7 @@ class TestTaskResults:
         simple_admin_header,
         client,
         task_body,
-        mocker,
-        k8s_client
+        reg_k8s_client
     ):
         """
         Tests that the job creation to fetch results from a PV returns a 500
@@ -554,14 +550,14 @@ class TestTaskResults:
         assert response.status_code == 201
 
         # Get results - creating a job fails
-        k8s_client["create_namespaced_job_mock"].side_effect = ApiException(status=500, reason="Something went wrong")
+        reg_k8s_client["create_namespaced_job_mock"].side_effect = ApiException(status=500, reason="Something went wrong")
 
         pod_mock = Mock()
         pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
         pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
         pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
         pod_mock.status.container_statuses = [Mock(ready=True)]
-        k8s_client["list_namespaced_pod_mock"].return_value.items = [pod_mock]
+        reg_k8s_client["list_namespaced_pod_mock"].return_value.items = [pod_mock]
 
         response = client.get(
             f'/tasks/{response.json["task_id"]}/results',
@@ -599,7 +595,6 @@ class TestTaskResults:
 def test_get_task_status_running_and_waiting(
     cr_client,
     registry_client,
-    k8s_client,
     running_state,
     waiting_state,
     post_json_admin_header,
@@ -654,7 +649,6 @@ def test_get_task_status_running_and_waiting(
 
 def test_get_task_status_terminated(
     cr_client,
-    k8s_client,
     registry_client,
     terminated_state,
     post_json_admin_header,

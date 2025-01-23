@@ -28,9 +28,6 @@ class BaseRegistry:
         if secret_name is not None:
             self.creds = self.get_secret()
 
-        if self.api_login:
-            self._token = self.login()
-
     def get_secret(self) -> dict[str,str]:
         """
         Get the registry-related secret
@@ -135,6 +132,7 @@ class AzureRegistry(BaseRegistry):
 
         self.auth = b64encode(f"{self.creds['user']}:{self.creds['token']}".encode()).decode()
         self.request_args["headers"] = {"Authorization": f"Basic {self.auth}"}
+        self._token = self.login()
 
     def get_image_tags(self, image:str, tag=None) -> bool:
         tags_list = super().get_image_tags(image)
@@ -164,6 +162,7 @@ class DockerRegistry(BaseRegistry):
 
         self.request_args["json"] = {"username": self.creds['user'], "password": self.creds['token']}
         self.request_args["headers"] = {"Content-Type": "application/json"}
+        self._token = self.login()
 
     def get_image_tags(self, image:str, tag:str=None) -> bool:
         tags_list = super().get_image_tags(image)

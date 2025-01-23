@@ -6,7 +6,7 @@ containers endpoints:
 
 from flask import Blueprint, request
 
-from app.helpers.exceptions import DBRecordNotFoundError
+from app.helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from app.helpers.wrappers import audit, auth
 from app.models.registry import Registry
 
@@ -47,6 +47,9 @@ def add_registry():
     POST /registries endpoint.
     """
     body = Registry.validate(request.json)
-    image = Registry(**body)
-    image.add()
-    return {"id": image.id}, 201
+    if Registry.query.filter_by(url=body['url']).one_or_none():
+        raise InvalidRequest(f"Registry {body['url']} already exist")
+
+    registry = Registry(**body)
+    registry.add()
+    return {"id": registry.id}, 201

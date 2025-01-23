@@ -115,7 +115,7 @@ def sync():
         or unintended containers to be used on a node.
     """
     synched = []
-    for registry in Registry.query.order_by(Registry.id.desc()):
+    for registry in Registry.query.all():
         for image in registry.fetch_image_list():
             for tag in image["tags"]:
                 if Container.query.filter_by(

@@ -1,5 +1,21 @@
 # Releases Changelog
 
+## 0.8.0
+- Added Container and Registry management:
+    - /containers
+        - POST
+        - GET
+        - GET /id
+        - PATCH /id
+        - POST /sync
+    - /registries
+        - POST
+        - GET
+        - GET /id
+- Removed `regcred` automatic generation, as deployments in the helm chart are all public
+- Removed registries-list.json which was a sibling process to the `regcred`
+
+
 ## 0.7.0
 - Added POST, GET `/users` admin-only endpoints to perform user management, and PUT `/users/reset-password` to allow users to reset their own credentials.
 

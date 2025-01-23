@@ -65,7 +65,7 @@ def tags_request(azure_login_request, expected_tags_list, expected_image_names, 
     yield azure_login_request
 
 @pytest.fixture
-def cr_client(mocker):
+def cr_client(mocker, reg_k8s_client):
     return mocker.patch(
         'app.helpers.container_registries.AzureRegistry',
         return_value=Mock(
@@ -96,7 +96,7 @@ def cr_class(mocker, cr_name, ):
         return AzureRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
-def registry(client, k8s_client, cr_name) -> Registry:
+def registry(client, reg_k8s_client, k8s_client, cr_name) -> Registry:
     reg = Registry(cr_name, '', '')
     reg.add()
     return reg

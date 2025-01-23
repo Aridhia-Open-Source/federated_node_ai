@@ -21,7 +21,7 @@ def registry_client(mocker):
     )
 
 @pytest.fixture
-def cr_client(mocker):
+def cr_client(mocker, reg_k8s_client):
     return mocker.patch(
         'app.helpers.container_registries.DockerRegistry',
         return_value=Mock(
@@ -52,7 +52,7 @@ def cr_class(cr_name, ):
         return DockerRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
-def registry(client, k8s_client, cr_name) -> Registry:
+def registry(client, reg_k8s_client, cr_name) -> Registry:
     reg = Registry(cr_name, '', '')
     reg.add()
     return reg
