@@ -200,6 +200,7 @@ jobs:
     - name: Build helm archive
       working-directory: k8s/federated-node
       run: |
+        helm dependency build || helm dependency update
         helm package . -d ../../artifacts/
 
     - name: Set helm channel to develop for dev branches
