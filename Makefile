@@ -18,5 +18,11 @@ pylint:
 chart:
 	helm package k8s/federated-node -d artifacts/
 
+push_chart:
+	curl --request POST \
+		--form 'chart=@artifacts/federated-node-${VERSION}.tgz' \
+		--user r-casula:${HELM_TOKEN} \
+		https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/api/develop/charts
+
 build_keycloak:
 	docker build build/keycloak -f build/keycloak/keycloak.Dockerfile -t ghcr.io/aridhia-open-source/federated_keycloak:0.0.1

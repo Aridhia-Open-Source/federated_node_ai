@@ -22,3 +22,10 @@ version: 0.8.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.8.0"
+
+# Dependencies on other charts
+dependencies:
+  - name: fn-task-controller
+    repository: https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/develop
+    version: 0.2.1
+    condition: outbound-mode

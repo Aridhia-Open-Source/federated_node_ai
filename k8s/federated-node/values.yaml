@@ -13,10 +13,14 @@ keycloak:
 autoscaling:
   enabled: false
 
+global:
+  namespaces:
+    keycloak: keycloak
+    tasks: tasks
+    controller: fn-controller
+
 namespaces:
-  keycloak: keycloak
   nginx: ingress-nginx
-  tasks: tasks
 
 # token:
 #   life:
@@ -102,3 +106,23 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+outbound: false
+
+###
+fn-task-controller:
+  controller:
+    tag: 0.2.0
+
+  storage:
+    size: 100Mi
+    local:
+      path: /data/controller
+    azure:
+    nfs:
+
+  idp:
+    github:
+      secret_name: github-app
+      secret_key: GH_SECRET
+      clientid_key: GH_CLIENT_ID
