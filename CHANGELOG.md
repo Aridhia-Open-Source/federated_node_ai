@@ -1,5 +1,21 @@
 # Releases Changelog
 
+## 0.8.0
+- Added Container and Registry management:
+    - /containers
+        - POST
+        - GET
+        - GET /id
+        - PATCH /id
+        - POST /sync
+    - /registries
+        - POST
+        - GET
+        - GET /id
+- Removed `regcred` automatic generation, as deployments in the helm chart are all public
+- Removed `registries-list.json` which was a sibling process to the `regcred`
+- In the values file, the `registries` key is deprecated.
+
 ## 0.7.2
 ### Bugfixes
 - Fixed an issue with the `needs_to_reset_password` field not being set correctly
