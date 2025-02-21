@@ -46,6 +46,7 @@ env:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   init:
@@ -150,7 +151,7 @@ jobs:
         with:
           registry: ${{ vars.DOCKER_CR }}
           username: ${{ github.actor }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: set lower case owner name
         run: |
           echo "OWNER_LC=${OWNER,,}" >> ${GITHUB_ENV}
