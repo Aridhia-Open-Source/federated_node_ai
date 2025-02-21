@@ -204,5 +204,3 @@ jobs:
       PATH_BUILD: k8s/federated-node
       CHART_NAME: federated-node
       IS_TAG: ${{ needs.init.outputs.is_tag }}
-    secrets:
-      HELM_TOKEN: ${{ secrets.HELM_TOKEN }}
