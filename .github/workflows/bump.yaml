@@ -55,6 +55,7 @@ jobs:
         env:
           CHART_VERSION: ${{ inputs.chartVersion }}
           APP_VERSION: ${{ inputs.appVersion }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           if [[ $(grep '${CHART_VERSION}' Chart.yaml) ]]; then
             echo "Nothing to change. Exiting early"
