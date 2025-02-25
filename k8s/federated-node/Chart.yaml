@@ -26,6 +26,6 @@ appVersion: "0.9.0"
 # Dependencies on other charts
 dependencies:
   - name: fn-task-controller
-    repository: https://gitlab.com/api/v4/projects/aridhia%2Ffederated-node/packages/helm/develop
+    repository: https://aridhia-open-source.github.io/federated-node-task-controller
     version: 0.2.1
     condition: outbound-mode
