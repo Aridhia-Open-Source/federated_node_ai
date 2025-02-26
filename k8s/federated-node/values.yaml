@@ -104,7 +104,7 @@ tolerations: []
 
 affinity: {}
 
-outbound-mode: false
+outboundMode: false
 
 ###
 fn-task-controller:

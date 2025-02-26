@@ -28,4 +28,4 @@ dependencies:
   - name: fn-task-controller
     repository: https://aridhia-open-source.github.io/federated-node-task-controller
     version: 0.2.1
-    condition: outbound-mode
+    condition: outboundMode
