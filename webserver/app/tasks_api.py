@@ -28,7 +28,10 @@ def get_service_info():
     """
     GET /tasks/service-info endpoint. Gets the server info
     """
-    return "WIP", 200
+    return {
+        "name": "Federated Node",
+        "doc": "Part of the PHEMS network"
+    }, 200
 
 @bp.route('/', methods=['GET'])
 @bp.route('', methods=['GET'])
