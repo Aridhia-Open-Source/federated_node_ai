@@ -16,7 +16,7 @@ from app.helpers.const import (
 from app.helpers.db import BaseModel, db
 from app.helpers.keycloak import Keycloak
 from app.helpers.kubernetes import KubernetesBatchClient, KubernetesCRDClient, KubernetesClient
-from app.helpers.exceptions import DBError, InvalidRequest, TaskImageException, TaskExecutionException
+from app.helpers.exceptions import DBError, InvalidRequest, TaskCRDExecutionException, TaskImageException, TaskExecutionException
 from app.models.dataset import Dataset
 from app.models.container import Container
 
@@ -457,19 +457,5 @@ class Task(db.Model, BaseModel):
             )
         except ApiException as apie:
             if apie.status != 409:
-                logger.error(apie.body)
-                req_values = []
-                unsupp_values = []
-                for mess in json.loads(apie.body)["details"]["causes"]:
-                    if mess["message"] == "Required value":
-                        req_values.append(mess["field"].replace("spec.results", "deliver_to"))
-                    elif "Unsupported value" in mess["message"]:
-                        unsupp_values.append(mess["message"])
-                    else:
-                        pass
-                if req_values:
-                    raise TaskExecutionException({"Missing values": req_values}, 400) from apie
-                if unsupp_values:
-                    raise TaskExecutionException(unsupp_values, 400) from apie
-                raise TaskExecutionException("Could not activate automatic delivery") from apie
+                raise TaskCRDExecutionException(apie.body, apie.status) from apie
             pass
