@@ -409,7 +409,7 @@ class Task(db.Model, BaseModel):
         except ApiException as e:
             if 'job_pod' in locals() and self.get_current_pod(job_pod.metadata.name):
                 v1_batch.delete_job(job_name)
-            logger.error(getattr(e, 'reason'))
+            logger.error(getattr(e, 'body'))
             raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
         except urllib3.exceptions.MaxRetryError as e:
             raise InvalidRequest("The cluster could not create the job") from e

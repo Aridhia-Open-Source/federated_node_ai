@@ -317,6 +317,18 @@ def request_base_body(dataset):
     }
 
 @pytest.fixture
+def request_base_body_name(dataset):
+    return {
+        "title": "Test Task",
+        "dataset_name": dataset.name,
+        "project_name": "project1",
+        "requested_by": { "email": "test@test.com" },
+        "description": "First task ever!",
+        "proj_start": dt.now().date().strftime("%Y-%m-%d"),
+        "proj_end": (dt.now().date() + timedelta(days=10)).strftime("%Y-%m-%d")
+    }
+
+@pytest.fixture
 def approve_request(mocker):
     return mocker.patch(
         'app.datasets_api.Request.approve',
