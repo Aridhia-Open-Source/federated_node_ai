@@ -223,9 +223,7 @@ def post_transfer_token():
 
         body["requested_by"] = json.dumps(body["requested_by"])
         ds_id = body.pop("dataset_id")
-        body["dataset"] = Dataset.query.filter(Dataset.id == ds_id).one_or_none()
-        if body["dataset"] is None:
-            raise DBRecordNotFoundError(f"Dataset {ds_id} not found")
+        body["dataset"] = Dataset.get_by_id(ds_id)
 
         req_attributes = Request.validate(body)
         req = Request(**req_attributes)
@@ -260,9 +258,7 @@ def select_beacon():
         Checks the validity of a query on a dataset
     """
     body = request.json.copy()
-    dataset = Dataset.query.filter(Dataset.id == body['dataset_id']).one_or_none()
-    if dataset is None:
-        raise DBRecordNotFoundError(f"Dataset with id {body['dataset_id']} does not exist")
+    dataset = Dataset.get_by_id(body['dataset_id'])
 
     if validate(body['query'], dataset):
         return {

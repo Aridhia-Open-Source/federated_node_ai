@@ -54,7 +54,7 @@ class TestTransfers:
             headers=post_json_admin_header
         )
         assert response.status_code == 404
-        assert response.json == {"error": "Dataset 5012 not found"}
+        assert response.json == {"error": "Dataset with id 5012 does not exist"}
 
     @mock.patch('app.helpers.wrappers.Keycloak.is_token_valid', return_value=False)
     def test_token_transfer_standard_user(
