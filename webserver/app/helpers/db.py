@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, select, Column
 from sqlalchemy.orm import Relationship, declarative_base
 from flask_sqlalchemy import SQLAlchemy
-from app.helpers.exceptions import InvalidDBEntry
+from app.helpers.exceptions import DBRecordNotFoundError, InvalidDBEntry
 from app.helpers.const import build_sql_uri
 
 
@@ -73,3 +73,14 @@ class BaseModel():
             if req_field not in list(valid.keys()):
                 raise InvalidDBEntry(f"Field \"{req_field}\" missing")
         return valid
+
+    @classmethod
+    def get_by_id(cls, obj_id:int):
+        """
+        Common wrapper to get by id, and raise an
+        exception if not found
+        """
+        obj = cls.query.filter(cls.id == obj_id).one_or_none()
+        if obj is None:
+            raise DBRecordNotFoundError(f"{cls.__name__.capitalize()} with id {obj_id} does not exist")
+        return obj

@@ -1,83 +1,13 @@
 import json
-import pytest
-from copy import deepcopy
-from unittest import mock
-from datetime import datetime, timedelta
-from kubernetes.client.exceptions import ApiException
 from unittest import mock
 from unittest.mock import Mock
 
-from app.helpers.const import CLEANUP_AFTER_DAYS, TASK_POD_RESULTS_PATH
+from app.helpers.const import TASK_POD_RESULTS_PATH
 from app.helpers.db import db
-from app.helpers.exceptions import InvalidRequest
 from app.models.task import Task
 from tests.fixtures.azure_cr_fixtures import *
+from tests.fixtures.tasks_fixtures import *
 
-
-@pytest.fixture(scope='function')
-def task_body(dataset, container):
-    return deepcopy({
-        "name": "Test Task",
-        "requested_by": "das9908-as098080c-9a80s9",
-        "executors": [
-            {
-                "image": container.full_image_name(),
-                "command": ["R", "-e", "df <- as.data.frame(installed.packages())[,c('Package', 'Version')];write.csv(df, file='/mnt/data/packages.csv', row.names=FALSE);Sys.sleep(10000)\""],
-                "env": {
-                    "VARIABLE_UNIQUE": 123,
-                    "USERNAME": "test"
-                }
-            }
-        ],
-        "description": "First task ever!",
-        "tags": {
-            "dataset_id": dataset.id,
-            "test_tag": "some content"
-        },
-        "inputs":{},
-        "outputs":{},
-        "resources": {},
-        "volumes": {}
-    })
-
-@pytest.fixture
-def running_state():
-    return Mock(
-        state=Mock(
-            running=Mock(
-                started_at="1/1/2024"
-            ),
-            waiting=None,
-            terminated=None
-        )
-    )
-
-@pytest.fixture
-def waiting_state():
-    return Mock(
-        state=Mock(
-            waiting=Mock(
-                started_at="1/1/2024"
-            ),
-            running=None,
-            terminated=None
-        )
-    )
-
-@pytest.fixture
-def terminated_state():
-    return Mock(
-        state=Mock(
-            terminated=Mock(
-                started_at="1/1/2024",
-                finished_at="1/1/2024",
-                reason="Completed successfully!",
-                exit_code=0,
-            ),
-            running=None,
-            waiting=None
-        )
-    )
 
 def test_get_list_tasks(
         client,
@@ -190,7 +120,6 @@ def test_create_task_with_ds_name(
 
 def test_create_task_with_ds_name_and_id(
         cr_client,
-
         post_json_admin_header,
         client,
         registry_client,
@@ -212,7 +141,6 @@ def test_create_task_with_ds_name_and_id(
 
 def test_create_task_with_conflicting_ds_name_and_id(
         cr_client,
-
         post_json_admin_header,
         client,
         dataset,
@@ -320,7 +248,6 @@ def test_create_task_image_not_found(
 def test_get_task_by_id_admin(
         token_valid_mock,
         cr_client,
-
         post_json_admin_header,
         post_json_user_header,
         simple_admin_header,
@@ -350,7 +277,6 @@ def test_get_task_by_id_admin(
 def test_get_task_by_id_non_admin_owner(
         token_valid_mock,
         cr_client,
-
         simple_user_header,
         post_json_user_header,
         client,
@@ -378,7 +304,6 @@ def test_get_task_by_id_non_admin_owner(
 def test_get_task_by_id_non_admin_non_owner(
         token_valid_mock,
         cr_client,
-
         post_json_user_header,
         simple_user_header,
         client,
@@ -408,7 +333,6 @@ def test_get_task_by_id_non_admin_non_owner(
 def test_cancel_task(
         client,
         cr_client,
-
         registry_client,
         simple_admin_header,
         post_json_admin_header,
@@ -476,121 +400,6 @@ def test_validate_task_basic_user(
         headers=post_json_user_header
     )
     assert response.status_code == 200
-
-
-class TestTaskResults:
-    def test_get_results(
-        self,
-        cr_client,
-        registry_client,
-        post_json_admin_header,
-        simple_admin_header,
-        client,
-        task_body,
-        mocker,
-        reg_k8s_client
-    ):
-        """
-        A simple test with mocked PVs to test a successful result
-        fetch
-        """
-        # Create a new task
-        data = task_body
-        # The mock has to be done manually rather than use the fixture
-        # as it complains about the return value of the list_pod method
-        mocker.patch('app.models.task.uuid4', return_value="1dc6c6d1-417f-409a-8f85-cb9d20f7c741")
-        response = client.post(
-            '/tasks/',
-            data=json.dumps(data),
-            headers=post_json_admin_header
-        )
-        assert response.status_code == 201
-
-        pod_mock = Mock()
-        pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
-        pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
-        pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
-        pod_mock.status.container_statuses = [Mock(ready=True)]
-        reg_k8s_client["list_namespaced_pod_mock"].return_value.items = [pod_mock]
-
-        mocker.patch(
-            'app.models.task.Task.get_status',
-            return_value={"running": {}}
-        )
-
-        response = client.get(
-            f'/tasks/{response.json["task_id"]}/results',
-            headers=simple_admin_header
-        )
-        assert response.status_code == 200
-        assert response.content_type == "application/x-tar"
-
-    def test_get_results_job_creation_failure(
-        self,
-        cr_client,
-        registry_client,
-        post_json_admin_header,
-        simple_admin_header,
-        client,
-        task_body,
-        reg_k8s_client
-    ):
-        """
-        Tests that the job creation to fetch results from a PV returns a 500
-        error code
-        """
-        # Create a new task
-        data = task_body
-
-        response = client.post(
-            '/tasks/',
-            data=json.dumps(data),
-            headers=post_json_admin_header
-        )
-        assert response.status_code == 201
-
-        # Get results - creating a job fails
-        reg_k8s_client["create_namespaced_job_mock"].side_effect = ApiException(status=500, reason="Something went wrong")
-
-        pod_mock = Mock()
-        pod_mock.metadata.labels = {"job-name": "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"}
-        pod_mock.metadata.name = "result-job-1dc6c6d1-417f-409a-8f85-cb9d20f7c741"
-        pod_mock.spec.containers = [Mock(image=task_body["executors"][0]["image"])]
-        pod_mock.status.container_statuses = [Mock(ready=True)]
-        reg_k8s_client["list_namespaced_pod_mock"].return_value.items = [pod_mock]
-
-        response = client.get(
-            f'/tasks/{response.json["task_id"]}/results',
-            headers=simple_admin_header
-        )
-        assert response.status_code == 400
-        assert response.json["error"] == 'Failed to run pod: Something went wrong'
-
-    def test_results_not_found_with_expired_date(
-        self,
-        simple_admin_header,
-        client,
-        dataset
-    ):
-        """
-        A task result are being deleted after a declared number of days.
-        This test makes sure an error is returned as expected
-        """
-        task = Task(
-            name="task",
-            docker_image="image:tag",
-            description="something",
-            requested_by="abc123-412-51251-213-412",
-            dataset=dataset,
-            created_at=datetime.now() - timedelta(days=CLEANUP_AFTER_DAYS)
-        )
-        task.add()
-        response = client.get(
-            f'/tasks/{task.id}/results',
-            headers=simple_admin_header
-        )
-        assert response.status_code == 500
-        assert response.json["error"] == 'Tasks results are not available anymore. Please, run the task again'
 
 def test_get_task_status_running_and_waiting(
     cr_client,
@@ -690,156 +499,3 @@ def test_get_task_status_terminated(
         }
     }
     assert response_id.json["status"] == expected_status
-
-class TestResourceValidators:
-    def test_valid_values(
-            self,
-            mocker,
-            user_uuid,
-            registry_client,
-            cr_client,
-            task_body
-        ):
-        """
-        Tests that the expected resource values are accepted
-        """
-        task_body["resources"] = {
-            "limits": {
-                "cpu": "100m",
-                "memory": "100Mi"
-            },
-            "requests": {
-                "cpu": "0.1",
-                "memory": "100Mi"
-            }
-        }
-        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
-                     return_value="")
-        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
-                     return_value={"sub": user_uuid})
-        Task.validate(task_body)
-
-    def test_invalid_memory_values(
-            self,
-            mocker,
-            user_uuid,
-            cr_client,
-            registry_client,
-            task_body
-        ):
-        """
-        Tests that the unexpected memory values are not accepted
-        """
-        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
-                     return_value="")
-        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
-                     return_value={"sub": user_uuid})
-
-        invalid_values = ["hundredMi", "100ki", "100mi", "0.1Ki", "Mi100"]
-        for in_val in invalid_values:
-            task_body["resources"] = {
-                "limits": {
-                    "cpu": "100m",
-                    "memory": "100Mi"
-                },
-                "requests": {
-                    "cpu": "0.1",
-                    "memory": in_val
-                }
-            }
-            with pytest.raises(InvalidRequest) as ir:
-                Task.validate(task_body)
-            assert ir.value.description == f'Memory resource value {in_val} not valid.'
-
-    def test_invalid_cpu_values(
-            self,
-            mocker,
-            user_uuid,
-            cr_client,
-            registry_client,
-            task_body
-        ):
-        """
-        Tests that the unexpected cpu values are not accepted
-        """
-        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
-                     return_value="")
-        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
-                     return_value={"sub": user_uuid})
-
-        invalid_values = ["5.24.1", "hundredm", "100Ki", "100mi", "0.1m"]
-
-        for in_val in invalid_values:
-            task_body["resources"] = {
-                "limits": {
-                    "cpu": in_val,
-                    "memory": "100Mi"
-                },
-                "requests": {
-                    "cpu": "0.1",
-                    "memory": "100Mi"
-                }
-            }
-            with pytest.raises(InvalidRequest) as ir:
-                Task.validate(task_body)
-            assert ir.value.description == f'Cpu resource value {in_val} not valid.'
-
-    def test_mem_limit_lower_than_request_fails(
-            self,
-            mocker,
-            user_uuid,
-            cr_client,
-            registry_client,
-            task_body
-        ):
-        """
-        Tests that the unexpected cpu values are not accepted
-        """
-        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
-                     return_value="")
-        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
-                     return_value={"sub": user_uuid})
-
-        task_body["resources"] = {
-            "limits": {
-                "cpu": "100m",
-                "memory": "100Mi"
-            },
-            "requests": {
-                "cpu": "0.1",
-                "memory": "200000Ki"
-            }
-        }
-        with pytest.raises(InvalidRequest) as ir:
-            Task.validate(task_body)
-        assert ir.value.description == 'Memory limit cannot be lower than request'
-
-    def test_cpu_limit_lower_than_request_fails(
-            self,
-            mocker,
-            user_uuid,
-            cr_client,
-            registry_client,
-            task_body
-        ):
-        """
-        Tests that the unexpected cpu values are not accepted
-        """
-        mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
-                     return_value="")
-        mocker.patch("app.helpers.keycloak.Keycloak.decode_token",
-                     return_value={"sub": user_uuid})
-
-        task_body["resources"] = {
-            "limits": {
-                "cpu": "100m",
-                "memory": "100Mi"
-            },
-            "requests": {
-                "cpu": "0.2",
-                "memory": "100Mi"
-            }
-        }
-        with pytest.raises(InvalidRequest) as ir:
-            Task.validate(task_body)
-        assert ir.value.description == 'Cpu limit cannot be lower than request'

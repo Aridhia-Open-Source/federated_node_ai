@@ -3,7 +3,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from kubernetes.client.exceptions import ApiException
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
@@ -24,6 +24,13 @@ logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)
 
 
+REVIEW_STATUS = {
+    True: "Approved Release",
+    False: "Blocked Release",
+    None: "Pending Review"
+}
+
+
 class Task(db.Model, BaseModel):
     __tablename__ = 'tasks'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -34,6 +41,7 @@ class Task(db.Model, BaseModel):
     created_at = Column(DateTime(timezone=False), server_default=func.now())
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     requested_by = Column(String(256), nullable=False)
+    review_status = Column(Boolean, nullable=True)
     dataset_id = Column(Integer, ForeignKey(Dataset.id, ondelete='CASCADE'))
     dataset = relationship("Dataset")
 
@@ -386,3 +394,22 @@ class Task(db.Model, BaseModel):
         except urllib3.exceptions.MaxRetryError:
             raise InvalidRequest("The cluster could not create the job")
         return res_file
+
+    def get_review_status(self) -> str:
+        """
+        Simple method to get the review_status
+        By default None
+            None => not reviewed/needs review
+            True => approved
+            False => denied/blocked
+        """
+        return REVIEW_STATUS[self.review_status]
+
+    def sanitized_dict(self):
+        """
+        Extend the method to add custom status and review
+        """
+        san_dict = super().sanitized_dict()
+        san_dict["status"] = self.get_status()
+        san_dict["review_status"] = self.get_review_status()
+        return san_dict
