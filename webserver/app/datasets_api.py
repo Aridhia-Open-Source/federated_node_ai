@@ -222,8 +222,9 @@ def post_transfer_token():
             raise InvalidRequest("Missing email from requested_by field")
 
         body["requested_by"] = json.dumps(body["requested_by"])
-        ds_id = body.pop("dataset_id")
-        body["dataset"] = Dataset.get_by_id(ds_id)
+        ds_id = body.pop("dataset_id", None)
+        ds_name = body.pop("dataset_name", None)
+        body["dataset"] = Dataset.get_dataset_by_name_or_id(ds_id, ds_name)
 
         req_attributes = Request.validate(body)
         req = Request(**req_attributes)

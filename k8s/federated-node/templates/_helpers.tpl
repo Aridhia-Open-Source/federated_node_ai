@@ -134,3 +134,9 @@ https://{{ .Values.ingress.host }}
 http://backend.{{ .Release.Namespace }}.svc:{{ .Values.federatedNode.port }}
 {{- end -}}
 {{- end }}
+{{- define "kc_namespace" -}}
+{{ .Values.global.namespaces.keycloak | default .Values.namespaces.keycloak }}
+{{- end -}}
+{{- define "tasks_namespace" -}}
+{{ .Values.global.namespaces.tasks | default .Values.namespaces.tasks }}
+{{- end -}}
