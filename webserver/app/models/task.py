@@ -194,9 +194,9 @@ class Task(db.Model, BaseModel):
             return int(base) * 10**(int(exp))
 
         # Other accepted formats trail with some letters
-        unit = re.search(r'[^\d]+$', val).span()[0]
-        base = val[:unit]
-        unit = val[unit:]
+        unit_index = re.search(r'[^\d]+$', val).span()[0]
+        base = val[:unit_index]
+        unit = val[unit_index:]
         return int(base) * MEMORY_UNITS[unit]
 
     @classmethod
