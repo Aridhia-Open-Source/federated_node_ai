@@ -80,7 +80,7 @@ class TestDatasets(MixinTestDataset):
         """
         response = client.get("/datasets/", headers=simple_admin_header)
 
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert response.json == {
             "datasets": [
                 self.expected_ds_entry(dataset)
@@ -120,7 +120,7 @@ class TestDatasets(MixinTestDataset):
         Get all dataset is possible for non-admin users
         """
         response = client.get("/datasets/", headers=simple_user_header)
-        assert response.status_code == 200
+        assert response.status_code == 201
 
     def test_get_dataset_by_id_200(
             self,
@@ -692,7 +692,7 @@ class TestPatchDataset(MixinTestDataset):
             json=data_body,
             headers=post_json_admin_header
         )
-        assert response.status_code == 204
+        assert response.status_code == 202
         ds = Dataset.query.filter(Dataset.id == dataset.id).one_or_none()
         assert ds.name == "new_name"
 
@@ -742,7 +742,7 @@ class TestPatchDataset(MixinTestDataset):
             json=data_body,
             headers=post_json_admin_header
         )
-        assert response.status_code == 204
+        assert response.status_code == 202
         ds = Dataset.query.filter(Dataset.id == dataset.id).one_or_none()
         assert ds.name == "new_name"
 
@@ -779,7 +779,7 @@ class TestPatchDataset(MixinTestDataset):
             json=data_body,
             headers=post_json_admin_header
         )
-        assert response.status_code == 204
+        assert response.status_code == 202
 
         expected_body = k8s_client["read_namespaced_secret_mock"].return_value
         for ns in self.expected_namespaces:
@@ -929,7 +929,7 @@ class TestBeacon:
             },
             headers=post_json_admin_header
         )
-        assert response.status_code == 500
+        assert response.status_code == 400
         assert response.json['result'] == 'Invalid'
 
     def test_beacon_connection_failed(

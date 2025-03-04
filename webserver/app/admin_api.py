@@ -4,6 +4,7 @@ admin endpoints:
 """
 
 from flask import Blueprint, request
+from http import HTTPStatus
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from .helpers.wrappers import auth
@@ -27,4 +28,4 @@ def get_audit_logs():
     res = session.execute(query).all()
     if res:
         res = [r[0].sanitized_dict() for r in res]
-    return res, 200
+    return res, HTTPStatus.OK

@@ -12,6 +12,7 @@ tasks-related endpoints:
 """
 from datetime import datetime, timedelta
 from flask import Blueprint, request, send_file
+from http import HTTPStatus
 
 from app.helpers.exceptions import UnauthorizedError, InvalidRequest
 from app.helpers.const import CLEANUP_AFTER_DAYS, PUBLIC_URL
@@ -34,7 +35,7 @@ def get_service_info():
     return {
         "name": "Federated Node",
         "doc": "Part of the PHEMS network"
-    }, 200
+    }, HTTPStatus.OK
 
 @bp.route('/', methods=['GET'])
 @bp.route('', methods=['GET'])
@@ -48,7 +49,7 @@ def get_tasks():
     res = session.execute(query).all()
     if res:
         res = [r[0].sanitized_dict() for r in res]
-    return res, 200
+    return res, HTTPStatus.OK
 
 @bp.route('/<task_id>', methods=['GET'])
 @audit
@@ -66,7 +67,7 @@ def get_task_id(task_id):
     if task.requested_by != dec_token['sub'] and not kc_client.is_user_admin(token):
         raise UnauthorizedError("User does not have enough permissions")
 
-    return task.sanitized_dict(), 200
+    return task.sanitized_dict(), HTTPStatus.OK
 
 @bp.route('/<task_id>/cancel', methods=['POST'])
 @audit
@@ -78,7 +79,7 @@ def cancel_tasks(task_id):
     task = Task.get_by_id(task_id)
 
     # Should remove pod/stop ML pipeline
-    return task.terminate_pod(), 201
+    return task.terminate_pod(), HTTPStatus.CREATED
 
 @bp.route('/', methods=['POST'])
 @bp.route('', methods=['POST'])
@@ -94,7 +95,7 @@ def post_tasks():
         task.add()
         # Create pod/start ML pipeline
         task.run()
-        return {"task_id": task.id}, 201
+        return {"task_id": task.id}, HTTPStatus.CREATED
     except:
         session.rollback()
         raise
@@ -108,7 +109,7 @@ def post_tasks_validate():
         Allows task definition validation and the DB query that will be used
     """
     Task.validate(request.json)
-    return "Ok", 200
+    return "Ok", HTTPStatus.OK
 
 @bp.route('/<task_id>/results', methods=['GET'])
 @audit
@@ -125,13 +126,13 @@ def get_task_results(task_id):
     task = Task.get_by_id(task_id)
 
     if not task.review_status and not kc_client.is_user_admin(token):
-        return {"status": task.get_review_status()}, 400
+        return {"status": task.get_review_status()}, HTTPStatus.BAD_REQUEST
 
     if task.created_at.date() + timedelta(days=CLEANUP_AFTER_DAYS) <= datetime.now().date():
         return {"error": "Tasks results are not available anymore. Please, run the task again"}, 500
 
     results_file = task.get_results()
-    return send_file(results_file, download_name=f"{PUBLIC_URL}-{task_id}results.tar.gz"), 200
+    return send_file(results_file, download_name=f"{PUBLIC_URL}-{task_id}results.tar.gz"), HTTPStatus.OK
 
 @bp.route('/<task_id>/results/approve', methods=['POST'])
 @audit
@@ -145,11 +146,16 @@ def approve_results(task_id):
     task = Task.get_by_id(task_id)
     if task.review_status is not None:
         raise InvalidRequest("Task has been already reviewed")
+
+    # Also update the CRD if needed
+    if task.get_task_crd():
+        task.update_task_crd()
+
     task.review_status = True
 
     return {
         "status": task.get_review_status()
-    }, 201
+    }, HTTPStatus.ACCEPTED
 
 @bp.route('/<task_id>/results/block', methods=['POST'])
 @audit
@@ -164,8 +170,12 @@ def block_results(task_id):
     if task.review_status is not None:
         raise InvalidRequest("Task has been already reviewed")
 
+    # Also update the CRD if needed
+    if task.get_task_crd():
+        task.update_task_crd()
+
     task.review_status = False
 
     return {
         "status": task.get_review_status()
-    }, 201
+    }, HTTPStatus.ACCEPTED

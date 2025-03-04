@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, select, Column
+from typing import Self
+from sqlalchemy import create_engine, Column
 from sqlalchemy.orm import Relationship, declarative_base
 from flask_sqlalchemy import SQLAlchemy
 from app.helpers.exceptions import DBRecordNotFoundError, InvalidDBEntry
@@ -75,7 +76,7 @@ class BaseModel():
         return valid
 
     @classmethod
-    def get_by_id(cls, obj_id:int):
+    def get_by_id(cls, obj_id:int) -> Self:
         """
         Common wrapper to get by id, and raise an
         exception if not found

@@ -208,6 +208,17 @@ def v1_crd_mock(mocker):
     return {
         "create_cluster_custom_object": mocker.patch(
             'app.helpers.kubernetes.KubernetesCRDClient.create_cluster_custom_object'
+        ),
+        "get_cluster_custom_object": mocker.patch(
+            'app.helpers.kubernetes.KubernetesCRDClient.get_cluster_custom_object',
+            Mock(return_value={
+                "metadata": {
+                    "annotations": {}
+                }
+            })
+        ),
+        "patch_cluster_custom_object": mocker.patch(
+            'app.helpers.kubernetes.KubernetesCRDClient.patch_cluster_custom_object'
         )
     }
 

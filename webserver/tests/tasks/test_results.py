@@ -1,3 +1,4 @@
+import json
 from kubernetes.client.exceptions import ApiException
 
 from tests.fixtures.azure_cr_fixtures import *
@@ -97,7 +98,8 @@ class TestResultsReview:
         simple_user_header,
         client,
         task_mock,
-        results_job_mock
+        results_job_mock,
+        mock_patch_crd
     ):
         """
         Test to make sure the approval allows the user
@@ -108,7 +110,7 @@ class TestResultsReview:
             f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
         )
-        assert response.status_code == 201
+        assert response.status_code == 202
 
         response = client.get(
             f'/tasks/{task_mock.id}/results',
@@ -145,7 +147,8 @@ class TestResultsReview:
         simple_user_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        mock_patch_crd
     ):
         """
         Test to make sure the user can't fetch their results
@@ -155,7 +158,7 @@ class TestResultsReview:
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
-        assert response.status_code == 201
+        assert response.status_code == 202
 
         response = client.get(
             f'/tasks/{task_mock.id}/results',
@@ -190,7 +193,8 @@ class TestResultsReview:
         simple_admin_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        mock_patch_crd
     ):
         """
         Tests that review can only happen once
@@ -199,10 +203,82 @@ class TestResultsReview:
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
-        assert response.status_code == 201
+        assert response.status_code == 202
         response = client.post(
             f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
         )
         assert response.status_code == 400
         assert response.json['error'] == "Task has been already reviewed"
+
+    def test_review_crd_patch_error(
+        self,
+        cr_client,
+        registry_client,
+        simple_admin_header,
+        client,
+        results_job_mock,
+        task_mock,
+        k8s_client
+    ):
+        """
+        Tests that review can only happen once
+        """
+        k8s_client["patch_cluster_custom_object"].side_effect = ApiException(
+            http_resp=Mock(
+                status=500,
+                reason="Error",
+                data=json.dumps({
+                    "details": {
+                        "causes": [
+                            {
+                                "message": "Failed to patch the CRD"
+                            }
+                        ]
+                    }
+                })
+            )
+        )
+
+        response = client.post(
+            f'/tasks/{task_mock.id}/results/block',
+            headers=simple_admin_header
+        )
+        assert response.status_code == 500
+        assert response.json['error'] == "Could not activate automatic delivery"
+
+    def test_review_crd_not_found(
+        self,
+        cr_client,
+        registry_client,
+        simple_admin_header,
+        client,
+        results_job_mock,
+        task_mock,
+        k8s_client
+    ):
+        """
+        Tests that review can only happen once
+        """
+        k8s_client["get_cluster_custom_object"].side_effect = ApiException(
+            http_resp=Mock(
+                status=404,
+                reason="Error",
+                data=json.dumps({
+                    "details": {
+                        "causes": [
+                            {
+                                "message": "Not found"
+                            }
+                        ]
+                    }
+                })
+            )
+        )
+
+        response = client.post(
+            f'/tasks/{task_mock.id}/results/block',
+            headers=simple_admin_header
+        )
+        assert response.status_code == 500
+        assert response.json['error'] == "Failed to update result delivery"

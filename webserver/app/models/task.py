@@ -2,6 +2,7 @@ import logging
 import json
 import re
 from datetime import datetime, timedelta
+from kubernetes.client import V1CustomResourceDefinition
 from kubernetes.client.exceptions import ApiException
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
@@ -234,6 +235,9 @@ class Task(db.Model, BaseModel):
         """
         return (datetime.now() + timedelta(days=CLEANUP_AFTER_DAYS)).strftime("%Y%m%d")
 
+    def needs_crd(self):
+        return not self.is_from_controller and self.deliver_to
+
     def run(self, validate=False):
         """
         Method to spawn a new pod with the requested image
@@ -279,8 +283,7 @@ class Task(db.Model, BaseModel):
             logger.error(json.loads(e.body))
             raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
 
-        if not self.is_from_controller and self.deliver_to:
-            # create CRD
+        if self.needs_crd():
             self.create_controller_crd()
 
     def get_db_environment_variables(self) -> dict:
@@ -442,6 +445,12 @@ class Task(db.Model, BaseModel):
         san_dict["review_status"] = self.get_review_status()
         return san_dict
 
+    def crd_name(self):
+        """
+        CRD name is set here for consistency's sake
+        """
+        return f"fn-task-{self.id}"
+
     def create_controller_crd(self):
         """
         In case this is a task triggered by users
@@ -452,6 +461,9 @@ class Task(db.Model, BaseModel):
         with default values
         """
         crd_client = KubernetesCRDClient()
+        if self.get_task_crd():
+            logging.info(f"CRD {self.crd_name()} already exists, skipping")
+            return
         try:
             crd_client.create_cluster_custom_object(
                 CRD_DOMAIN, 'v1', 'analytics',
@@ -464,7 +476,7 @@ class Task(db.Model, BaseModel):
                             f"{CRD_DOMAIN}/task_id": str(self.id),
                             f"{CRD_DOMAIN}/done": 'true'
                         },
-                        "name": f"fn-task-{self.id}"
+                        "name": self.crd_name()
                     },
                     "spec": {
                         "dataset": {"name": self.dataset.name},
@@ -476,13 +488,45 @@ class Task(db.Model, BaseModel):
                         },
                         "results": self.deliver_to,
                         "user": {
-                            "idpId": "",
+                            "idpId": self.requested_by,
                             "username": Keycloak().get_user_by_id(self.requested_by)["username"]
                         }
                     }
                 }
             )
         except ApiException as apie:
-            if apie.status != 409:
-                raise TaskCRDExecutionException(apie.body, apie.status) from apie
-            pass
+            raise TaskCRDExecutionException(apie.body, apie.status) from apie
+
+    def get_task_crd(self) -> V1CustomResourceDefinition|None:
+        """
+        Find the CRD associated with the current task.
+            Ignore if not found
+        """
+        crd_client = KubernetesCRDClient()
+        try:
+            return crd_client.get_cluster_custom_object(CRD_DOMAIN,"v1","analytics",self.crd_name())
+        except ApiException as apie:
+            if apie.status == 404:
+                return None
+            raise TaskCRDExecutionException(apie.body, apie.status) from apie
+
+    def update_task_crd(self):
+        """
+        In case the review happened, update the CRD
+        annotation with the appropriate approved value
+        """
+        crd_client = KubernetesCRDClient()
+        crd_client.api_client.set_default_header('Content-Type', 'application/json-patch+json')
+        try:
+            task_crd = self.get_task_crd()
+            if not task_crd:
+                raise TaskExecutionException("Failed to update result delivery")
+
+            annotations = task_crd["metadata"].get("annotations", {})
+            annotations[f"{CRD_DOMAIN}/approved"] = str(self.review_status)
+            crd_client.patch_cluster_custom_object(
+                CRD_DOMAIN, "v1", "analytics", self.crd_name(),
+                [{"op": "add", "path": "/metadata/annotations", "value": annotations}]
+            )
+        except ApiException as apie:
+            raise TaskCRDExecutionException(apie.body, apie.status) from apie

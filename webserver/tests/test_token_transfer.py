@@ -72,7 +72,7 @@ class TestTransfers:
             headers=post_json_admin_header
         )
         assert response.status_code == 404
-        assert response.json == {"error": "Dataset with id 5012 does not exist"}
+        assert response.json == {"error": "Dataset 5012 does not exist"}
 
     def test_token_transfer_admin_dataset_by_name_not_found(
             self,
