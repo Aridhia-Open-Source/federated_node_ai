@@ -1,9 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from kubernetes.client.exceptions import ApiException
+
+import json
 from pytest import fixture
 from copy import deepcopy
 from unittest.mock import Mock
 
-from app.helpers.const import CLEANUP_AFTER_DAYS
 from app.models.task import Task
 
 
@@ -101,3 +103,39 @@ def task_mock(dataset, user_uuid, container):
     )
     task.add()
     return task
+
+@fixture
+def k8s_crd_500():
+    return ApiException(
+        http_resp=Mock(
+            status=500,
+            reason="Error",
+            data=json.dumps({
+                "details": {
+                    "causes": [
+                        {
+                            "message": "Failed to patch the CRD"
+                        }
+                    ]
+                }
+            })
+        )
+    )
+
+@fixture
+def k8s_crd_404():
+    return ApiException(
+        http_resp=Mock(
+            status=404,
+            reason="Error",
+            data=json.dumps({
+                "details": {
+                    "causes": [
+                        {
+                            "message": "Not Found",
+                        }
+                    ]
+                }
+            })
+        )
+    )

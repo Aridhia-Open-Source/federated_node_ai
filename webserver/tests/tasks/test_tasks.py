@@ -102,12 +102,14 @@ def test_create_task_with_delivery_missing_fields(
         client,
         registry_client,
         task_body,
-        k8s_client
+        k8s_client,
+        k8s_crd_404
     ):
     """
     Tests task creation returns 201. Should be consistent
     with or without the task_controller flag
     """
+    k8s_client["get_cluster_custom_object"].side_effect = k8s_crd_404
     k8s_client["create_cluster_custom_object"].side_effect = ApiException(
         http_resp=Mock(
             status=400,
@@ -121,7 +123,8 @@ def test_create_task_with_delivery_missing_fields(
                         }
                     ]
                 }
-            }))
+            })
+        )
     )
     task_body["deliver_to"] = {
         "other": {
@@ -142,13 +145,15 @@ def test_create_task_with_delivery_top_level_only(
         client,
         registry_client,
         task_body,
-        k8s_client
+        k8s_client,
+        k8s_crd_404
     ):
     """
     Tests task creation returns 201. Should be consistent
     with or without the task_controller flag
     """
     error_message = "Unsupported value. Only accepting \"Bearer\", \"AzCopy\" and \"Basic\""
+    k8s_client["get_cluster_custom_object"].side_effect = k8s_crd_404
     k8s_client["create_cluster_custom_object"].side_effect = ApiException(
         http_resp=Mock(
             status=400,
@@ -161,7 +166,8 @@ def test_create_task_with_delivery_top_level_only(
                         }
                     ]
                 }
-            }))
+            })
+        )
     )
     task_body["deliver_to"] = {
         "other": {

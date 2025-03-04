@@ -149,7 +149,7 @@ def approve_results(task_id):
 
     # Also update the CRD if needed
     if task.get_task_crd():
-        task.update_task_crd()
+        task.update_task_crd(True)
 
     task.review_status = True
 
@@ -172,7 +172,7 @@ def block_results(task_id):
 
     # Also update the CRD if needed
     if task.get_task_crd():
-        task.update_task_crd()
+        task.update_task_crd(False)
 
     task.review_status = False
 

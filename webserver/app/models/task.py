@@ -192,8 +192,11 @@ class Task(db.Model, BaseModel):
         if re.match(r'^\d+e\d+$', val):
             base, exp = val.split('e')
             return int(base) * 10**(int(exp))
-        base = val[:-2]
-        unit = val[-2:]
+
+        # Other accepted formats trail with some letters
+        unit = re.search(r'[^\d]+$', val).span()[0]
+        base = val[:unit]
+        unit = val[unit:]
         return int(base) * MEMORY_UNITS[unit]
 
     @classmethod
@@ -236,7 +239,7 @@ class Task(db.Model, BaseModel):
         return (datetime.now() + timedelta(days=CLEANUP_AFTER_DAYS)).strftime("%Y%m%d")
 
     def needs_crd(self):
-        return not self.is_from_controller and self.deliver_to
+        return ((not self.is_from_controller) and self.deliver_to)
 
     def run(self, validate=False):
         """
@@ -510,7 +513,7 @@ class Task(db.Model, BaseModel):
                 return None
             raise TaskCRDExecutionException(apie.body, apie.status) from apie
 
-    def update_task_crd(self):
+    def update_task_crd(self, approval:bool):
         """
         In case the review happened, update the CRD
         annotation with the appropriate approved value
@@ -523,7 +526,7 @@ class Task(db.Model, BaseModel):
                 raise TaskExecutionException("Failed to update result delivery")
 
             annotations = task_crd["metadata"].get("annotations", {})
-            annotations[f"{CRD_DOMAIN}/approved"] = str(self.review_status)
+            annotations[f"{CRD_DOMAIN}/approved"] = str(approval)
             crd_client.patch_cluster_custom_object(
                 CRD_DOMAIN, "v1", "analytics", self.crd_name(),
                 [{"op": "add", "path": "/metadata/annotations", "value": annotations}]

@@ -1,8 +1,9 @@
-import json
+from datetime import timedelta
 from kubernetes.client.exceptions import ApiException
 
 from tests.fixtures.azure_cr_fixtures import *
 from tests.fixtures.tasks_fixtures import *
+from app.helpers.const import CLEANUP_AFTER_DAYS
 
 
 class TestTaskResults:
@@ -90,7 +91,7 @@ class TestResultsReview:
         assert response.status_code == 200
         assert response.json["review_status"] == "Pending Review"
 
-    def test_default_review_approved(
+    def test_review_approved(
         self,
         cr_client,
         registry_client,
@@ -99,7 +100,7 @@ class TestResultsReview:
         client,
         task_mock,
         results_job_mock,
-        mock_patch_crd
+        k8s_client
     ):
         """
         Test to make sure the approval allows the user
@@ -111,6 +112,11 @@ class TestResultsReview:
             headers=simple_admin_header
         )
         assert response.status_code == 202
+        k8s_client["patch_cluster_custom_object"].assert_called_with(
+            'tasks.federatednode.com', 'v1', 'analytics', f'fn-task-{task_mock.id}', [
+                {'op': 'add', 'path': '/metadata/annotations', 'value': {'tasks.federatednode.com/approved': 'True'}}
+            ]
+        )
 
         response = client.get(
             f'/tasks/{task_mock.id}/results',
@@ -118,7 +124,7 @@ class TestResultsReview:
         )
         assert response.status_code == 200
 
-    def test_default_review_pending(
+    def test_review_pending(
         self,
         cr_client,
         registry_client,
@@ -131,7 +137,6 @@ class TestResultsReview:
         Test to make sure the user can't fetch their results
         before the review took place
         """
-
         response = client.get(
             f'/tasks/{task_mock.id}/results',
             headers=simple_user_header
@@ -139,7 +144,7 @@ class TestResultsReview:
         assert response.status_code == 400
         assert response.json["status"] == "Pending Review"
 
-    def test_default_review_blocked(
+    def test_review_blocked(
         self,
         cr_client,
         registry_client,
@@ -148,11 +153,10 @@ class TestResultsReview:
         client,
         results_job_mock,
         task_mock,
-        mock_patch_crd
     ):
         """
         Test to make sure the user can't fetch their results
-        before the review took place
+        if they have been blocked by an administrator
         """
         response = client.post(
             f'/tasks/{task_mock.id}/results/block',
@@ -194,7 +198,6 @@ class TestResultsReview:
         client,
         results_job_mock,
         task_mock,
-        mock_patch_crd
     ):
         """
         Tests that review can only happen once
@@ -219,32 +222,21 @@ class TestResultsReview:
         client,
         results_job_mock,
         task_mock,
-        k8s_client
+        k8s_client,
+        k8s_crd_500
     ):
         """
         Tests that review can only happen once
         """
-        k8s_client["patch_cluster_custom_object"].side_effect = ApiException(
-            http_resp=Mock(
-                status=500,
-                reason="Error",
-                data=json.dumps({
-                    "details": {
-                        "causes": [
-                            {
-                                "message": "Failed to patch the CRD"
-                            }
-                        ]
-                    }
-                })
-            )
-        )
+        k8s_client["patch_cluster_custom_object"].side_effect = k8s_crd_500
 
         response = client.post(
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
         assert response.status_code == 500
+        k8s_client["patch_cluster_custom_object"].assert_called()
+
         assert response.json['error'] == "Could not activate automatic delivery"
 
     def test_review_crd_not_found(
@@ -255,30 +247,18 @@ class TestResultsReview:
         client,
         results_job_mock,
         task_mock,
-        k8s_client
+        k8s_client,
+        k8s_crd_404
     ):
         """
-        Tests that review can only happen once
+        Tests that if a task without a CRD will go through
+        normal process without calling patch_cluster_custom_object
         """
-        k8s_client["get_cluster_custom_object"].side_effect = ApiException(
-            http_resp=Mock(
-                status=404,
-                reason="Error",
-                data=json.dumps({
-                    "details": {
-                        "causes": [
-                            {
-                                "message": "Not found"
-                            }
-                        ]
-                    }
-                })
-            )
-        )
+        k8s_client["get_cluster_custom_object"].side_effect = k8s_crd_404
 
         response = client.post(
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
-        assert response.status_code == 500
-        assert response.json['error'] == "Failed to update result delivery"
+        assert response.status_code == 202
+        k8s_client["patch_cluster_custom_object"].assert_not_called()
