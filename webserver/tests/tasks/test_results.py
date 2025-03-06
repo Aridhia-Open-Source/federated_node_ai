@@ -78,7 +78,8 @@ class TestResultsReview:
         simple_admin_header,
         client,
         task_mock,
-        results_job_mock
+        results_job_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the default value is None,
@@ -100,13 +101,13 @@ class TestResultsReview:
         client,
         task_mock,
         results_job_mock,
-        k8s_client
+        k8s_client,
+        set_task_review_env
     ):
         """
         Test to make sure the approval allows the user
         to retrieve their results
         """
-
         response = client.post(
             f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
@@ -131,7 +132,8 @@ class TestResultsReview:
         simple_user_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the user can't fetch their results
@@ -153,6 +155,7 @@ class TestResultsReview:
         client,
         results_job_mock,
         task_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the user can't fetch their results
@@ -178,7 +181,8 @@ class TestResultsReview:
         simple_user_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        set_task_review_env
     ):
         """
         Trying to review an non-existing task should return 404
@@ -198,6 +202,7 @@ class TestResultsReview:
         client,
         results_job_mock,
         task_mock,
+        set_task_review_env
     ):
         """
         Tests that review can only happen once
@@ -223,7 +228,8 @@ class TestResultsReview:
         results_job_mock,
         task_mock,
         k8s_client,
-        k8s_crd_500
+        k8s_crd_500,
+        set_task_review_env
     ):
         """
         Tests that review can only happen once
@@ -248,7 +254,8 @@ class TestResultsReview:
         results_job_mock,
         task_mock,
         k8s_client,
-        k8s_crd_404
+        k8s_crd_404,
+        set_task_review_env
     ):
         """
         Tests that if a task without a CRD will go through
@@ -262,3 +269,25 @@ class TestResultsReview:
         )
         assert response.status_code == 202
         k8s_client["patch_cluster_custom_object"].assert_not_called()
+        task_mock
+
+    def test_review_disabled(
+        self,
+        cr_client,
+        registry_client,
+        simple_admin_header,
+        client,
+        results_job_mock,
+        task_mock,
+    ):
+        """
+        Tests that review cannot be used when the env var
+        TASK_REVIEW is not set (set_task_review_env fixture does that)
+        """
+        for review in ["block", "approve"]:
+            response = client.post(
+                f'/tasks/{task_mock.id}/results/{review}',
+                headers=simple_admin_header
+            )
+            assert response.status_code == 400
+            assert response.json['error'] == "Task reviews are not enabled on this Federated Node"

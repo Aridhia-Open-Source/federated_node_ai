@@ -7,6 +7,7 @@
     smoketests: true
     ```
     __Warning__ this will add and then remove the test data from keycloak and the db. It will not be enabled by default.
+- Added a `taskReview` flag on the values to enable task results review before being released. Set to `true` by default.
 - Added the Federated Node Task Controller as a chart dependency. This can be installed by setting `outboundMode` to true on the values file. By default, it won't be installed.
 
 ## 0.8.0

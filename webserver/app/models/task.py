@@ -12,7 +12,7 @@ from uuid import uuid4
 import urllib3
 from app.helpers.const import (
     CLEANUP_AFTER_DAYS, CRD_DOMAIN, MEMORY_RESOURCE_REGEX, MEMORY_UNITS, CPU_RESOURCE_REGEX,
-    TASK_NAMESPACE, TASK_POD_RESULTS_PATH, RESULTS_PATH
+    TASK_NAMESPACE, TASK_POD_RESULTS_PATH, RESULTS_PATH, TASK_REVIEW
 )
 from app.helpers.db import BaseModel, db
 from app.helpers.keycloak import Keycloak
@@ -445,7 +445,9 @@ class Task(db.Model, BaseModel):
         """
         san_dict = super().sanitized_dict()
         san_dict["status"] = self.get_status()
-        san_dict["review_status"] = self.get_review_status()
+        if TASK_REVIEW:
+            san_dict["review_status"] = self.get_review_status()
+
         return san_dict
 
     def crd_name(self):

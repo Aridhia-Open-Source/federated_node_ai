@@ -38,4 +38,5 @@ CLEANUP_AFTER_DAYS = int(os.getenv("CLEANUP_AFTER_DAYS"))
 TASK_POD_RESULTS_PATH = os.getenv("TASK_POD_RESULTS_PATH")
 RESULTS_PATH = os.getenv("RESULTS_PATH")
 PUBLIC_URL = os.getenv("PUBLIC_URL")
+TASK_REVIEW = os.getenv("TASK_REVIEW")
 CRD_DOMAIN = "tasks.federatednode.com"

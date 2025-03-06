@@ -2,6 +2,7 @@ from datetime import datetime
 from kubernetes.client.exceptions import ApiException
 
 import json
+from datetime import datetime
 from pytest import fixture
 from copy import deepcopy
 from unittest.mock import Mock
@@ -139,3 +140,8 @@ def k8s_crd_404():
             })
         )
     )
+
+@fixture()
+def set_task_review_env(mocker):
+    mocker.patch('app.models.task.TASK_REVIEW', return_value="enabled")
+    mocker.patch('app.tasks_api.TASK_REVIEW', return_value="enabled")
