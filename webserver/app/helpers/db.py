@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, select, Column
+from typing import Self
+from sqlalchemy import create_engine, Column
 from sqlalchemy.orm import Relationship, declarative_base
 from flask_sqlalchemy import SQLAlchemy
 from app.helpers.exceptions import DBRecordNotFoundError, InvalidDBEntry
@@ -11,7 +12,7 @@ db = SQLAlchemy(model_class=Base)
 
 # Another helper class for common methods
 class BaseModel():
-    def sanitized_dict(self):
+    def sanitized_dict(self) -> dict[str,str]:
         jsonized = self.__dict__.copy()
         jsonized.pop('_sa_instance_state', None)
         return jsonized
@@ -50,11 +51,11 @@ class BaseModel():
         return not (attribute.nullable or attribute.primary_key or attribute.server_default is not None)
 
     @classmethod
-    def _get_required_fields(cls):
+    def _get_required_fields(cls) -> list[str]:
         return [f.name for f in cls._get_fields() if cls.is_field_required(f)]
 
     @classmethod
-    def validate(cls, data:dict):
+    def validate(cls, data:dict) -> dict:
         """
         Make sure we have all required fields. Set to None if missing
         """
@@ -75,7 +76,7 @@ class BaseModel():
         return valid
 
     @classmethod
-    def get_by_id(cls, obj_id:int):
+    def get_by_id(cls, obj_id:int) -> Self:
         """
         Common wrapper to get by id, and raise an
         exception if not found

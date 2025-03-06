@@ -13,7 +13,7 @@ tasks-related endpoints:
 from datetime import datetime, timedelta
 from flask import Blueprint, request, send_file
 
-from app.helpers.const import CLEANUP_AFTER_DAYS
+from app.helpers.const import CLEANUP_AFTER_DAYS, TASK_REVIEW
 from app.helpers.exceptions import UnauthorizedError, InvalidRequest
 from app.helpers.keycloak import Keycloak
 from app.helpers.wrappers import audit, auth
@@ -121,7 +121,7 @@ def get_task_results(task_id):
 
     task = Task.get_by_id(task_id)
 
-    if not task.review_status and not kc_client.is_user_admin(token):
+    if TASK_REVIEW and (not task.review_status and not kc_client.is_user_admin(token)):
         return {"status": task.get_review_status()}, 400
 
     if task.created_at.date() + timedelta(days=CLEANUP_AFTER_DAYS) <= datetime.now().date():
@@ -139,6 +139,9 @@ def approve_results(task_id):
         Approves the release (automatic or manual) of
         a task's results
     """
+    if not TASK_REVIEW:
+        raise InvalidRequest("Task reviews are not enabled on this Federated Node")
+
     task = Task.get_by_id(task_id)
     if task.review_status is not None:
         raise InvalidRequest("Task has been already reviewed")
@@ -157,6 +160,9 @@ def block_results(task_id):
         Blocks the release (automatic or manual) of
         a task's results
     """
+    if not TASK_REVIEW:
+        raise InvalidRequest("Task reviews are not enabled on this Federated Node")
+
     task = Task.get_by_id(task_id)
     if task.review_status is not None:
         raise InvalidRequest("Task has been already reviewed")

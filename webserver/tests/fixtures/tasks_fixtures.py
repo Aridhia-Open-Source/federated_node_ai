@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+import os
+from unittest import mock
 from pytest import fixture
 from copy import deepcopy
 from unittest.mock import Mock
@@ -101,3 +103,8 @@ def task_mock(dataset, user_uuid, container):
     )
     task.add()
     return task
+
+@fixture()
+def set_task_review_env(mocker):
+    mocker.patch('app.models.task.TASK_REVIEW', return_value="enabled")
+    mocker.patch('app.tasks_api.TASK_REVIEW', return_value="enabled")

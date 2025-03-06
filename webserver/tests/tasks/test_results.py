@@ -1,3 +1,5 @@
+import os
+from unittest import mock
 from kubernetes.client.exceptions import ApiException
 
 from tests.fixtures.azure_cr_fixtures import *
@@ -76,7 +78,8 @@ class TestResultsReview:
         simple_admin_header,
         client,
         task_mock,
-        results_job_mock
+        results_job_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the default value is None,
@@ -97,13 +100,13 @@ class TestResultsReview:
         simple_user_header,
         client,
         task_mock,
-        results_job_mock
+        results_job_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the approval allows the user
         to retrieve their results
         """
-
         response = client.post(
             f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
@@ -123,13 +126,13 @@ class TestResultsReview:
         simple_user_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the user can't fetch their results
         before the review took place
         """
-
         response = client.get(
             f'/tasks/{task_mock.id}/results',
             headers=simple_user_header
@@ -145,7 +148,8 @@ class TestResultsReview:
         simple_user_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        set_task_review_env
     ):
         """
         Test to make sure the user can't fetch their results
@@ -171,7 +175,8 @@ class TestResultsReview:
         simple_user_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        set_task_review_env
     ):
         """
         Trying to review an non-existing task should return 404
@@ -190,7 +195,8 @@ class TestResultsReview:
         simple_admin_header,
         client,
         results_job_mock,
-        task_mock
+        task_mock,
+        set_task_review_env
     ):
         """
         Tests that review can only happen once
@@ -206,3 +212,23 @@ class TestResultsReview:
         )
         assert response.status_code == 400
         assert response.json['error'] == "Task has been already reviewed"
+
+    def test_review_disabled(
+        self,
+        cr_client,
+        registry_client,
+        simple_admin_header,
+        client,
+        task_mock
+    ):
+        """
+        Tests that review cannot be used when the env var
+        TASK_REVIEW is not set (set_task_review_env fixture does that)
+        """
+        for review in ["block", "approve"]:
+            response = client.post(
+                f'/tasks/{task_mock.id}/results/{review}',
+                headers=simple_admin_header
+            )
+            assert response.status_code == 400
+            assert response.json['error'] == "Task reviews are not enabled on this Federated Node"

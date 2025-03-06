@@ -15,8 +15,11 @@ data:
   TASK_NAMESPACE: {{ .Values.namespaces.tasks }}
   CLEANUP_AFTER_DAYS: {{ .Values.cleanupTime | quote }}
   PUBLIC_URL: {{ .Values.ingress.host }}
-{{ if .Values.storage.azure }}
+{{- if .Values.storage.azure -}}
   AZURE_STORAGE_ENABLED: "true"
   AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/results
   AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
-{{ end }}
+{{- end -}}
+{{- if .Values.taskReview -}}
+  TASK_REVIEW: enabled
+{{- end -}}
