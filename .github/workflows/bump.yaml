@@ -56,7 +56,7 @@ jobs:
             sed -i "s/^appVersion: .*/appVersion: \"${APP_VERSION}\"/" Chart.yaml
           fi
           if [[ -n "${FNTC_VERSION}" ]]; then
-            sed -i "s/\sversion: .*/version: ${FNTC_VERSION}/" Chart.yaml
+            sed -i "s/\sversion: .*/ version: ${FNTC_VERSION}/" Chart.yaml
           fi
 
           cat Chart.yaml
