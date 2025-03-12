@@ -22,6 +22,8 @@ global:
 namespaces:
   nginx: ingress-nginx
 
+local_development: false
+
 db:
   user:
   password:
@@ -95,6 +97,12 @@ ingress:
     # keyFile:
     # certFile:
     # secretName:
+
+# Enables full smoketests when running `helm test`.
+# This will actively try to add new database and keycloak entries
+# and then remove them as part of the cleanup process. Basic tests will be carried anyway.
+# If not comfortable with these smoketests, do no overwrite this value.
+smoketests: false
 
 resources: {}
 
