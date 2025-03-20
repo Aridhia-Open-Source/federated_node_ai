@@ -1736,34 +1736,6 @@
             },
             "required": ["image"]
           },
-          "deliver_to": {
-            "type": "object",
-            "description": "If used will automatically deliver the results to the url provided. Granted that this has been added to the list of allowed destinations",
-            "oneOf": [
-              {
-                "properties": {
-                  "other": {
-                    "type": "object",
-                    "properties": {
-                      "url": {"type": "string", "example": "https://deliveryurl.com"},
-                      "auth_type": {"type": "string", "enum": ["Bearer", "Basic", "AzCopy"]}
-                    }
-                  }
-                }
-              },
-              {
-                "properties": {
-                  "git":{
-                    "type": "object",
-                    "properties": {
-                      "repository": {"type": "string", "example": "org/repo"},
-                      "organization": {"type": "string", "example": "org"}
-                    }
-                  }
-                }
-              }
-            ]
-          },
           "tags": {
             "type": "object",
             "description": "Either dataset_id or dataset_name has to be set",

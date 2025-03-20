@@ -64,7 +64,6 @@ class Task(db.Model, BaseModel):
         self.inputs = inputs
         self.outputs = outputs
         self.is_from_controller = kwargs.get("from_controller")
-        self.deliver_to = kwargs.get("deliver_to")
 
     @classmethod
     def validate(cls, data:dict):
@@ -75,16 +74,9 @@ class Task(db.Model, BaseModel):
         executors = data["executors"][0]
         data["docker_image"] = executors["image"]
         is_from_controller = data.pop("task_controller", False)
-        deliver_to = data.pop("deliver_to", None)
-        # Difference between not providing it (None)
-        # and providing an incomplete format. Rest is validated
-        # through CRD own validation
-        if deliver_to == {} or (not isinstance(deliver_to, dict) and deliver_to is not None):
-            raise InvalidRequest("`deliver_to` must have either `git` or `other` as field")
 
         data = super().validate(data)
 
-        data["deliver_to"] = deliver_to
         data["from_controller"] = is_from_controller
         # Dataset validation
         ds_id = data.get("tags", {}).get("dataset_id")
@@ -270,7 +262,7 @@ class Task(db.Model, BaseModel):
             logger.error(json.loads(e.body))
             raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
 
-        if not self.is_from_controller and self.deliver_to:
+        if not self.is_from_controller:
             # create CRD
             self.create_controller_crd()
 
@@ -443,10 +435,8 @@ class Task(db.Model, BaseModel):
                         "image": self.docker_image,
                         "project": "federated_node",
                         "source": {
-                            "organization": "Aridhia-Open-Source",
                             "repository": "Aridhia-Open-Source/PHEMS_federated_node"
                         },
-                        "results": self.deliver_to,
                         "user": {
                             "idpId": "",
                             "username": Keycloak().get_user_by_id(self.requested_by)["username"]

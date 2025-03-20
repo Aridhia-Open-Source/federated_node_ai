@@ -68,9 +68,7 @@ class TaskCRDExecutionException(LogAndException):
         req_values = []
         unsupp_values = []
         for mess in json.loads(description)["details"]["causes"]:
-            if mess["message"] == "Required value":
-                req_values.append(mess["field"].replace("spec.results", "deliver_to"))
-            elif "Unsupported value" in mess["message"]:
+            if "Unsupported value" in mess["message"]:
                 unsupp_values.append(mess["message"])
             else:
                 pass
