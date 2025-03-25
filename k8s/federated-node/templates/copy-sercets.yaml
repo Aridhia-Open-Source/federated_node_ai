@@ -36,10 +36,10 @@ metadata:
   name: {{ .Values.certs.azure.secretName }}
   namespace: {{ (index .Values "cert-manager" "namespace") }}
 data:
-{{- with $sec.data  }}
+{{- with $sec.data }}
 {{ toYaml . | indent 2 }}
 {{- end }}
-type: {{ $sec.type}}
+type: {{ $sec.type }}
 ---
 {{- end }}
 {{- if .Values.storage.azure }}
