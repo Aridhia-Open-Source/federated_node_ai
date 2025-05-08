@@ -55,7 +55,6 @@ jobs:
         env:
           CHART_VERSION: ${{ inputs.chartVersion }}
           APP_VERSION: ${{ inputs.appVersion }}
-          CERTMANAGER_VERSION: ${{ inputs.certManager }}
         run: |
           if [[ $(grep '${CHART_VERSION}' Chart.yaml) ]]; then
             echo "Nothing to change. Exiting early"
