@@ -200,6 +200,7 @@ class Dataset(db.Model, BaseModel):
                 v1.patch_namespaced_secret(namespace=DEFAULT_NAMESPACE, name=self.get_creds_secret_name(), body=secret)
                 v1.patch_namespaced_secret(namespace=TASK_NAMESPACE, name=self.get_creds_secret_name(), body=secret_task)
         except ApiException as e:
+            logger.error(e.body)
             # Host and name are unique so there shouldn't be duplicates. If so
             # let the exception to be re-raised with the internal one
             raise InvalidRequest(e.reason) from e
