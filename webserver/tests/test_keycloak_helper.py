@@ -111,7 +111,7 @@ class TestKeycloakResponseFailures:
             )
             with pytest.raises(KeycloakError) as exc:
                 kc_client._get_client_secret()
-            assert exc.value.details == f'Failed to fetch {kc_client.client_id}\'s secret'
+            assert exc.value.description == f'Failed to fetch {kc_client.client_id}\'s secret'
 
     def test_get_client_id(
             self
