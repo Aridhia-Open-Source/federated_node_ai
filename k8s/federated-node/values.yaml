@@ -20,9 +20,12 @@ global:
     controller: fn-controller
 
 namespaces:
-  nginx: ingress-nginx
+  keycloak: keycloak
+  tasks: tasks
 
+# Local Development-related options
 local_development: false
+create_db_deployment: false
 
 db:
   user:
@@ -84,19 +87,29 @@ podSecurityContext: {}
 
 securityContext: {}
 
-ingress:
-  host:
-  on_aks: false
-  whitelist:
-    enabled: false
-    ips: []
-  blacklist:
-    enabled: false
-    ips: []
-  tls: {}
-    # keyFile:
-    # certFile:
+# If using nginx, or ssl certificates, this will set the hostname
+host:
+tls:
+  secretName: tls
+
+# nginx white/black-listing, at ingress level
+whitelist:
+  enabled: false
+  ips: []
+blacklist:
+  enabled: false
+  ips: []
+
+# Running on azure?
+on_aks: false
+# Running on AWS?
+on_eks: false
+
+certs:
+  azure: {}
     # secretName:
+    # configmap:
+  aws: {}
 
 # Enables full smoketests when running `helm test`.
 # This will actively try to add new database and keycloak entries
@@ -114,7 +127,8 @@ affinity: {}
 
 outboundMode: false
 
-###
+##SUBCHARTS
+### Task controller
 fn-task-controller:
   controller: {}
     # tag:
@@ -129,3 +143,30 @@ fn-task-controller:
     #   secret_name:
     #   secret_key:
     #   clientid_key:
+  delivery:
+    github: {}
+      # repository:
+    other: {}
+      # url
+      # auth_type
+
+### Cert manager
+cert-manager:
+  enabled: false
+  namespace: fn-certmanager
+  installCRDs: true
+
+### Ingress nginx
+ingress-nginx:
+  enabled: false
+  namespaceOverride: ingress-nginx
+  controller:
+    ingressClassResource:
+      name: "fn-nginx"
+    allowSnippetAnnotations: true
+    ingressClass: "fn-nginx"
+    # If running on aks:
+    # service:
+    #   externalTrafficPolicy: Local
+    extraArgs:
+      default-ssl-certificate: default/tls

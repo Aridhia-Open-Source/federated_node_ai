@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, select, Column
+from sqlalchemy import create_engine, Column
 from sqlalchemy.orm import Relationship, declarative_base
 from flask_sqlalchemy import SQLAlchemy
 from app.helpers.exceptions import InvalidDBEntry
@@ -18,6 +18,12 @@ class BaseModel():
 
     def add(self, commit=True):
         db.session.add(self)
+        db.session.flush()
+        if commit:
+            db.session.commit()
+
+    def delete(self, commit=True):
+        db.session.delete(self)
         db.session.flush()
         if commit:
             db.session.commit()

@@ -30,11 +30,17 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+# To support the task controller subchart we will need to include
+# a custom path as helpers are merged and the individual chart values
+# are then applied
 {{- define "backend-image" -}}
-ghcr.io/aridhia-open-source/federated_node_run
+ghcr.io/aridhia-open-source/federated_node_run:{{ include "image-tag" . }}
 {{- end }}
 {{- define "fn-alpine" -}}
-ghcr.io/aridhia-open-source/alpine:3.19
+ghcr.io/aridhia-open-source/alpine:{{ include "image-tag" . }}
+{{- end }}
+{{- define "image-tag" -}}
+{{ (.Values.backend).tag | default .Chart.AppVersion }}
 {{- end }}
 
 {{/*
@@ -135,7 +141,7 @@ Just need to append the NEW_DB env var
 {{- end -}}
 {{- define "testsBaseUrl" }}
 {{- if not .Values.local_development -}}
-https://{{ .Values.ingress.host }}
+https://{{ .Values.host }}
 {{- else -}}
 http://backend.{{ .Release.Namespace }}.svc:{{ .Values.federatedNode.port }}
 {{- end -}}

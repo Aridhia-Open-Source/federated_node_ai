@@ -1,5 +1,83 @@
 # Releases Changelog
 
+## 0.12.0
+- Added the Federated Node Task Controller as a chart dependency. This can be installed by setting `outboundMode` to true on the values file. By default, it won't be installed.
+- Some jobs will be cleaned before and after an upgrade.
+- Fixed issues with rendering nfs templates due to an extra `-`
+- Multiple database engines now supported:
+    - MS SQL
+    - Postgres
+    - MariaDB
+    - MySQL
+    - OracleDB
+- Tasks do not need to fetch data themselves. The node will do so and mount a file called `input.csv` as default. This can be specified by the `inputs` field in the `/tasks` request. Where it will have the following format:
+    ```json
+    {
+        "file_name": "file_path"
+    }
+    ```
+
+### Bugfixes
+- Issue with new user fixed due to a format mismatch
+
+## 0.11.0
+- Changed the way data is fetched from datasets, now the FN will gather it in a `csv` file and mount it to the analytics pod.
+- The dataset now has an optional `schema` field, mostly for MS SQL services.
+- The POST `tasks` endpoint now uses `db_query` as a new field. This is a json object with `query` and `dialect` as properties.
+- POST `tasks` uses the `input` field to set where the fetched data csv file should be called and where it should be mounted. The format will be
+    ```json
+    {
+        "file_name": "path_to_mount"
+    }
+    ```
+- DB credentials are not passed to the task's pod anymore
+- Replaced the keycloak-credential-refresh job with a re-setter one.
+- Added a new value, `create_db_deployment`, only for local deployments. Defaults to `false`
+- Added a weight on the nginx namespace template, as new installation might complain
+- The datasets are now strictly linked to the `token_transfer` request body. A non-admin user can only trigger a task by providing the project-name they have been approved for. This will avoid inconsistencies with names and ids.
+- The alpine helper image now has the same tag as the backend.
+
+### Bugfixes
+- Fixed an issue with the result cleaner where the volume mounted would include too much
+
+## 0.10.0
+**With this update, if using nginx, you will need to update your dns record to the new ingress' IP**
+
+- Added `cert-manager` to handle SSL renewal. Set `cert-manager.enabled` in the values file to `true`.
+
+    An example of configuration on AKS would be:
+    ```yaml
+    cert-manager:
+        enabled: true
+    certs:
+        azure:
+            configmap: azuredns-config
+            secretName: azuredns-secret
+    ```
+    If not needed leave `cert-manager` and `certs` out of the values file.
+- nginx is explicitly set to off. To enable it, set `ingress-nginx.enabled: true` in your values file.
+- Restructured the way nginx is configured. Most of the settings were migrated to the root level from `ingress`. In detail:
+    - `ingress.on_aks` moved to `on_aks`
+    - `ingress.on_eks` moved to `on_eks`
+    - `ingress.host` moved to `host`
+    - `ingress.tls.secretName` moved to `tls.secretName`
+    - `ingress.whitelist.*` moved to `whitelist.*`
+    - `ingress.blacklist.*` moved to `blacklist.*`
+
+- on AKS-based deployments would need to add:
+    ```yaml
+    ingress-nginx:
+        controller:
+            service:
+                externalTrafficPolicy: Local
+    ```
+- nginx namespace is now defined in `ingress-nginx.namespaceOverride`
+- Added the `/tasks/<task_id>/logs` to fetch a task pod's logs.
+- Task's pods will not have service account tokens mounted
+
+### Security
+- Updated the nginx version to `1.12.1` to address a vulnerability
+
 ## 0.9.0
 - Added the Federated Node Task Controller as a chart dependency. This can be installed by setting `outboundMode` to true on the values file. By default, it won't be installed.
 - Added a test suite for the helm chart. This can be simply run with `helm test federatednode`
@@ -9,7 +87,7 @@
     ```
     __Warning__ this will add and then remove the test data from keycloak and the db. It will not be enabled by default.
 
-### bugfixes
+### Bugfixes
 - Fixed a deployment issue issue with first-time installations where on azure storage, the results folder should exist already. Now this is done by the backend's initcontainer.
 - Fixed a deployment issue where ingresses were not updated or deleted during upgrades
 - Fixed a deployment issue when using azure storage accounts, the secret containing auth credentials is missing on the tasks namespace. This led tasks to fail to start.
