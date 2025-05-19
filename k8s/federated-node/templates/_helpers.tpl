@@ -43,10 +43,10 @@ ghcr.io/aridhia-open-source/alpine:{{ include "image-tag" . }}
 {{ (.Values.backend).tag | default .Chart.AppVersion }}
 {{- end }}
 {{- define "fn-alpine" -}}
-ghcr.io/aridhia-open-source/alpine:{{ .Values.backend.tag | default .Chart.AppVersion }}
+ghcr.io/aridhia-open-source/alpine:{{ include "image-tag" . }}
 {{- end }}
 {{- define "image-tag" -}}
-{{ .Values.backend.tag | default .Chart.AppVersion }}
+{{ (.Values.backend).tag | default .Chart.AppVersion }}
 {{- end }}
 
 {{/*

@@ -11,6 +11,10 @@ on:
         description: 'New tag the docker images are going to use'
         required: false
         type: string
+      taskController:
+        description: 'Task controller sub-chart version'
+        required: false
+        type: string
       dryRun:
         description: 'Dry run, no changes committed. Shows the new Chart.yaml contents'
         required: false
