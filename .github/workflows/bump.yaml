@@ -15,6 +15,7 @@ on:
         description: 'Task controller sub-chart version'
         required: false
         type: string
+        default: null
       dryRun:
         description: 'Dry run, no changes committed. Shows the new Chart.yaml contents'
         required: false
@@ -24,10 +25,12 @@ on:
         description: 'CertManager sub-chart version'
         required: false
         type: string
+        default: null
       ingressNginx:
         description: 'Nginx ingress sub-chart version'
         required: false
         type: string
+        default: null
 
 permissions:
   contents: write
