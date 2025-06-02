@@ -15,6 +15,10 @@ logger = logging.getLogger("registry_model")
 logger.setLevel(logging.INFO)
 
 
+logger = logging.getLogger('registry_model')
+logger.setLevel(logging.INFO)
+
+
 class Registry(db.Model, BaseModel):
     __tablename__ = 'registries'
 
