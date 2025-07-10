@@ -10,7 +10,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y curl \
+    && apt-get install --no-install-recommends -y curl \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && /root/.local/bin/uv init \
     && /root/.local/bin/uv add requests \
