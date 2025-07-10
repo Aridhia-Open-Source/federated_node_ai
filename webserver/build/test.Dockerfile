@@ -3,18 +3,22 @@ FROM python:3.13.5-slim
 COPY ./ /app
 COPY ../../pyproject.toml /
 
-WORKDIR /app/app
 ENV PYTHONDONTWRITEBYTECODE=1
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
-    && apt-get install -y libpq-dev python3-dev gcc \
+    && apt-get install -y \
+    libpq-dev \
+    python3-dev \
+    gcc \
+    curl \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && /root/.local/bin/uv sync -- extra dev \
+    && /root/.local/bin/uv sync --extra dev \
     && PATH=$(which pg_config):$PATH \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /app/app
 ENV PATH="/.venv/bin:$PATH"
 
 WORKDIR /app
