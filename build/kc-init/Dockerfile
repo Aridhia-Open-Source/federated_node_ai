@@ -1,4 +1,4 @@
-FROM python:3.13.5-slim-bullseye
+FROM python:3.13.5-slim
 
 ARG USERNAME=fednode
 ARG USER_UID=1001
