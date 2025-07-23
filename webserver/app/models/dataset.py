@@ -1,14 +1,15 @@
 import logging
 import re
 import requests
+from kubernetes.client import V1EnvVar, V1EnvVarSource, V1SecretKeySelector
+from kubernetes.client.exceptions import ApiException
 from sqlalchemy import Column, Integer, String
+
 from app.helpers.base_model import BaseModel, db
 from app.helpers.const import DEFAULT_NAMESPACE, TASK_NAMESPACE, PUBLIC_URL
 from app.helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from app.helpers.keycloak import Keycloak
 from app.helpers.kubernetes import KubernetesClient
-from kubernetes.client.exceptions import ApiException
-
 from app.helpers.connection_string import Mssql, Postgres, Mysql, Oracle, MariaDB
 
 logger = logging.getLogger("dataset_model")
@@ -243,3 +244,36 @@ class Dataset(db.Model, BaseModel):
 
     def __repr__(self):
         return f'<Dataset {self.name}>'
+
+    def create_db_env_vars(self):
+        """
+        From a secret name, setup a base env list with db credentials.
+        """
+        secret_name = self.get_creds_secret_name()
+        return [
+            V1EnvVar(
+                name="DB_PSW",
+                value_from=V1EnvVarSource(
+                    secret_key_ref=V1SecretKeySelector(
+                        name=secret_name,
+                        key="PGPASSWORD",
+                        optional=True
+                    )
+                )
+            ),
+            V1EnvVar(
+                name="DB_USER",
+                value_from=V1EnvVarSource(
+                    secret_key_ref=V1SecretKeySelector(
+                        name=secret_name,
+                        key="PGUSER",
+                        optional=True
+                    )
+                )
+            ),
+            V1EnvVar(name="DB_PORT", value=str(self.port)),
+            V1EnvVar(name="DB_NAME", value=self.name),
+            V1EnvVar(name="DB_SCHEMA", value=self.schema),
+            V1EnvVar(name="DB_ARGS", value=self.extra_connection_args),
+            V1EnvVar(name="DB_HOST", value=self.host)
+        ]

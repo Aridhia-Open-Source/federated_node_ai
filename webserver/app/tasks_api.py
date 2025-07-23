@@ -68,7 +68,7 @@ def get_task_id(task_id):
     """
     task = Task.query.filter(Task.id == task_id).one_or_none()
     if task is None:
-        raise DBRecordNotFoundError(f"Dataset with id {task_id} does not exist")
+        raise DBRecordNotFoundError(f"Task with id {task_id} does not exist")
 
     does_user_own_task(task)
 

@@ -3,9 +3,22 @@ A collection of general use endpoints
 These won't have any restrictions and won't go through
     Keycloak for token validation.
 """
+import json
+import logging
 import requests
 from flask import Blueprint, redirect, url_for, request
+from kubernetes.client import ApiException
+
+from app.helpers.const import SLM_BACKEND_URL, TASK_NAMESPACE
+from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
+from app.helpers.exceptions import InvalidRequest
+from app.helpers.fetch_data_container import FetchDataContainer
+from app.models.request import Request
+
+
+logger = logging.getLogger('main')
+logger.setLevel(logging.INFO)
 
 bp = Blueprint('main', __name__, url_prefix='/')
 
@@ -56,3 +69,48 @@ def login():
     return {
         "token": Keycloak().get_token(**credentials)
     }, 200
+
+@bp.route("/ask", methods=["POST"])
+def ask():
+    """
+    POST /ask endpoint
+        Given a prompt, send it to the ollama API interface
+        return its response or graciously handle the errors
+    """
+    query: str | None = request.json.get("question")
+    if not query:
+        raise InvalidRequest("Question is a mandatory field", 400)
+
+    project = request.headers.get("project-name")
+    user_token = Keycloak.get_token_from_headers()
+    user_id = Keycloak().decode_token(user_token).get('sub')
+    dataset = Request.get_active_project(project, user_id).dataset
+
+    data_pod = FetchDataContainer(
+        dataset=dataset
+    ).get_full_pod_definition()
+    try:
+        KubernetesClient().create_namespaced_pod(
+            namespace=TASK_NAMESPACE,
+            body=data_pod,
+            pretty='true'
+        )
+    except ApiException as e:
+        logger.error(json.loads(e.body))
+        raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
+
+    # get the dataset csv and send it to slm
+    resp: requests.Response = requests.post(
+        SLM_BACKEND_URL,
+        data={
+            "message": query,
+            "file": ""
+        },
+        headers={
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    )
+    if resp.ok:
+        return resp
+
+    raise InvalidRequest(f"Something went wrong during the analysis: {resp.text}", 500)
