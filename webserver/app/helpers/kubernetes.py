@@ -11,7 +11,7 @@ from kubernetes.watch import Watch
 from app.helpers.exceptions import InvalidRequest, KubernetesException
 from app.helpers.const import TASK_NAMESPACE
 
-logger = logging.getLogger('kubernetes_helper')
+logger: logging.Logger = logging.getLogger('kubernetes_helper')
 logger.setLevel(logging.INFO)
 
 
@@ -246,6 +246,46 @@ class KubernetesClient(KubernetesBase, client.CoreV1Api):
                     logger.error(e.body)
                     raise InvalidRequest(e.reason)
         return body
+
+    def create_pv_pvc_specs(self, name:str, labels:str, mount_path:str):
+        """
+        Create a pair of PersistentVolume and Claim
+        """
+        pv_spec = client.V1PersistentVolumeSpec(
+            access_modes=['ReadWriteMany'],
+            capacity={"storage": "100Mi"},
+            storage_class_name="shared-results"
+        )
+        if os.getenv("AZURE_STORAGE_ENABLED"):
+            pv_spec.azure_file=client.V1AzureFilePersistentVolumeSource(
+                read_only=False,
+                secret_name=os.getenv("AZURE_SECRET_NAME"),
+                share_name=os.getenv("AZURE_SHARE_NAME")
+            )
+        else:
+            pv_spec.host_path=client.V1HostPathVolumeSource(
+                path=mount_path
+            )
+
+        pv = client.V1PersistentVolume(
+            api_version='v1',
+            kind='PersistentVolume',
+            metadata=client.V1ObjectMeta(name=name, namespace=TASK_NAMESPACE, labels=labels),
+            spec=pv_spec
+        )
+
+        pvc = client.V1PersistentVolumeClaim(
+            api_version='v1',
+            kind='PersistentVolumeClaim',
+            metadata=client.V1ObjectMeta(name=f"{name}-volclaim", namespace=TASK_NAMESPACE, labels=labels),
+            spec=client.V1PersistentVolumeClaimSpec(
+                access_modes=['ReadWriteMany'],
+                volume_name=name,
+                storage_class_name="shared-results",
+                resources=client.V1VolumeResourceRequirements(requests={"storage": "100Mi"})
+            )
+        )
+        return pv, pvc
 
 
 class KubernetesBatchClient(KubernetesBase, client.BatchV1Api):

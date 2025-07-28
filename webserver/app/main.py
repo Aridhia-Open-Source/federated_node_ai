@@ -5,15 +5,17 @@ These won't have any restrictions and won't go through
 """
 import json
 import logging
+import asyncio
 import requests
 from flask import Blueprint, redirect, url_for, request
-from kubernetes.client import ApiException
+from kubernetes.client import ApiException, V1PodList
 
-from app.helpers.const import SLM_BACKEND_URL, TASK_NAMESPACE
+from app.helpers.const import SLM_BACKEND_URL, RESULTS_PATH, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
 from app.helpers.exceptions import InvalidRequest
 from app.helpers.fetch_data_container import FetchDataContainer
+from app.models.dataset import Dataset
 from app.models.request import Request
 
 
@@ -71,26 +73,30 @@ def login():
     }, 200
 
 @bp.route("/ask", methods=["POST"])
-def ask():
+async def ask():
     """
     POST /ask endpoint
         Given a prompt, send it to the ollama API interface
         return its response or graciously handle the errors
     """
     query: str | None = request.json.get("question")
-    if not query:
-        raise InvalidRequest("Question is a mandatory field", 400)
+    table: str | None = request.json.get("table")
+    if not query and not table:
+        raise InvalidRequest("Question and table are mandatory fields", 400)
 
     project = request.headers.get("project-name")
     user_token = Keycloak.get_token_from_headers()
     user_id = Keycloak().decode_token(user_token).get('sub')
-    dataset = Request.get_active_project(project, user_id).dataset
+    # dataset: Dataset = Request.get_active_project(project, user_id).dataset
+    dataset = Dataset.get_dataset_by_name_or_id(id=1)
+    fdc = FetchDataContainer(
+        dataset=dataset, table=table
+    )
 
-    data_pod = FetchDataContainer(
-        dataset=dataset
-    ).get_full_pod_definition()
+    v1 = KubernetesClient()
+    data_pod = fdc.get_full_pod_definition()
     try:
-        KubernetesClient().create_namespaced_pod(
+        v1.create_namespaced_pod(
             namespace=TASK_NAMESPACE,
             body=data_pod,
             pretty='true'
@@ -99,18 +105,39 @@ def ask():
         logger.error(json.loads(e.body))
         raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
 
-    # get the dataset csv and send it to slm
-    resp: requests.Response = requests.post(
-        SLM_BACKEND_URL,
-        data={
-            "message": query,
-            "file": ""
-        },
-        headers={
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    )
-    if resp.ok:
-        return resp
+    # check when the task is done
+    monitor = True
+    while monitor:
+        pods: V1PodList = v1.list_namespaced_pod(
+            namespace=TASK_NAMESPACE,
+            label_selector=f"pod={fdc.pod_name}"
+        )
+        for pod in pods.items:
+            if pod.metadata.name == data_pod.metadata.name:
+                match pod.status.phase:
+                    case "Failed":
+                        logger.error(v1.read_namespaced_pod_log(
+                            fdc.pod_name, timestamps=True,
+                            namespace=TASK_NAMESPACE,
+                            container="fetch-data"
+                        ).splitlines())
+                        raise InvalidRequest("Failed to fetch data", 500)
+                    case "Succeeded":
+                        monitor = False
+                        break
+                    case _:
+                        pass
 
-    raise InvalidRequest(f"Something went wrong during the analysis: {resp.text}", 500)
+    # get the dataset csv and send it to slm
+    req = asyncio.create_task(
+        requests.post(
+            f"{SLM_BACKEND_URL}/ask",
+            data={"message": query},
+            files={"file": open(f"{RESULTS_PATH}/fetched-data/fetched-data/{dataset.get_creds_secret_name()}.csv", "rb")},
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        )
+    )
+    req.add_done_callback(set(req).discard)
+    return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200

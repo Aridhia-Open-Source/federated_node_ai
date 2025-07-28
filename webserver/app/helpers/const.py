@@ -10,7 +10,7 @@ def build_sql_uri(
         ) -> str:
     return f"postgresql://{username}:{password}@{host}:{port}/{database}"
 
-PASS_GENERATOR_SET: string.LiteralString = string.ascii_letters + string.digits + "!$@#.-_"
+PASS_GENERATOR_SET: str = string.ascii_letters + string.digits + "!$@#.-_"
 DEFAULT_NAMESPACE = os.getenv("DEFAULT_NAMESPACE")
 PUBLIC_URL = os.getenv("PUBLIC_URL")
 TASK_NAMESPACE: str | None = os.getenv("TASK_NAMESPACE")

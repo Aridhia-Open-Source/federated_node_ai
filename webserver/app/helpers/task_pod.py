@@ -7,7 +7,6 @@ from kubernetes.client import (
     V1AzureFilePersistentVolumeSource,
     V1HostPathVolumeSource, V1EnvVar,
     V1PersistentVolume, V1PersistentVolumeClaim,
-    V1EnvVarSource, V1SecretKeySelector,
     V1PersistentVolumeClaimSpec, V1VolumeResourceRequirements
 )
 from app.helpers.const import RESULTS_PATH, TASK_NAMESPACE, TASK_PULL_SECRET_NAME
@@ -144,8 +143,11 @@ class TaskPod:
         and assemble it with the different sdk objects
         """
         # Create a dedicated VPC for each task so that we can keep results indefinitely
-        self.create_storage_specs()
-        KubernetesClient().create_persistent_storage(self.pv, self.pvc)
+        # self.create_storage_specs()
+        k8s = KubernetesClient()
+        self.pv, self.pvc = k8s.create_pv_pvc_specs(self.name, self.labels, RESULTS_PATH)
+        k8s.create_persistent_storage(self.pv, self.pvc)
+
         pvc_name = f"{self.name}-volclaim"
         pvc = V1PersistentVolumeClaimVolumeSource(claim_name=pvc_name)
 
