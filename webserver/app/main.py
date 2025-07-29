@@ -10,7 +10,7 @@ from flask import Blueprint, redirect, url_for, request
 from kubernetes.client import ApiException, V1PodList
 
 from app.helpers.backround_task import BackgroundTasks
-from app.helpers.const import SLM_BACKEND_URL, RESULTS_PATH, TASK_NAMESPACE
+from app.helpers.const import TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
 from app.helpers.exceptions import InvalidRequest
@@ -84,11 +84,15 @@ async def ask():
     if not query and not table:
         raise InvalidRequest("Question and table are mandatory fields", 400)
 
-    project = request.headers.get("project-name")
+    kc_client = Keycloak()
     user_token = Keycloak.get_token_from_headers()
-    user_id = Keycloak().decode_token(user_token).get('sub')
-    # dataset: Dataset = Request.get_active_project(project, user_id).dataset
-    dataset = Dataset.get_dataset_by_name_or_id(id=1)
+    if kc_client.is_user_admin(user_token):
+        dataset = Dataset.get_dataset_by_name_or_id(**request.json.get("dataset"))
+    else:
+        project = request.headers.get("project-name")
+        user_id = kc_client.decode_token(user_token).get('sub')
+        dataset: Dataset = Request.get_active_project(project, user_id).dataset
+
     fdc = FetchDataContainer(
         dataset=dataset, table=table
     )
