@@ -5,11 +5,11 @@ These won't have any restrictions and won't go through
 """
 import json
 import logging
-import asyncio
 import requests
 from flask import Blueprint, redirect, url_for, request
 from kubernetes.client import ApiException, V1PodList
 
+from app.helpers.backround_task import BackgroundTasks
 from app.helpers.const import SLM_BACKEND_URL, RESULTS_PATH, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
@@ -129,15 +129,6 @@ async def ask():
                         pass
 
     # get the dataset csv and send it to slm
-    req = asyncio.create_task(
-        requests.post(
-            f"{SLM_BACKEND_URL}/ask",
-            data={"message": query},
-            files={"file": open(f"{RESULTS_PATH}/fetched-data/fetched-data/{dataset.get_creds_secret_name()}.csv", "rb")},
-            headers={
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        )
-    )
-    req.add_done_callback(set(req).discard)
+    BackgroundTasks(kwargs={"query": query, "file_name": dataset.get_creds_secret_name()}).start()
+
     return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
