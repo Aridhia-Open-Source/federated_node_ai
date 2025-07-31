@@ -9,7 +9,7 @@ from kubernetes.stream import stream
 from kubernetes.client.exceptions import ApiException
 from kubernetes.watch import Watch
 from app.helpers.exceptions import InvalidRequest, KubernetesException
-from app.helpers.const import TASK_NAMESPACE
+from app.helpers.const import TASK_NAMESPACE, DEFAULT_NAMESPACE
 
 logger: logging.Logger = logging.getLogger('kubernetes_helper')
 logger.setLevel(logging.INFO)
@@ -246,6 +246,16 @@ class KubernetesClient(KubernetesBase, client.CoreV1Api):
                     logger.error(e.body)
                     raise InvalidRequest(e.reason)
         return body
+
+    def get_secret_by_label(self, label:str, namespace:str=DEFAULT_NAMESPACE):
+        """
+        Gets the list of secrets with the label, and return the first match
+        """
+        secrets_list = self.list_namespaced_secret(namespace=namespace, label_selector=label)
+        if not secrets_list:
+            raise KubernetesException(f"No secrets found with label(s) {label}")
+
+        return secrets_list.items[0]
 
     def create_pv_pvc_specs(self, name:str, labels:str, mount_path:str):
         """

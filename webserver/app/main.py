@@ -3,8 +3,11 @@ A collection of general use endpoints
 These won't have any restrictions and won't go through
     Keycloak for token validation.
 """
+import base64
 import json
 import logging
+import os
+import subprocess
 import requests
 from flask import Blueprint, redirect, url_for, request
 from kubernetes.client import ApiException, V1PodList
@@ -109,7 +112,7 @@ async def ask():
         logger.error(json.loads(e.body))
         raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
 
-    # check when the task is done
+    # check when the task is done, maybe with k8s watch instead
     monitor = True
     while monitor:
         pods: V1PodList = v1.list_namespaced_pod(
@@ -133,6 +136,9 @@ async def ask():
                         pass
 
     # get the dataset csv and send it to slm
-    BackgroundTasks(kwargs={"query": query, "file_name": dataset.get_creds_secret_name()}).start()
+    BackgroundTasks(kwargs={
+        "query": query,
+        "file_name": dataset.get_creds_secret_name()
+    }).start()
 
     return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
