@@ -138,7 +138,9 @@ async def ask():
     # get the dataset csv and send it to slm
     BackgroundTasks(kwargs={
         "query": query,
-        "file_name": dataset.get_creds_secret_name()
+        "file_name": dataset.get_creds_secret_name(),
+        "dataset_name": dataset.name,
+        "user_id": user_id
     }).start()
 
     return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
