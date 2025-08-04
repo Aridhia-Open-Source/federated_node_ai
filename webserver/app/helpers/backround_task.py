@@ -26,12 +26,19 @@ class BackgroundTasks(threading.Thread):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         self.query: str = kwargs.pop("query")
         self.file_name: str = kwargs.pop("file_name")
+        self.dataset_name: str = kwargs.pop("dataset_name")
+        self.user_id: str = kwargs.pop("user_id")
         self.expected_file_name: str = f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv"
 
     def run(self, *args, **kwargs):
         resp = requests.post(
             f"{SLM_BACKEND_URL}/ask",
-            data={"message": self.query,"file": open(f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv", "rb")}
+            data={
+                "message": self.query,
+                "dataset_name": self.dataset_name,
+                "user_id": self.user_id,
+                "file": open(f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv", "rb")
+            }
         )
         logger.info("Status: %s", resp.status_code)
         if not resp.ok:
