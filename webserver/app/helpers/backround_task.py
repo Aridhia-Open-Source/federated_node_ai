@@ -4,6 +4,7 @@ import os
 import subprocess
 import requests
 import threading
+import uuid
 
 from app.helpers.const import RESULTS_PATH, SLM_BACKEND_URL
 from app.helpers.exceptions import InvalidRequest
@@ -28,7 +29,8 @@ class BackgroundTasks(threading.Thread):
         self.file_name: str = kwargs.pop("file_name")
         self.dataset_name: str = kwargs.pop("dataset_name")
         self.user_id: str = kwargs.pop("user_id")
-        self.expected_file_name: str = f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv"
+        self.dataset_file_name: str = f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv"
+        self.expected_file_name: str = f"{RESULTS_PATH}/{self.dataset_name}-{uuid.uuid4()}.zip"
 
     def run(self, *args, **kwargs):
         resp = requests.post(
@@ -37,27 +39,33 @@ class BackgroundTasks(threading.Thread):
                 "message": self.query,
                 "dataset_name": self.dataset_name,
                 "user_id": self.user_id,
-                "file": open(f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv", "rb")
-            }
+            }, files={"file": open(self.dataset_file_name, "rb")}
         )
         logger.info("Status: %s", resp.status_code)
         if not resp.ok:
             logger.error(resp.text)
-            # Deliver results
-            auth_secret = KubernetesClient().get_secret_by_label(
-                namespace="default", label=f"url={os.getenv("DELIVERY_URL")}"
+            raise InvalidRequest("The query failed to execute")
+
+        # Save the file
+        with open(self.expected_file_name, "wb") as file:
+            file.write(resp.content)
+
+        # Deliver results
+        auth_secret = KubernetesClient().get_secret_by_label(
+            namespace="default", label=f"url={os.getenv("DELIVERY_URL")}"
+        )
+        creds = base64.b64decode(
+            auth_secret.data["auth"].encode()
+        ).decode()
+        out = subprocess.run(
+            ["azcopy", "copy", self.expected_file_name, creds],
+            capture_output=True,
+            check=False
+        )
+        if out.stderr:
+            logger.error(out.stderr)
+            raise InvalidRequest(
+                "Something went wrong with the result push"
             )
-            creds = base64.b64decode(
-                auth_secret.data["auth"].encode()
-            ).decode()
-            out = subprocess.run(
-                ["azcopy", "copy", self.expected_file_name, creds],
-                capture_output=True,
-                check=False
-            )
-            if out.stderr:
-                logger.error(out.stderr)
-                raise InvalidRequest(
-                    "Something went wrong with the result push"
-                )
-            logger.info(out.stdout)
+        logger.info(out.stdout)
+        os.remove(self.expected_file_name)

@@ -89,11 +89,12 @@ async def ask():
 
     kc_client = Keycloak()
     user_token = Keycloak.get_token_from_headers()
+    user_id = kc_client.decode_token(user_token).get('sub')
+
     if kc_client.is_user_admin(user_token):
         dataset = Dataset.get_dataset_by_name_or_id(**request.json.get("dataset"))
     else:
         project = request.headers.get("project-name")
-        user_id = kc_client.decode_token(user_token).get('sub')
         dataset: Dataset = Request.get_active_project(project, user_id).dataset
 
     fdc = FetchDataContainer(
