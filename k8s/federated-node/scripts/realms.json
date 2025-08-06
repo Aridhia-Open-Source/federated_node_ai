@@ -209,6 +209,9 @@
                 "name": "can_exec_task"
               },
               {
+                "name": "can_send_nlq"
+              },
+              {
                 "name": "can_admin_task"
               },
               {
@@ -311,7 +314,7 @@
             "logic": "POSITIVE",
             "decisionStrategy": "AFFIRMATIVE",
             "config": {
-              "scopes": "[\"can_exec_task\"]",
+              "scopes": "[\"can_exec_task\", \"can_send_nlq\"]",
               "applyPolicies": "[\"all-users-policy\", \"system-policy\"]"
             }
           },
@@ -366,6 +369,9 @@
           },
           {
             "name": "can_exec_task"
+          },
+          {
+            "name": "can_send_nlq"
           },
           {
             "name": "can_admin_task"

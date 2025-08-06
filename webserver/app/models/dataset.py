@@ -133,6 +133,7 @@ class Dataset(db.Model, BaseModel):
         admin_ds_scope.append(kc_client.get_scope('can_admin_dataset'))
         admin_ds_scope.append(kc_client.get_scope('can_access_dataset'))
         admin_ds_scope.append(kc_client.get_scope('can_exec_task'))
+        admin_ds_scope.append(kc_client.get_scope('can_send_nlq'))
         admin_ds_scope.append(kc_client.get_scope('can_admin_task'))
         admin_ds_scope.append(kc_client.get_scope('can_send_request'))
         admin_ds_scope.append(kc_client.get_scope('can_admin_request'))

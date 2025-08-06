@@ -20,6 +20,7 @@ from app.helpers.exceptions import InvalidRequest
 from app.helpers.fetch_data_container import FetchDataContainer
 from app.models.dataset import Dataset
 from app.models.request import Request
+from app.helpers.wrappers import async_audit, audit, auth
 
 
 logger = logging.getLogger('main')
@@ -76,6 +77,8 @@ def login():
     }, 200
 
 @bp.route("/ask", methods=["POST"])
+@async_audit
+@auth(scope='can_send_nlq')
 async def ask():
     """
     POST /ask endpoint

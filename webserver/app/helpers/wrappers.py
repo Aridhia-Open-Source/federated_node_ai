@@ -1,3 +1,4 @@
+import inspect
 import logging
 from functools import wraps
 from flask import request
@@ -10,13 +11,14 @@ from app.models.dataset import Dataset
 from app.models.request import Request
 
 
-logger = logging.getLogger('wrappers')
+logger: logging.Logger = logging.getLogger('wrappers')
 logger.setLevel(logging.INFO)
+
 
 def auth(scope:str, check_dataset=True):
     def auth_wrapper(func):
         @wraps(func)
-        def _auth(*args, **kwargs):
+        async def _auth(*args, **kwargs):
             token = request.headers.get("Authorization", "").replace("Bearer ", "")
             if scope and not token:
                 raise AuthenticationError("Token not provided")
@@ -59,7 +61,10 @@ def auth(scope:str, check_dataset=True):
                     token_type = 'access_token'
 
             if kc_client.is_token_valid(token, scope, resource, token_type):
-                return func(*args, **kwargs)
+                if inspect.iscoroutinefunction(func):
+                    return await func(*args, **kwargs)
+                else:
+                    return func(*args, **kwargs)
             else:
                 raise UnauthorizedError("Token is not valid, or the user has not enough permissions.")
         return _auth
@@ -78,36 +83,60 @@ def audit(func):
             response_object = { "error": "Record already exists" }
             http_status = 500
 
-        if 'HTTP_X_REAL_IP' in request.environ:
-            # if behind a proxy
-            source_ip = request.environ['HTTP_X_REAL_IP']
-        else:
-            source_ip = request.environ['REMOTE_ADDR']
+        create_audit(http_status, func.__name__)
 
-        details = None
-        if request.data:
-            details = request.data.decode()
-            # details should include the request body. If a json and the body is not empty
-            if request.is_json:
-                details = request.json
-                # Remove any of the following fields that contain
-                # sensitive data, so far only username and password on dataset POST
-                for field in ["username", "password"]:
-                    find_and_redact_key(details, field)
-                details = str(details)
-
-        requested_by = ""
-        if "Authorization" in request.headers:
-            token = Keycloak().decode_token(Keycloak.get_token_from_headers())
-            requested_by = token.get('sub')
-
-        http_method = request.method
-        http_endpoint = request.path
-        api_function = func.__name__
-        to_save = Audit(source_ip, http_method, http_endpoint, requested_by, http_status, api_function, details)
-        to_save.add()
         return response_object, http_status
     return _audit
+
+def async_audit(func):
+    @wraps(func)
+    async def _audit(*args, **kwargs):
+        try:
+            response_object, http_status = await func(*args, **kwargs)
+        except LogAndException as exc:
+            response_object = { "error": exc.description }
+            http_status = exc.code
+        except IntegrityError:
+            response_object = { "error": "Record already exists" }
+            http_status = 500
+
+        create_audit(http_status, func.__name__)
+
+        return response_object, http_status
+    return _audit
+
+
+def create_audit(http_status: int, func_name:str):
+    if 'HTTP_X_REAL_IP' in request.environ:
+        # if behind a proxy
+        source_ip = request.environ['HTTP_X_REAL_IP']
+    else:
+        source_ip = request.environ['REMOTE_ADDR']
+
+    details = None
+    if request.data:
+        details = request.data.decode()
+        # details should include the request body. If a json and the body is not empty
+        if request.is_json:
+            details = request.json
+            # Remove any of the following fields that contain
+            # sensitive data, so far only username and password on dataset POST
+            for field in ["username", "password"]:
+                find_and_redact_key(details, field)
+            details = str(details)
+
+    requested_by = ""
+    if "Authorization" in request.headers:
+        token = Keycloak().decode_token(Keycloak.get_token_from_headers())
+        requested_by = token.get('sub')
+
+    http_method = request.method
+    http_endpoint = request.path
+    api_function = func_name
+    to_save = Audit(source_ip, http_method, http_endpoint, requested_by, http_status, api_function, details)
+    to_save.add()
+
+
 
 def find_and_delete_key(obj: dict, key: str):
     """
