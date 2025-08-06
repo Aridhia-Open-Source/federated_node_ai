@@ -55,7 +55,7 @@ jobs:
       - name: New Version Bump
         id: newversion
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           set -e
           NEW_VERSION=$(python3 scripts/semver_bump.py -v ${{ needs.tag.outputs.current_version }} -n)
