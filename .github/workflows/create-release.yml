@@ -25,6 +25,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    if: ${{inputs.majorVersion == 'true'}} || ${{inputs.minorVersion == 'true'}} || ${{inputs.patchVersion == 'true'}}
     steps:
       - name: test
         run: |
