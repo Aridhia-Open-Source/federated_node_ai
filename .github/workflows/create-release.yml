@@ -1,0 +1,41 @@
+name: Create Release
+run-name: Create Release
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.BUMP_APP_ID }}
+          private-key: ${{ secrets.BUMP_APP_SECRET }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ steps.generate-token.outputs.token }}
+      - name: Create Tag
+        run: |
+          version=$(grep '^version:.*' Chart.yaml | sed 's/^.*: //')
+          echo "Creating tag $version"
+          git tag "$version"
+          git push --tags
+  setNewVersion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: New Version Bump
+        id: newversion
+        run: |
+          NEW_VERSION=$(python3 scripts/semver_bump.py $)
+          gh workflow run bump.yml \
+            -f chartVersion=$NEW_VERSION \
+            -f appVersion=$NEW_VERSION \
+            --ref ${{ github.ref }}
+
