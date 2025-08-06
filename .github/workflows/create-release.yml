@@ -2,15 +2,29 @@ name: Create Release
 run-name: Create Release
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - create-release-pipeline
+    inputs:
+      majorVersion:
+        description: 'Bump the major version, i.e. 1.0.0 -> 2.0.0'
+        required: false
+        default: false
+        type: boolean
+      minorVersion:
+        description: 'Bump the minor version, i.e. 0.1.0 -> 0.2.0'
+        required: false
+        default: true
+        type: boolean
+      patchVersion:
+        description: 'Bump the patch version, i.e. 0.0.1 -> 0.0.2'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 jobs:
   tag:
+    if: inputs.majorVersion == 'true' || inputs.minorVersion == 'true' || inputs.patchVersion == 'true'
     runs-on: ubuntu-latest
     outputs:
       current_version: ${{ steps.create_tag.outputs.CURRENT_VERSION }}
@@ -58,7 +72,19 @@ jobs:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           set -e
-          NEW_VERSION=$(python3 scripts/semver_bump.py -v ${{ needs.tag.outputs.current_version }} -n)
+          base_args=""
+
+          if [[ "${{ inputs.majorVersion }}" == "true" ]]; then
+            base_args+="-m "
+          fi
+          if [[ "${{ inputs.minorVersion }}" == "true" ]]; then
+            base_args+="-n "
+          fi
+          if [[ "${{ inputs.patchVersion }}" == "true" ]]; then
+            base_args+="-p "
+          fi
+
+          NEW_VERSION=$(python3 scripts/semver_bump.py -v ${{ needs.tag.outputs.current_version }} $base_args)
 
           echo "New Version: $NEW_VERSION"
           gh workflow run "Version bump" \
