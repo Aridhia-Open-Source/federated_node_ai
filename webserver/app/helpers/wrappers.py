@@ -136,23 +136,6 @@ def create_audit(http_status: int, func_name:str):
     to_save = Audit(source_ip, http_method, http_endpoint, requested_by, http_status, api_function, details)
     to_save.add()
 
-
-
-def find_and_delete_key(obj: dict, key: str):
-    """
-    Given a dictionary, tries to find a (nested) key and pops it
-    """
-    copy_obj = obj.copy()
-    for k, v in copy_obj.items():
-        if isinstance(v, dict):
-            find_and_delete_key(v, key)
-        elif isinstance(v, list):
-            for item in obj[k]:
-                if isinstance(item, dict):
-                    find_and_delete_key(item, key)
-        elif k == key:
-            obj.pop(key, None)
-
 def find_and_redact_key(obj: dict, key: str):
     """
     Given a dictionary, tries to find a (nested) key and redact its value
