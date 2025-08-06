@@ -61,7 +61,7 @@ jobs:
           NEW_VERSION=$(python3 scripts/semver_bump.py -v ${{ needs.tag.outputs.current_version }} -n)
 
           echo "New Version: $NEW_VERSION"
-          gh workflow run bump.yml \
+          gh workflow run "Version bump" \
             -f chartVersion=$NEW_VERSION \
             -f appVersion=$NEW_VERSION \
             --ref ${{ github.ref }}
