@@ -23,6 +23,14 @@ permissions:
   contents: write
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: test
+        run: |
+          echo "maj: ${{inputs.majorVersion}}"
+          echo "min: ${{inputs.minorVersion}}"
+          echo "pat: ${{inputs.patchVersion}}"
   tag:
     if: inputs.majorVersion == 'true' || inputs.minorVersion == 'true' || inputs.patchVersion == 'true'
     runs-on: ubuntu-latest
