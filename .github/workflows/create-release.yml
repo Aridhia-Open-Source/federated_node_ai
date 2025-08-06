@@ -12,6 +12,9 @@ permissions:
 jobs:
   tag:
     runs-on: ubuntu-latest
+    outputs:
+      current_version: ${{ steps.create_tag.outputs.CURRENT_VERSION }}
+      generated_token: ${{ steps.generate-token.outputs.token }}
     steps:
       - name: Generate a token
         id: generate-token
@@ -25,18 +28,30 @@ jobs:
           ref: ${{ github.ref }}
           token: ${{ steps.generate-token.outputs.token }}
       - name: Create Tag
+        id: create_tag
+        working-directory: k8s/federated-node
         run: |
+          set -e
           version=$(grep '^version:.*' Chart.yaml | sed 's/^.*: //')
+          echo "CURRENT_VERSION=$version" >> ${GITHUB_OUTPUT}
           echo "Creating tag $version"
           git tag "$version"
           git push --tags
   setNewVersion:
     runs-on: ubuntu-latest
+    needs:
+      - tag
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ needs.tag.outputs.generated_token }}
       - name: New Version Bump
         id: newversion
         run: |
-          NEW_VERSION=$(python3 scripts/semver_bump.py $)
+          set -e
+          NEW_VERSION=$(python3 scripts/semver_bump.py ${{ needs.tag.outputs.current_version }})
           gh workflow run bump.yml \
             -f chartVersion=$NEW_VERSION \
             -f appVersion=$NEW_VERSION \
