@@ -23,18 +23,9 @@ permissions:
   contents: write
 
 jobs:
-  verify:
+  tag:
     runs-on: ubuntu-latest
     if: ${{inputs.majorVersion == 'true'}} || ${{inputs.minorVersion == 'true'}} || ${{inputs.patchVersion == 'true'}}
-    steps:
-      - name: test
-        run: |
-          echo "maj: ${{inputs.majorVersion}}"
-          echo "min: ${{inputs.minorVersion}}"
-          echo "pat: ${{inputs.patchVersion}}"
-  tag:
-    if: inputs.majorVersion == 'true' || inputs.minorVersion == 'true' || inputs.patchVersion == 'true'
-    runs-on: ubuntu-latest
     outputs:
       current_version: ${{ steps.create_tag.outputs.CURRENT_VERSION }}
     steps:
