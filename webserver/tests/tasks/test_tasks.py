@@ -619,7 +619,6 @@ class TestPostTask:
             post_json_admin_header,
             client,
             registry_client,
-            set_task_controller_env,
             k8s_client,
             task_body
         ):
