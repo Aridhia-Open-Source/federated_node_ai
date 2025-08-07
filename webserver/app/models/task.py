@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import urllib3
 from app.helpers.const import (
-    CLEANUP_AFTER_DAYS, CRD_DOMAIN, MEMORY_RESOURCE_REGEX, MEMORY_UNITS, CPU_RESOURCE_REGEX, PUBLIC_URL,
+    CLEANUP_AFTER_DAYS, CRD_DOMAIN, MEMORY_RESOURCE_REGEX, MEMORY_UNITS, CPU_RESOURCE_REGEX, PUBLIC_URL, TASK_CONTROLLER,
     TASK_NAMESPACE, TASK_POD_RESULTS_PATH, TASK_POD_INPUTS_PATH, RESULTS_PATH, TASK_REVIEW
 )
 from app.helpers.base_model import BaseModel, db
@@ -428,8 +428,13 @@ class Task(db.Model, BaseModel):
         so that the task controller can deliver resutls automatically
         Some info like the idp and source is not actively used
         by the controller at this stage, so we populate them
-        with default values
+        with default values.
+
+        If the TASK_CONTROLLER env variable is not set, do nothing
         """
+        if not TASK_CONTROLLER:
+            return
+
         crd_client = KubernetesCRDClient()
         try:
             crd_client.create_cluster_custom_object(

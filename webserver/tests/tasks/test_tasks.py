@@ -227,6 +227,7 @@ class TestPostTask:
         )
         assert response.status_code == 201
         reg_k8s_client["create_namespaced_pod_mock"].assert_called()
+        reg_k8s_client["create_cluster_custom_object"].assert_not_called()
         pod_body = reg_k8s_client["create_namespaced_pod_mock"].call_args.kwargs["body"]
         # Make sure the two init containers are created
         assert len(pod_body.spec.init_containers) == 2
@@ -612,12 +613,57 @@ class TestPostTask:
         assert len(pod_body.spec.containers[0].volume_mounts) == 2
         assert [vm.mount_path for vm in pod_body.spec.containers[0].volume_mounts] == ["/mnt/inputs", TASK_POD_RESULTS_PATH]
 
+    def test_create_task_controller_not_deployed_no_crd(
+            self,
+            cr_client,
+            post_json_admin_header,
+            client,
+            registry_client,
+            set_task_controller_env,
+            k8s_client,
+            task_body
+        ):
+        """
+        Tests task creation returns 201. It should not try to
+        create a CRD if the task controller is not deployed
+        """
+        response = client.post(
+            '/tasks/',
+            data=json.dumps(task_body),
+            headers=post_json_admin_header
+        )
+        assert response.status_code == 201
+        k8s_client["create_cluster_custom_object"].assert_not_called()
+
+    def test_create_task_controller_not_deployed_no_crd(
+            self,
+            cr_client,
+            post_json_admin_header,
+            client,
+            registry_client,
+            set_task_controller_env,
+            k8s_client,
+            task_body
+        ):
+        """
+        Tests task creation returns 201. It should not try to
+        create a CRD if the task controller is not deployed
+        """
+        response = client.post(
+            '/tasks/',
+            data=json.dumps(task_body),
+            headers=post_json_admin_header
+        )
+        assert response.status_code == 201
+        k8s_client["create_cluster_custom_object"].assert_called()
+
     def test_create_task_from_controller(
             self,
             cr_client,
             post_json_admin_header,
             client,
             registry_client,
+            k8s_client,
             task_body
         ):
         """
@@ -631,6 +677,7 @@ class TestPostTask:
             headers=post_json_admin_header
         )
         assert response.status_code == 201
+        k8s_client["create_cluster_custom_object"].assert_not_called()
 
     def test_task_connection_string_postgres(
             self,

@@ -13,8 +13,8 @@ tasks-related endpoints:
 from datetime import datetime, timedelta
 from flask import Blueprint, request, send_file
 
-from app.helpers.const import CLEANUP_AFTER_DAYS, PUBLIC_URL, TASK_REVIEW
-from app.helpers.exceptions import DBRecordNotFoundError, UnauthorizedError, InvalidRequest
+from app.helpers.const import CLEANUP_AFTER_DAYS, PUBLIC_URL, TASK_CONTROLLER, TASK_REVIEW
+from app.helpers.exceptions import DBRecordNotFoundError, FeatureNotAvailableException, UnauthorizedError, InvalidRequest
 from app.helpers.keycloak import Keycloak
 from app.helpers.wrappers import audit, auth
 from app.helpers.base_model import db
@@ -140,6 +140,7 @@ def get_task_results(task_id):
         raise DBRecordNotFoundError(f"Task with id {task_id} does not exist")
 
     does_user_own_task(task)
+
     if TASK_REVIEW and not task.review_status:
         return {"status": task.get_review_status()}, 400
 
@@ -174,11 +175,12 @@ def approve_results(task_id):
         a task's results
     """
     if not TASK_REVIEW:
-        raise InvalidRequest("Task reviews are not enabled on this Federated Node")
+        raise FeatureNotAvailableException()
 
     task = Task.get_by_id(task_id)
     if task.review_status is not None:
         raise InvalidRequest("Task has been already reviewed")
+
     task.review_status = True
 
     return {
@@ -195,7 +197,7 @@ def block_results(task_id):
         a task's results
     """
     if not TASK_REVIEW:
-        raise InvalidRequest("Task reviews are not enabled on this Federated Node")
+        raise FeatureNotAvailableException()
 
     task = Task.get_by_id(task_id)
     if task.review_status is not None:

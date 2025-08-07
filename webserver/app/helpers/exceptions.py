@@ -85,3 +85,7 @@ class KubernetesException(LogAndException):
 
 class ContainerRegistryException(LogAndException):
     pass
+
+class FeatureNotAvailableException(LogAndException):
+    description = "This feature is not available on this Federated Node"
+    code = 400

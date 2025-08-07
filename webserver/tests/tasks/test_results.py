@@ -231,4 +231,4 @@ class TestResultsReview:
                 headers=simple_admin_header
             )
             assert response.status_code == 400
-            assert response.json['error'] == "Task reviews are not enabled on this Federated Node"
+            assert response.json['error'] == "This feature is not available on this Federated Node"

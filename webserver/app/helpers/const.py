@@ -41,3 +41,4 @@ RESULTS_PATH = os.getenv("RESULTS_PATH")
 PUBLIC_URL = os.getenv("PUBLIC_URL")
 CRD_DOMAIN = "tasks.federatednode.com"
 TASK_REVIEW = os.getenv("TASK_REVIEW")
+TASK_CONTROLLER= os.getenv("TASK_CONTROLLER")

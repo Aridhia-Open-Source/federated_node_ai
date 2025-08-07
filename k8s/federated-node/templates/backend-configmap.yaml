@@ -32,3 +32,6 @@ data:
 {{- if .Values.taskReview -}}
   TASK_REVIEW: enabled
 {{- end -}}
+{{- if .Values.outboundMode -}}
+  TASK_CONTROLLER: enabled
+{{- end -}}
