@@ -1,9 +1,9 @@
-import os
-from unittest import mock
+from datetime import timedelta
 from kubernetes.client.exceptions import ApiException
 
 from tests.fixtures.azure_cr_fixtures import *
 from tests.fixtures.tasks_fixtures import *
+from webserver.app.helpers.const import CLEANUP_AFTER_DAYS
 
 
 class TestTaskResults:

@@ -1,11 +1,8 @@
-from datetime import datetime, timedelta
-import os
-from unittest import mock
+from datetime import datetime
 from pytest import fixture
 from copy import deepcopy
 from unittest.mock import Mock
 
-from app.helpers.const import CLEANUP_AFTER_DAYS
 from app.models.task import Task
 
 

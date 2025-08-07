@@ -44,7 +44,7 @@ db:
 # How many days the results and k8s resources are kept for
 cleanupTime: 3
 
-taskReview: true
+taskReview: false
 
 federatedNode:
   port: 5000

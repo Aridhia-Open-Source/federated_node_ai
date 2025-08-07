@@ -1,6 +1,9 @@
 # Releases Changelog
 
 
+## 1.3.0
+- Added a `taskReview` flag on the values to enable task results review before being released. Set to `false` by default.
+
 ## 1.2.0
 - Added two `DELETE` enpoints for datasets and registries. Using them will remove related k8s secrets, and DB entries. In the case of datasets, dictionaries and catalogues. For registries, all related containers added either manually of via sync (manual or scheduled).
 - Added support for AWS EFS persistent volume through the csi driver `efs.csi.aws.com`
@@ -120,7 +123,6 @@
     smoketests: true
     ```
     __Warning__ this will add and then remove the test data from keycloak and the db. It will not be enabled by default.
-- Added a `taskReview` flag on the values to enable task results review before being released. Set to `true` by default.
 
 ### Bugfixes
 - Fixed a deployment issue issue with first-time installations where on azure storage, the results folder should exist already. Now this is done by the backend's initcontainer.

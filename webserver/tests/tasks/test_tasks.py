@@ -1,16 +1,11 @@
 import json
+import pytest
+import re
 from unittest import mock
 from unittest.mock import Mock
 
-from app.helpers.const import TASK_POD_RESULTS_PATH
-import pytest
-import re
-from copy import deepcopy
-from unittest import mock
 from datetime import datetime, timedelta
 from kubernetes.client.exceptions import ApiException
-from unittest import mock
-from unittest.mock import Mock
 
 from app.helpers.const import CLEANUP_AFTER_DAYS, TASK_POD_RESULTS_PATH
 from app.helpers.base_model import db
