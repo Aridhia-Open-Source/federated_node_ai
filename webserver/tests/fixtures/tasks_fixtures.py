@@ -10,10 +10,10 @@ from app.models.task import Task
 
 
 @fixture(scope='function')
-def task_body(dataset, container, user_uuid):
+def task_body(dataset, container):
     return deepcopy({
         "name": "Test Task",
-        "requested_by": user_uuid,
+        "requested_by": "das9908-as098080c-9a80s9",
         "executors": [
             {
                 "image": container.full_image_name(),
@@ -24,13 +24,17 @@ def task_body(dataset, container, user_uuid):
                 }
             }
         ],
+        "db_query": {
+            "query": "SELECT * FROM table",
+            "dialect": "postgres"
+        },
         "description": "First task ever!",
         "tags": {
             "dataset_id": dataset.id,
             "test_tag": "some content"
         },
-        "inputs":{},
-        "outputs":{},
+        "inputs": {},
+        "outputs": {},
         "resources": {},
         "volumes": {}
     })
