@@ -117,7 +117,7 @@ class TestGetContainers(ContainersMixin):
         )
 
         assert resp.status_code == 404
-        assert resp.json["error"] == f'Container id: {container.id + 1} not found'
+        assert resp.json["error"] == f'Container with id {container.id + 1} does not exist'
 
     def test_get_container_by_id_non_auth(
         self,
@@ -298,7 +298,7 @@ class TestPatchContainers:
             headers=post_json_admin_header
         )
         assert resp.status_code == 404
-        assert resp.json["error"] == f"Container id: {container.id + 1} not found"
+        assert resp.json["error"] == f"Container with id {container.id + 1} does not exist"
 
     def test_patch_container_non_json(
         self,
@@ -408,3 +408,23 @@ class TestSync:
 
         assert resp.status_code == 201
         assert resp.json == []
+
+    def test_sync_no_action_inactive_registry(
+        self,
+        client,
+        post_json_admin_header,
+        registry
+    ):
+        """
+        Basic test that makes sure that if a registry is inactive
+        nothing is done.
+        """
+        registry.active = False
+        resp = client.post(
+            "/containers/sync",
+            headers=post_json_admin_header
+        )
+
+        assert resp.status_code == 201
+        assert resp.json == []
+        assert Container.get_all() == []

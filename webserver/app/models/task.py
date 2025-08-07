@@ -3,15 +3,15 @@ import json
 import re
 from datetime import datetime, timedelta
 from kubernetes.client.exceptions import ApiException
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
 
 import urllib3
 from app.helpers.const import (
-    CLEANUP_AFTER_DAYS, CRD_DOMAIN, MEMORY_RESOURCE_REGEX, MEMORY_UNITS, CPU_RESOURCE_REGEX,
-    TASK_NAMESPACE, TASK_POD_RESULTS_PATH, TASK_POD_INPUTS_PATH, RESULTS_PATH
+    CLEANUP_AFTER_DAYS, CRD_DOMAIN, MEMORY_RESOURCE_REGEX, MEMORY_UNITS, CPU_RESOURCE_REGEX, PUBLIC_URL,
+    TASK_NAMESPACE, TASK_POD_RESULTS_PATH, TASK_POD_INPUTS_PATH, RESULTS_PATH, TASK_REVIEW
 )
 from app.helpers.base_model import BaseModel, db
 from app.helpers.keycloak import Keycloak
@@ -26,6 +26,13 @@ logger = logging.getLogger('task_model')
 logger.setLevel(logging.INFO)
 
 
+REVIEW_STATUS = {
+    True: "Approved Release",
+    False: "Blocked Release",
+    None: "Pending Review"
+}
+
+
 class Task(db.Model, BaseModel):
     __tablename__ = 'tasks'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -36,6 +43,7 @@ class Task(db.Model, BaseModel):
     created_at = Column(DateTime(timezone=False), server_default=func.now())
     updated_at = Column(DateTime(timezone=False), onupdate=func.now())
     requested_by = Column(String(256), nullable=False)
+    review_status = Column(Boolean, nullable=True)
     dataset_id = Column(Integer, ForeignKey(Dataset.id, ondelete='CASCADE'))
     dataset = relationship("Dataset")
 
@@ -44,7 +52,7 @@ class Task(db.Model, BaseModel):
                  docker_image:str,
                  requested_by:str,
                  dataset:Dataset,
-                 executors:dict = {},
+                 executors:list[dict] = [],
                  tags:dict = {},
                  resources:dict = {},
                  inputs:dict = {},
@@ -123,7 +131,7 @@ class Task(db.Model, BaseModel):
                 data["resources"].get("limits", {}).get("memory"),
                 data["resources"].get("requests", {}).get("memory")
             )
-        data["db_query"] = data.pop("db_query")
+        data["db_query"] = data.pop("db_query", {})
         return data
 
     @classmethod
@@ -397,19 +405,20 @@ class Task(db.Model, BaseModel):
             job_pod = v1.list_namespaced_pod(namespace=TASK_NAMESPACE, label_selector=f"job-name={job_name}").items[0]
 
             res_file = v1.cp_from_pod(
-                job_pod.metadata.name,
-                TASK_POD_RESULTS_PATH,
-                f"{RESULTS_PATH}/{self.id}/results"
+                pod_name=job_pod.metadata.name,
+                source_path=TASK_POD_RESULTS_PATH,
+                dest_path=f"{RESULTS_PATH}/{self.id}/results",
+                out_name=f"{PUBLIC_URL}-results-{self.id}"
             )
-            v1.delete_pod(job_pod.metadata.name)
+            # v1.delete_pod(job_pod.metadata.name)
             v1_batch.delete_job(job_name)
         except ApiException as e:
             if 'job_pod' in locals() and self.get_current_pod(job_pod.metadata.name):
                 v1_batch.delete_job(job_name)
-            logger.error(getattr(e, 'body'))
+            logger.error(getattr(e, 'reason'))
             raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
-        except urllib3.exceptions.MaxRetryError as e:
-            raise InvalidRequest("The cluster could not create the job") from e
+        except urllib3.exceptions.MaxRetryError as mre:
+            raise InvalidRequest("The cluster could not create the job") from mre
         return res_file
 
     def create_controller_crd(self):
@@ -455,6 +464,27 @@ class Task(db.Model, BaseModel):
                 raise TaskCRDExecutionException(apie.body, apie.status) from apie
             pass
 
+    def get_review_status(self) -> str:
+        """
+        Simple method to get the review_status
+        By default None
+            None => not reviewed/needs review
+            True => approved
+            False => denied/blocked
+        """
+        return REVIEW_STATUS[self.review_status]
+
+    def sanitized_dict(self):
+        """
+        Extend the method to add custom status and review
+        """
+        san_dict = super().sanitized_dict()
+        san_dict["status"] = self.get_status()
+        if TASK_REVIEW:
+            san_dict["review_status"] = self.get_review_status()
+
+        return san_dict
+
     def get_logs(self):
         """
         Retrieve the pod's logs
@@ -474,5 +504,4 @@ class Task(db.Model, BaseModel):
                 container=pod.metadata.name
             ).splitlines()
         except ApiException as apie:
-            logger.error(apie)
             raise TaskExecutionException("Failed to fetch the logs") from apie

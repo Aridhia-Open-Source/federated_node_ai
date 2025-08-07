@@ -3,6 +3,7 @@ datasets-related endpoints:
 - GET /datasets
 - POST /datasets
 - GET /datasets/id
+- DELETE /datasets/id
 - GET /datasets/id/catalogues
 - GET /datasets/id/dictionaries
 - GET /datasets/id/dictionaries/table_name
@@ -11,10 +12,14 @@ datasets-related endpoints:
 """
 from datetime import datetime
 from flask import Blueprint, request
+from kubernetes.client import ApiException
+import logging
 
-from .helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from .helpers.base_model import db
+from .helpers.const import DEFAULT_NAMESPACE
+from .helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from .helpers.keycloak import Keycloak
+from .helpers.kubernetes import KubernetesClient
 from .helpers.query_validator import validate
 from .helpers.wrappers import auth, audit
 from .models.dataset import Dataset
@@ -26,6 +31,8 @@ from .models.request import Request
 bp = Blueprint('datasets', __name__, url_prefix='/datasets')
 session = db.session
 
+logger = logging.getLogger("dataset_api")
+logger.setLevel(logging.INFO)
 
 @bp.route('/', methods=['GET'])
 @bp.route('', methods=['GET'])
@@ -90,6 +97,36 @@ def get_datasets_by_id_or_name(dataset_id:int=None, dataset_name:str=None):
     """
     ds = Dataset.get_dataset_by_name_or_id(name=dataset_name, id=dataset_id)
     return Dataset.sanitized_dict(ds), 200
+
+@bp.route('/<int:dataset_id>', methods=['DELETE'])
+@bp.route('/<dataset_name>', methods=['DELETE'])
+@audit
+@auth(scope='can_access_dataset')
+def delete_datasets_by_id_or_name(dataset_id:int=None, dataset_name:str=None):
+    """
+    DELETE /datasets/id endpoint. Deletes the dataset from the db and k8s secrets
+        the DB entry deletion is prioritized to the k8s secret.
+    """
+    ds = Dataset.get_dataset_by_name_or_id(name=dataset_name, id=dataset_id)
+    secret_name = ds.get_creds_secret_name()
+
+    try:
+        ds.delete(False)
+    except:
+        session.rollback()
+        raise InvalidRequest("Error while deleting the record")
+
+    v1 = KubernetesClient()
+    try:
+        v1.delete_namespaced_secret(secret_name, DEFAULT_NAMESPACE)
+    except ApiException as apie:
+        if apie.status != 404:
+            logger.error(apie)
+            session.rollback()
+            raise InvalidRequest("Could not clear the secrets properly") from apie
+
+    session.commit()
+    return {}, 204
 
 @bp.route('/<int:dataset_id>', methods=['PATCH'])
 @bp.route('/<dataset_name>', methods=['PATCH'])
@@ -227,9 +264,7 @@ def post_transfer_token():
         body["requested_by"] = user["id"]
         ds_id = body.pop("dataset_id", None)
         ds_name = body.pop("dataset_name", None)
-        body["dataset"] = Dataset.get_dataset_by_name_or_id(id=ds_id, name=ds_name)
-        if body["dataset"] is None:
-            raise DBRecordNotFoundError(f"Dataset {ds_id} not found")
+        body["dataset"] = Dataset.get_dataset_by_name_or_id(ds_id, ds_name)
 
         req_attributes = Request.validate(body)
         req = Request(**req_attributes)
@@ -254,9 +289,7 @@ def select_beacon():
         Checks the validity of a query on a dataset
     """
     body = request.json.copy()
-    dataset = Dataset.query.filter(Dataset.id == body['dataset_id']).one_or_none()
-    if dataset is None:
-        raise DBRecordNotFoundError(f"Dataset with id {body['dataset_id']} does not exist")
+    dataset = Dataset.get_by_id(body['dataset_id'])
 
     if validate(body['query'], dataset):
         return {
