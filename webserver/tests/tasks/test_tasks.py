@@ -635,7 +635,7 @@ class TestPostTask:
         assert response.status_code == 201
         k8s_client["create_cluster_custom_object"].assert_not_called()
 
-    def test_create_task_controller_not_deployed_no_crd(
+    def test_create_task_controller_deployed_create_crd(
             self,
             cr_client,
             post_json_admin_header,
@@ -646,8 +646,8 @@ class TestPostTask:
             task_body
         ):
         """
-        Tests task creation returns 201. It should not try to
-        create a CRD if the task controller is not deployed
+        Tests task creation returns 201. It should try to
+        create a CRD if the task controller is deployed
         """
         response = client.post(
             '/tasks/',
