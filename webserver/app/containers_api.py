@@ -9,7 +9,7 @@ containers endpoints:
 import logging
 from flask import Blueprint, request
 
-from .helpers.db import db
+from .helpers.base_model import db
 from .helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from .helpers.wrappers import audit, auth
 from .models.container import Container
@@ -112,7 +112,7 @@ def sync():
         or unintended containers to be used on a node.
     """
     synched = []
-    for registry in Registry.query.all():
+    for registry in Registry.query.filter(Registry.active == True).all():
         for image in registry.fetch_image_list():
             for tag in image["tags"]:
                 if Container.query.filter_by(
