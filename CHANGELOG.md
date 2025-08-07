@@ -3,6 +3,7 @@
 
 ## 1.3.0
 - Added a `taskReview` flag on the values to enable task results review before being released. Set to `false` by default.
+- Results can also be delivered automatically after bein g triggered by the API call directly. The `/tasks/<id>/results` endpoint will still work.
 
 ## 1.2.0
 - Added two `DELETE` enpoints for datasets and registries. Using them will remove related k8s secrets, and DB entries. In the case of datasets, dictionaries and catalogues. For registries, all related containers added either manually of via sync (manual or scheduled).
@@ -117,7 +118,6 @@
 - Updated the nginx version to `1.12.1` to address a vulnerability
 
 ## 0.9.0
-- Added the Federated Node Task Controller as a chart dependency. This can be installed by setting `outboundMode` to true on the values file. By default, it won't be installed.
 - Added a test suite for the helm chart. This can be simply run with `helm test federatednode`
 - __smoketests__ can be also run if the values file contains
     ```yaml
