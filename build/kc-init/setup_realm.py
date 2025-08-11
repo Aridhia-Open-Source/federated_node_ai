@@ -3,11 +3,13 @@
 # applied on existing realms, so we need a way to apply
 # those changes, hence this file
 
-import requests
-from requests import Response
 import json
 import os
-from common import login, health_check
+import requests
+from requests import Response
+
+from common import get_new_user_payload, login, health_check
+
 
 KEYCLOAK_NAMESPACE = os.getenv("KEYCLOAK_NAMESPACE")
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", f"http://keycloak.{KEYCLOAK_NAMESPACE}.svc.cluster.local")
@@ -17,6 +19,10 @@ KEYCLOAK_CLIENT = os.getenv("KEYCLOAK_CLIENT", "global")
 KEYCLOAK_USER = os.getenv("KEYCLOAK_ADMIN")
 KEYCLOAK_PASS = os.getenv("KEYCLOAK_ADMIN_PASSWORD")
 KEYCLOAK_SECRET = os.getenv("KEYCLOAK_GLOBAL_CLIENT_SECRET")
+FIRST_USER_PASS = os.getenv("FIRST_USER_PASS")
+FIRST_USER_EMAIL = os.getenv("FIRST_USER_EMAIL")
+FIRST_USER_FIRST_NAME = os.getenv("FIRST_USER_FIRST_NAME", "")
+FIRST_USER_LAST_NAME = os.getenv("FIRST_USER_LAST_NAME", "")
 
 
 def is_response_good(response:Response) -> None:
@@ -32,32 +38,19 @@ print(f"Accessing to keycloak {REALM} realm")
 admin_token = login(KEYCLOAK_URL, KEYCLOAK_PASS)
 
 print("Got the token...Creating user in new Realm")
-payload = json.dumps({
-  "firstName": "Admin",
-  "lastName": "Admin",
-  "email": "",
-  "enabled": "true",
-  "username": KEYCLOAK_USER,
-  "credentials": [
-    {
-      "type": "password",
-      "temporary": False,
-      "value": KEYCLOAK_PASS
-    }
-  ]
-})
+
 headers = {
   'Cache-Control': 'no-cache',
   'Content-Type': 'application/json',
   'Authorization': f'Bearer {admin_token}'
 }
 
-response = requests.post(
+response_admin_user = requests.post(
   f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/users",
   headers=headers,
-  data=payload
+  json=get_new_user_payload(KEYCLOAK_USER, KEYCLOAK_PASS)
 )
-is_response_good(response)
+is_response_good(response_admin_user)
 
 
 print("Getting realms roles id")
@@ -83,9 +76,29 @@ response = requests.get(
     headers=headers
 )
 is_response_good(response)
-user_id = response.json()[0]["id"]
+user_ids = [response.json()[0]["id"]]
 
-print("Assigning role to user")
+if FIRST_USER_PASS and FIRST_USER_EMAIL:
+  print(f"Creating first user {FIRST_USER_EMAIL}")
+  response_user = requests.post(
+    f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/users",
+    headers=headers,
+    json=get_new_user_payload(
+      FIRST_USER_EMAIL, FIRST_USER_PASS,
+      FIRST_USER_EMAIL, FIRST_USER_FIRST_NAME,
+      FIRST_USER_LAST_NAME
+    )
+  )
+  is_response_good(response_user)
+
+  response = requests.get(
+      f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/users?username={FIRST_USER_EMAIL}",
+      headers=headers
+  )
+  is_response_good(response)
+  user_ids.append(response.json()[0]["id"])
+
+print("Assigning role to users")
 
 payload = json.dumps([
   {
@@ -98,12 +111,13 @@ headers = {
   'Authorization': f'Bearer {admin_token}'
 }
 
-response = requests.post(
-    f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm",
-    headers=headers,
-    data=payload
-)
-is_response_good(response)
+for user_id in user_ids:
+  response = requests.post(
+      f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm",
+      headers=headers,
+      data=payload
+  )
+  is_response_good(response)
 
 
 print("Setting up the token exchange for global client")
