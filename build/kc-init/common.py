@@ -1,3 +1,4 @@
+from typing import Any
 import requests
 import time
 
@@ -49,3 +50,20 @@ def login(kc_url:str, kc_pass:str) -> str:
 
     print("Successful")
     return response.json()["access_token"]
+
+def get_new_user_payload(username:str, password:str, email:str="", first_name:str="Admin", last_name:str="Admin") -> dict[str, Any]:
+    return {
+        "firstName": first_name,
+        "lastName": last_name,
+        "email": email,
+        "enabled": "true",
+        "emailVerified": "true",
+        "username": username,
+        "credentials": [
+            {
+            "type": "password",
+            "temporary": False,
+            "value": password
+            }
+        ]
+    }
