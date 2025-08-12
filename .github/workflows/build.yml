@@ -2,6 +2,13 @@ name: Build Docker Image
 run-name: Building images
 on:
   workflow_dispatch:
+    inputs:
+      BUILD_DOCKER:
+        default: true
+        type: boolean
+      BUILD_HELM:
+        default: true
+        type: boolean
   push:
     tags:
       - '**'
@@ -105,9 +112,13 @@ jobs:
       run:
         shell: bash
     runs-on: ubuntu-latest
-    if: needs.init.outputs.is_tag == 'false'
+    if: needs.init.outputs.is_tag == 'false' || inputs.BUILD_DOCKER == 'false'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Run Helm unittests
+        run: |
+          make helm_tests
 
       - name: Run Python Tests
         working-directory: webserver
@@ -186,7 +197,7 @@ jobs:
           push: true
   release:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
-    if: always() && !failure() && !cancelled()
+    if: always() && !failure() && !cancelled() && inputs.BUILD_DOCKER == true
     needs:
       - init
       - build
