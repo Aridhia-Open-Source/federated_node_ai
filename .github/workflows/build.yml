@@ -5,9 +5,11 @@ on:
     inputs:
       BUILD_DOCKER:
         default: true
+        description: Should the images be build
         type: boolean
       BUILD_HELM:
         default: true
+        description: Should the helm chart be build
         type: boolean
   push:
     tags:
