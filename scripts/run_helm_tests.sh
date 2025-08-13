@@ -2,12 +2,23 @@
 
 set -e
 
-docker build \
-  -f build/helm-unittest/Dockerfile . -t helm-unittest-fn
+IMAGE_NAME="helm-unittest-fn"
+CONTAINER_NAME="helm-test"
 
-docker run --name helm-test helm-unittest-fn
+if [[ -z "$(docker ps -a -f "name=$CONTAINER_NAME" --format json | jq length)" ]]; then
+  echo "Image missing"
+else
+   docker rm "$CONTAINER_NAME"
+fi
+docker build \
+  -f build/helm-unittest/Dockerfile \
+  . \
+  -t "$IMAGE_NAME"
+
+docker run --name "$CONTAINER_NAME" "$IMAGE_NAME"
+
 exit_code=$?
 
-docker rm helm-test
+docker rm "$CONTAINER_NAME" -v
 
 exit $exit_code
