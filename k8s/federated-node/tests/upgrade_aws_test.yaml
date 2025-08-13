@@ -1,8 +1,9 @@
 suite: Storage testing for AWS
 release:
   namespace: federatednode
-  revision: 0
+  revision: 2
   name: federatednode
+  upgrade: true
 kubernetesProvider:
   scheme:
     v1/Secret:
@@ -43,51 +44,41 @@ kubernetesProvider:
       data:
         stuff: things
 tests:
-  - it: creates AWS storage
-    template: copy-secrets.yaml
+  - it: upgrade AWS storage
+    template: storageclass.yaml
     values:
       - values/values-aws.yaml
+    set:
+      storage:
+        aws:
+          fileSystemId: fs-newstring
+          accessPointId: fs-shortnewstring
     asserts:
       - equal:
-          path: metadata.name
-          value: awscert-config
-        documentSelector:
-          path: metadata.name
-          value: awscert-config
-  - it: creates AWS persistency
-    template: backend-results-pv.yaml
-    values:
-      - values/values-aws.yaml
-    asserts:
-      - equal:
-          path: spec.csi.driver
-          value: efs.csi.aws.com
-        documentSelector:
-          path: kind
-          value: PersistentVolume
-  - it: creates AWS certificate issuer
+          path: parameters.fileSystemId
+          value: fs-newstring::fs-shortnewstring
+  - it: upgrade AWS certificate issuer
     template: certificates/issuer.yaml
+    kubernetesProvider:
+      objects:
+        - apiVersion: v1
+          kind: Secret
+          metadata:
+            name: new-certificate-config
+            namespace: federatednode
+          data:
+            EMAIL_CERT: bmV3QGNlcnQuY29t
+            REGION: dGVzdA==
+            ACCOUNT_ID: dGVzdA==
+            ROLE_NAME: dGVzdA==
     values:
       - values/values-aws.yaml
+    set:
+      certs:
+        aws: new-certificate-config
     asserts:
+      - equal:
+          path: spec.acme.email
+          value: new@cert.com
       - exists:
           path: spec.acme.solvers[0].dns01.route53
-  - it: creates AWS certificate roles
-    template: certificates/roles.yaml
-    values:
-      - values/values-aws.yaml
-    asserts:
-      - hasDocuments:
-          count: 2
-      - hasDocuments:
-          count: 1
-          filterAware: true
-        documentSelector:
-          path: kind
-          value: Role
-      - hasDocuments:
-          count: 1
-          filterAware: true
-        documentSelector:
-          path: kind
-          value: RoleBinding
