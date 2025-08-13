@@ -1,14 +1,22 @@
 pullPolicy: Always
 
-local_development: true
-create_db_deployment: true
 cleanupTime: 1
 keycloak:
   replicas: 1
 backend:
-  volumes:
-    results_path: /data/flask/results
+  replicas: 1
 
+federatedNode:
+  port: 5000
+  volumes:
+    results_path: /mnt/results
+    task_pod_results_path: /mnt/data
+autoscaling:
+  enabled: false
+namespaces: &namespaces
+  keycloak: keycloak
+  tasks: tasks
+  controller: fn-controller
 db:
   user: admin
   host: db.federatednode.svc
@@ -16,12 +24,15 @@ db:
   secret:
     key: password
     name: local-db
-
+local_development: false
+create_db_deployment: false
 storage:
+  capacity: 10Gi
   aws:
     fileSystemId: fs-12345aef
     accessPointId: fsap-12345aef
-
+tls:
+  secretName: tls
 on_eks: true
 on_aks: false
 ingress:
@@ -34,10 +45,12 @@ ingress:
     enabled: false
   tls:
     secretName: my-tls-secret
-
+token:
+  life: 2592000
 certs:
   frequency: 65
   aws: awscert-config
+  rotationPolicy: Never
 
 smoketests: false
 
@@ -45,14 +58,29 @@ host: &host phems-federatednode.net
 
 global:
   host: *host
+  namespaces: *namespaces
 
 cert-manager:
   enabled: true
+  namespace: fn-certmanager
+  installCRDs: true
 
 ingress-nginx:
   enabled: false
+  namespaceOverride: ingress-nginx
+  controller:
+    # admissionWebhooks:
+    #   enabled: false
+    ingressClassResource:
+      name: "fn-nginx"
+    allowSnippetAnnotations: false
+    ingressClass: "fn-nginx"
+    # If running on aks:
+    # service:
+    #   externalTrafficPolicy: Local
+    extraArgs:
+      default-ssl-certificate: default/tls
 
-#dev stuff
 outboundMode: true
 fn-task-controller:
   controller:
@@ -72,3 +100,12 @@ fn-task-controller:
   delivery:
     github:
       repository: Aridhia-Open-Source/Federated-Node-Example-App
+whitelist:
+  enabled: false
+  ips: []
+blacklist:
+  enabled: false
+  ips: []
+integrations:
+  domains:
+   - 'self'
