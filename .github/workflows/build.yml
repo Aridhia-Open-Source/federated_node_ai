@@ -112,7 +112,7 @@ jobs:
       run:
         shell: bash
     runs-on: ubuntu-latest
-    if: needs.init.outputs.is_tag == 'false' || inputs.BUILD_DOCKER == 'false'
+    if: needs.init.outputs.is_tag == 'false' && inputs.BUILD_DOCKER == 'false'
     steps:
       - uses: actions/checkout@v4
 

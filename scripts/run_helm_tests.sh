@@ -20,5 +20,6 @@ docker run --name "$CONTAINER_NAME" "$IMAGE_NAME"
 exit_code=$?
 
 docker rm "$CONTAINER_NAME" -v
+docker rmi "$CONTAINER_NAME"
 
 exit $exit_code
