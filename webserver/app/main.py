@@ -117,14 +117,17 @@ async def ask():
         raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
 
     # check when the task is done, maybe with k8s watch instead
-    monitor = True
-    while monitor:
+    logging.info("Fetching data, waiting for %s to complete", data_pod.metadata.name)
+    while True:
         pods: V1PodList = v1.list_namespaced_pod(
             namespace=TASK_NAMESPACE,
             label_selector=f"pod={fdc.pod_name}"
         )
         for pod in pods.items:
             if pod.metadata.name == data_pod.metadata.name:
+                print("Found pod %s", pod.metadata.name)
+                logging.info("Found pod %s", pod.metadata.name)
+                logging.info("Status %s", pod.status.phase)
                 match pod.status.phase:
                     case "Failed":
                         logger.error(v1.read_namespaced_pod_log(
@@ -134,17 +137,14 @@ async def ask():
                         ).splitlines())
                         raise InvalidRequest("Failed to fetch data", 500)
                     case "Succeeded":
-                        monitor = False
-                        break
+                        print("data fetched")
+                        # get the dataset csv and send it to slm
+                        BackgroundTasks(kwargs={
+                            "query": query,
+                            "file_name": dataset.get_creds_secret_name(),
+                            "dataset_name": dataset.name,
+                            "user_id": user_id
+                        }).start()
+                        return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
                     case _:
                         pass
-
-    # get the dataset csv and send it to slm
-    BackgroundTasks(kwargs={
-        "query": query,
-        "file_name": dataset.get_creds_secret_name(),
-        "dataset_name": dataset.name,
-        "user_id": user_id
-    }).start()
-
-    return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200

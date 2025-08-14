@@ -5,7 +5,7 @@ ARG USERNAME=fednode
 ARG USER_UID=1001
 ARG USER_GID=1001
 
-COPY app /app
+COPY app/Pipfile* /app/
 COPY migrations /migrations
 COPY alembic.ini /
 
@@ -32,6 +32,7 @@ RUN groupadd -g "$USER_GID" "$USERNAME" \
     && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" \
     && chown -R "$USERNAME":"$USERNAME" /app
 
+COPY app /app
 USER ${USER_UID}
 EXPOSE 5000
 WORKDIR /
