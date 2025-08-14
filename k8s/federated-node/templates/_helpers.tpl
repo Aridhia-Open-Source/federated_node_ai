@@ -161,6 +161,9 @@ Just need to append the NEW_DB env var
 {{- define "controller_namespace" -}}
 {{ ((.Values.global).namespaces).controller | default .Values.namespaces.controller }}
 {{- end -}}
+{{- define "slm_namespace" -}}
+{{ ((.Values.global).namespaces).slm | default .Values.namespaces.slm }}
+{{- end -}}
 {{- define "testsBaseUrl" }}
 {{- if not .Values.local_development -}}
 https://{{ .Values.host }}

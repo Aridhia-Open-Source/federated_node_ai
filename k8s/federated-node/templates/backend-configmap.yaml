@@ -9,6 +9,8 @@ data:
   PGPORT: {{ include "dbPort" . }}
   PGDATABASE: {{ .Values.db.name | quote }}
   PGUSER: {{ include "dbUser" . }}
+  DELIVERY_URL: {{ .Values.global.delivery_url }}
+  SLM_BACKEND_URL: http://slm-backend.{{ include "slm_namespace" . }}.svc:8000
   KEYCLOAK_URL: "http://keycloak.{{ include "kc_namespace" . }}.svc.cluster.local"
   DEFAULT_NAMESPACE: {{ .Release.Namespace }}
   KEYCLOAK_NAMESPACE: {{ include "kc_namespace" . }}
@@ -19,6 +21,10 @@ data:
   TASK_POD_RESULTS_PATH: {{ .Values.federatedNode.volumes.task_pod_results_path }}
   IMAGE_TAG: {{ include "image-tag" . }}
   CLAIM_CAPACITY: {{ .Values.storage.capacity }}
+  PV_MOUNT_POINT: /mnt/results
+{{- if .Values.storage.local }}
+  HOST_PATH: {{ .Values.storage.local.path }}/results
+{{- end }}
 {{- if .Values.storage.aws }}
   AWS_STORAGE_ENABLED: "true"
   AWS_STORAGE_DRIVER: "efs.csi.aws.com"

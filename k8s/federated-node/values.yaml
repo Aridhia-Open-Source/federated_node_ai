@@ -18,9 +18,11 @@ namespaces: &namespaces
   keycloak: keycloak
   tasks: tasks
   controller: fn-controller
+  slm: ollama
 
 global:
   namespaces: *namespaces
+  delivery_url:
 
 token:
   life: 2592000
