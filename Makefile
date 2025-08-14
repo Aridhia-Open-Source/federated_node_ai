@@ -28,4 +28,4 @@ build_alpine:
 	docker build build/alpine -t ghcr.io/aridhia-open-source/alpine:0.0.1
 
 build_kc_init:
-	docker build build/kc-init -t ghcr.io/aridhia-open-source/kc_init:0.0.1
+	docker build build/kc-init -t ghcr.io/aridhia-open-source/keycloak_initializer:0.0.1

@@ -21,6 +21,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY *.py /scripts/
-ENV PATH="/.venv/bin:$PATH"
+ENV PATH="/scripts/.venv/bin:$PATH"
 USER ${USER_UID}
 ENTRYPOINT [ "/bin/sh", "-c", "python3 /scripts/setup_realm.py" ]
