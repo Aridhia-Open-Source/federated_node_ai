@@ -151,7 +151,7 @@ class TaskPod:
         # Create a dedicated VPC for each task so that we can keep results indefinitely
         # self.create_storage_specs()
         k8s = KubernetesClient()
-        self.pv, self.pvc = k8s.create_pv_pvc_specs(self.name, self.labels, RESULTS_PATH)
+        self.pv, self.pvc = k8s.create_pv_pvc_specs(self.name, self.labels)
         k8s.create_persistent_storage(self.pv, self.pvc)
 
         pvc_name = f"{self.name}-volclaim"

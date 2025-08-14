@@ -9,7 +9,7 @@ from kubernetes.stream import stream
 from kubernetes.client.exceptions import ApiException
 from kubernetes.watch import Watch
 from app.helpers.exceptions import InvalidRequest, KubernetesException
-from app.helpers.const import TASK_NAMESPACE, DEFAULT_NAMESPACE
+from app.helpers.const import TASK_NAMESPACE, DEFAULT_NAMESPACE, HOST_PATH
 
 logger: logging.Logger = logging.getLogger('kubernetes_helper')
 logger.setLevel(logging.INFO)
@@ -257,7 +257,7 @@ class KubernetesClient(KubernetesBase, client.CoreV1Api):
 
         return secrets_list.items[0]
 
-    def create_pv_pvc_specs(self, name:str, labels:str, mount_path:str):
+    def create_pv_pvc_specs(self, name:str, labels:str):
         """
         Create a pair of PersistentVolume and Claim
         """
@@ -274,7 +274,7 @@ class KubernetesClient(KubernetesBase, client.CoreV1Api):
             )
         else:
             pv_spec.host_path=client.V1HostPathVolumeSource(
-                path=mount_path
+                path=HOST_PATH
             )
 
         pv = client.V1PersistentVolume(

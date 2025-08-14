@@ -29,7 +29,7 @@ class BackgroundTasks(threading.Thread):
         self.file_name: str = kwargs.pop("file_name")
         self.dataset_name: str = kwargs.pop("dataset_name")
         self.user_id: str = kwargs.pop("user_id")
-        self.dataset_file_name: str = f"{RESULTS_PATH}/fetched-data/fetched-data/{self.file_name}.csv"
+        self.dataset_file_name: str = f"{RESULTS_PATH}/fetched-data/{self.file_name}.csv"
         self.expected_file_name: str = f"{RESULTS_PATH}/{self.dataset_name}-{uuid.uuid4()}.zip"
 
     def run(self, *args, **kwargs):

@@ -6,7 +6,7 @@ from kubernetes.client import (
     V1ObjectMeta, V1PodSpec, V1Volume,
     V1PersistentVolumeClaimVolumeSource,
 )
-from app.helpers.const import IMAGE_TAG, RESULTS_PATH, TASK_POD_RESULTS_PATH, TASK_NAMESPACE
+from app.helpers.const import IMAGE_TAG, PV_MOUNT_POINT, TASK_POD_RESULTS_PATH, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.models.dataset import Dataset
 
@@ -24,6 +24,7 @@ class FetchDataContainer():
             table:str = None
         ) -> None:
         self.pod_name = f"{name}-{uuid.uuid4()}"
+        self.base_mount_path = base_mount_path
 
         vol_mount = V1VolumeMount(
             mount_path=base_mount_path,
@@ -53,20 +54,19 @@ class FetchDataContainer():
         """
         Using the self.container, create the full pod specs
         """
-        os.makedirs(name=f"{RESULTS_PATH}/fetched-data", exist_ok=True)
+        os.makedirs(name=f"{PV_MOUNT_POINT}/fetched-data", exist_ok=True)
         k8s = KubernetesClient()
-        pv, pvc = k8s.create_pv_pvc_specs(
-            mount_path=f"{RESULTS_PATH}/fetched-data",
+        self.pv, self.pvc = k8s.create_pv_pvc_specs(
             name=self.pod_name,
             labels={"task": "fetch-data"}
         )
-        k8s.create_persistent_storage(pv, pvc)
+        k8s.create_persistent_storage(self.pv, self.pvc)
 
         volumes: list[V1Volume] = [
             V1Volume(
                 name="csv",
                 persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(
-                    claim_name=pvc.metadata.name
+                    claim_name=self.pvc.metadata.name
                 )
             )
         ]
@@ -83,3 +83,8 @@ class FetchDataContainer():
             )
         )
 
+    def cleanup(self):
+        k8s = KubernetesClient()
+        k8s.delete_namespaced_pod(name=self.pod_name, namespace=TASK_NAMESPACE)
+        k8s.delete_namespaced_persistent_volume_claim(self.pvc.metadata.name, TASK_NAMESPACE)
+        k8s.delete_persistent_volume(self.pv.metadata.name)

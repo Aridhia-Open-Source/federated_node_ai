@@ -3,17 +3,15 @@ A collection of general use endpoints
 These won't have any restrictions and won't go through
     Keycloak for token validation.
 """
-import base64
 import json
 import logging
-import os
-import subprocess
 import requests
 from flask import Blueprint, redirect, url_for, request
 from kubernetes.client import ApiException, V1PodList
+from kubernetes.watch import Watch
 
 from app.helpers.backround_task import BackgroundTasks
-from app.helpers.const import TASK_NAMESPACE
+from app.helpers.const import RESULTS_PATH, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
 from app.helpers.exceptions import InvalidRequest
@@ -118,33 +116,32 @@ async def ask():
 
     # check when the task is done, maybe with k8s watch instead
     logging.info("Fetching data, waiting for %s to complete", data_pod.metadata.name)
-    while True:
-        pods: V1PodList = v1.list_namespaced_pod(
-            namespace=TASK_NAMESPACE,
-            label_selector=f"pod={fdc.pod_name}"
-        )
-        for pod in pods.items:
-            if pod.metadata.name == data_pod.metadata.name:
-                print("Found pod %s", pod.metadata.name)
-                logging.info("Found pod %s", pod.metadata.name)
-                logging.info("Status %s", pod.status.phase)
-                match pod.status.phase:
-                    case "Failed":
-                        logger.error(v1.read_namespaced_pod_log(
-                            fdc.pod_name, timestamps=True,
-                            namespace=TASK_NAMESPACE,
-                            container="fetch-data"
-                        ).splitlines())
-                        raise InvalidRequest("Failed to fetch data", 500)
-                    case "Succeeded":
-                        print("data fetched")
-                        # get the dataset csv and send it to slm
-                        BackgroundTasks(kwargs={
-                            "query": query,
-                            "file_name": dataset.get_creds_secret_name(),
-                            "dataset_name": dataset.name,
-                            "user_id": user_id
-                        }).start()
-                        return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
-                    case _:
-                        pass
+    watcher = Watch()
+    for pod in watcher.stream(
+        v1.list_namespaced_pod,
+        namespace=TASK_NAMESPACE,
+        label_selector=f"pod={fdc.pod_name}"
+    ):
+        if pod["object"].metadata.name == data_pod.metadata.name:
+            logging.info("Found pod %s", pod["object"].metadata.name)
+            logging.info("Status %s", pod["object"].status.phase)
+            match pod["object"].status.phase:
+                case "Failed":
+                    logger.error(v1.read_namespaced_pod_log(
+                        fdc.pod_name, timestamps=True,
+                        namespace=TASK_NAMESPACE,
+                        container="fetch-data"
+                    ).splitlines())
+                    raise InvalidRequest("Failed to fetch data", 500)
+                case "Succeeded":
+                    # get the dataset csv and send it to slm
+                    BackgroundTasks(kwargs={
+                        "query": query,
+                        "file_name": dataset.get_creds_secret_name(),
+                        "dataset_name": dataset.name,
+                        "user_id": user_id
+                    }).start()
+                    fdc.cleanup()
+                    return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
+                case _:
+                    pass

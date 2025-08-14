@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 make build_docker
 
 microk8s ctr image rm ghcr.io/aridhia-open-source/federated_node_run:1.3.0-slm
