@@ -24,12 +24,15 @@ headers = {
   'Authorization': f'Bearer {admin_token}'
 }
 
+# Create backend user
 create_user_with_role(settings.keycloak_admin, settings.keycloak_admin_password)
-create_user_with_role(
-    settings.first_user_email, settings.first_user_pass,
-    settings.first_user_email, settings.first_user_first_name,
-    settings.first_user_last_name, "Administrator"
-  )
+# Create first user, if chosen to do so
+if settings.first_user_email:
+  create_user_with_role(
+      settings.first_user_email, settings.first_user_pass,
+      settings.first_user_email, settings.first_user_first_name,
+      settings.first_user_last_name, "Administrator"
+    )
 
 print("Setting up the token exchange for global client")
 all_clients = requests.get(
@@ -140,53 +143,6 @@ client_permission_resp = requests.put(
   }
 )
 is_response_good(client_permission_resp)
-
-# Setting the users' required field to not require firstName and lastName
-user_profiles_resp = requests.get(
-  f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}/users/profile",
-  headers={'Authorization': f'Bearer {admin_token}'}
-)
-if is_response_good(user_profiles_resp):
-  print(user_profiles_resp.text)
-  exit(1)
-
-edit_upd = user_profiles_resp.json()
-for attribute in edit_upd["attributes"]:
-   if attribute["name"] in ["firstName", "lastName"]:
-      attribute.pop("required", None)
-
-user_edit_profiles_resp = requests.put(
-  f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}/users/profile",
-  json=edit_upd,
-  headers={
-    'Content-Type': 'application/json',
-    'Authorization': f'Bearer {admin_token}'
-  }
-)
-if is_response_good(user_edit_profiles_resp):
-  print(user_edit_profiles_resp.text)
-  exit(1)
-
-# Enable user profiles on a realm level
-realm_settings = requests.get(
-  f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}",
-  headers={'Authorization': f'Bearer {admin_token}'}
-)
-if is_response_good(realm_settings):
-  print(realm_settings.text)
-  exit(1)
-
-r_settings = realm_settings.json()
-r_settings["attributes"]["userProfileEnabled"] = True
-
-update_settings = requests.put(
-  f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}",
-  json=r_settings,
-  headers={'Authorization': f'Bearer {admin_token}'}
-)
-if is_response_good(update_settings):
-  print(update_settings.text)
-  exit(1)
 
 # Updating client secret
 print("Updating client secret")
