@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 1.3.0
+- Upgraded all python images to use `python:3.13-slim`
+- Upgraded alpine image to 3.22
 
 ## 1.3.0
 - Added the option to setup an initial user to avoid using the backend credentials. To set it up, the following section in the values file has been added:
