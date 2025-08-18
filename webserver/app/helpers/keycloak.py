@@ -456,6 +456,9 @@ class Keycloak:
             logger.info(scope_response.content.decode())
             raise KeycloakError("Error when fetching the scopes from Keycloak")
 
+        if not scope_response.json():
+            raise KeycloakError("Scope not found")
+
         return scope_response.json()[0]
 
     def create_client(self, client_name:str, token_lifetime:int) -> dict:

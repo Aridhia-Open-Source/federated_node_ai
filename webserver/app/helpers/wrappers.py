@@ -14,57 +14,68 @@ from app.models.request import Request
 logger: logging.Logger = logging.getLogger('wrappers')
 logger.setLevel(logging.INFO)
 
+def common_auth(scope:str, check_dataset=True, **kwargs):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if scope and not token:
+        raise AuthenticationError("Token not provided")
+
+    resource = 'endpoints'
+    ds_id = None
+    requested_project = request.headers.get("project-name")
+    client = 'global'
+    token_type = 'refresh_token'
+
+    kc_client = Keycloak()
+    token_info = kc_client.decode_token(token)
+    user = kc_client.get_user_by_username(token_info['username'])
+
+    if requested_project and not kc_client.is_user_admin(token):
+        dar = Request.get_active_project(requested_project, user["id"])
+        if dar.dataset_id:
+            ds = Dataset.get_dataset_by_name_or_id(id=dar.dataset_id)
+            resource = f"{ds.id}-{ds.name}"
+
+    elif check_dataset:
+        ds_id = kwargs.get("dataset_id")
+        ds_name = kwargs.get("dataset_name", "")
+
+        if request.is_json and request.data:
+            flat_json = flatten_dict(request.json)
+            ds_id = flat_json.get("dataset_id")
+            ds_name = flat_json.get("dataset_name", "")
+
+        if ds_id or ds_name:
+            ds = Dataset.get_dataset_by_name_or_id(name=ds_name, id=ds_id)
+            resource = f"{ds.id}-{ds.name}"
+
+    # If the user is an admin or system, ignore the project
+    if not kc_client.has_user_roles(user["id"], {"Super Administrator", "Administrator", "System"}):
+        if requested_project:
+            client = f"Request {token_info['username']} - {requested_project}"
+            kc_client = Keycloak(client)
+            token = kc_client.exchange_global_token(token)
+            token_type = 'access_token'
+
+    return kc_client.is_token_valid(token, scope, resource, token_type)
+
 
 def auth(scope:str, check_dataset=True):
     def auth_wrapper(func):
         @wraps(func)
+        def _auth(*args, **kwargs):
+            if common_auth(scope, check_dataset):
+                return func(*args, **kwargs)
+            else:
+                raise UnauthorizedError("Token is not valid, or the user has not enough permissions.")
+        return _auth
+    return auth_wrapper
+
+def async_auth(scope:str, check_dataset=True):
+    def auth_wrapper(func):
+        @wraps(func)
         async def _auth(*args, **kwargs):
-            token = request.headers.get("Authorization", "").replace("Bearer ", "")
-            if scope and not token:
-                raise AuthenticationError("Token not provided")
-
-            resource = 'endpoints'
-            ds_id = None
-            requested_project = request.headers.get("project-name")
-            client = 'global'
-            token_type = 'refresh_token'
-
-            kc_client = Keycloak()
-            token_info = kc_client.decode_token(token)
-            user = kc_client.get_user_by_username(token_info['username'])
-
-            if requested_project and not kc_client.is_user_admin(token):
-                dar = Request.get_active_project(requested_project, user["id"])
-                if dar.dataset_id:
-                    ds = Dataset.get_dataset_by_name_or_id(id=dar.dataset_id)
-                    resource = f"{ds.id}-{ds.name}"
-
-            elif check_dataset:
-                ds_id = kwargs.get("dataset_id")
-                ds_name = kwargs.get("dataset_name", "")
-
-                if request.is_json and request.data:
-                    flat_json = flatten_dict(request.json)
-                    ds_id = flat_json.get("dataset_id")
-                    ds_name = flat_json.get("dataset_name", "")
-
-                if ds_id or ds_name:
-                    ds = Dataset.get_dataset_by_name_or_id(name=ds_name, id=ds_id)
-                    resource = f"{ds.id}-{ds.name}"
-
-            # If the user is an admin or system, ignore the project
-            if not kc_client.has_user_roles(user["id"], {"Super Administrator", "Administrator", "System"}):
-                if requested_project:
-                    client = f"Request {token_info['username']} - {requested_project}"
-                    kc_client = Keycloak(client)
-                    token = kc_client.exchange_global_token(token)
-                    token_type = 'access_token'
-
-            if kc_client.is_token_valid(token, scope, resource, token_type):
-                if inspect.iscoroutinefunction(func):
-                    return await func(*args, **kwargs)
-                else:
-                    return func(*args, **kwargs)
+            if common_auth(scope, check_dataset):
+                return await func(*args, **kwargs)
             else:
                 raise UnauthorizedError("Token is not valid, or the user has not enough permissions.")
         return _auth
@@ -90,7 +101,7 @@ def audit(func):
 
 def async_audit(func):
     @wraps(func)
-    async def _audit(*args, **kwargs):
+    async def _audit_async(*args, **kwargs):
         try:
             response_object, http_status = await func(*args, **kwargs)
         except LogAndException as exc:
@@ -103,7 +114,7 @@ def async_audit(func):
         create_audit(http_status, func.__name__)
 
         return response_object, http_status
-    return _audit
+    return _audit_async
 
 
 def create_audit(http_status: int, func_name:str):
