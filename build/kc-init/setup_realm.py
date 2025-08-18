@@ -146,7 +146,10 @@ is_response_good(client_permission_resp)
 
 # Updating client secret
 print("Updating client secret")
-response_get = requests.get(f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}/clients/{client_id}", headers=headers)
+response_get = requests.get(
+  f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}/clients/{client_id}",
+  headers=headers
+)
 body = response_get.json()
 body["secret"] = settings.keycloak_global_client_secret
 response_secret = requests.put(
