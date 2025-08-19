@@ -1,3 +1,5 @@
+## The Federated Node AI is a modified version of the Federated Node. It allows the FN to be used as a mechanism for interacting with an offline LLM or SLM. 
+
 ![phems_logo](https://github.com/Aridhia-Open-Source/PHEMS_federated_node/blob/main/images/phems_logo_RGB_color_cropped_left%20align.JPG)
 ## The PHEMS Project
 
