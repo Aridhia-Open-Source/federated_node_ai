@@ -114,7 +114,7 @@ jobs:
       run:
         shell: bash
     runs-on: ubuntu-latest
-    if: github.env.IS_TAG == 'false' && inputs.BUILD_DOCKER
+    if: needs.init.outputs.is_tag == 'false' && inputs.BUILD_DOCKER
     steps:
       - uses: actions/checkout@v4
 
