@@ -106,6 +106,8 @@ jobs:
       - name: Run hadolint
         run: |
           make hadolint
+          echo "${{needs.init.outputs.is_tag}}"
+          echo "${{inputs.BUILD_DOCKER}}"
   tests:
     needs:
       - init
@@ -199,7 +201,7 @@ jobs:
           push: true
   release:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/helm-build.yml@main
-    if: always() || !failure() || needs.build.result == 'skipped' && inputs.BUILD_DOCKER
+    if: always() || !failure() || needs.build.result == 'skipped' && inputs.BUILD_HELM
     needs:
       - init
       - build
