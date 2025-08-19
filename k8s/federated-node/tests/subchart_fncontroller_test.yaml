@@ -43,7 +43,8 @@ kubernetesProvider:
         namespace: federatednode
       type: Opaque
       data:
-        password: dGVzdA==
+        GH_SECRET: dGVzdA==
+        GH_CLIENT_ID: dGVzdA==
 tests:
   - it: kc-secrets is copied correctly to controller ns
     template: ../templates/keycloak-secrets.yaml
@@ -57,5 +58,5 @@ tests:
           path: metadata.name
           value: github-app
       - equal:
-          path: data.password
+          path: data.GH_SECRET
           value: dGVzdA==

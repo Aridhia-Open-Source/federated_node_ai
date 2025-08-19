@@ -35,13 +35,6 @@ kubernetesProvider:
       type: Opaque
       data:
         password: dGVzdA==
-    - apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: awscert-config
-        namespace: federatednode
-      data:
-        stuff: things
 tests:
   - it: creates AWS storage
     template: copy-secrets.yaml
