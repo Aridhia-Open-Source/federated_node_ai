@@ -39,13 +39,6 @@ kubernetesProvider:
       type: Opaque
       data:
         password: dGVzdA==
-    - apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: awscert-config
-        namespace: federatednode
-      data:
-        stuff: things
 tests:
   # Mostly to make sure is created
   - it: simulate reuse-values args

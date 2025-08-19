@@ -51,23 +51,4 @@ cert-manager:
 ingress-nginx:
   enabled: false
 
-#dev stuff
-outboundMode: true
-fn-task-controller:
-  controller:
-    vol_path: /data/controller
-
-  storage:
-    aws:
-      fileSystemId: fs-12345aef
-      accessPointId: fsap-12345aef
-
-  idp:
-    github:
-      secret_name: github-app
-      secret_key: GH_SECRET
-      clientid_key: GH_CLIENT_ID
-      orgAndRepo: Aridhia-Open-Source/Federated-Node-Example-App
-  delivery:
-    github:
-      repository: Aridhia-Open-Source/Federated-Node-Example-App
+outboundMode: false
