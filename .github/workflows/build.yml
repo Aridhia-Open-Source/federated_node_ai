@@ -92,7 +92,7 @@ jobs:
           fi
   linters:
     needs: init
-    if: needs.init.outputs.is_tag == 'false'
+    if: ! github.env.IS_TAG
     defaults:
       run:
         shell: bash
@@ -114,7 +114,7 @@ jobs:
       run:
         shell: bash
     runs-on: ubuntu-latest
-    if: needs.init.outputs.is_tag == 'false' && inputs.BUILD_DOCKER
+    if: ! github.env.IS_TAG && inputs.BUILD_DOCKER
     steps:
       - uses: actions/checkout@v4
 
