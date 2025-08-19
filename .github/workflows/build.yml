@@ -92,7 +92,7 @@ jobs:
           fi
   linters:
     needs: init
-    if: ! github.env.IS_TAG
+    if: github.env.IS_TAG == 'false'
     defaults:
       run:
         shell: bash
