@@ -7,7 +7,7 @@ from settings import settings
 MAX_RETRIES = 20
 
 
-def health_check(kc_url:str):
+def health_check():
     """
     Simple kecyloak health check
     """
@@ -15,7 +15,7 @@ def health_check(kc_url:str):
     for i in range(1, MAX_RETRIES):
         print(f"Health check {i}/{MAX_RETRIES}")
         try:
-            hc_resp = requests.get(f"{kc_url}/realms/master")
+            hc_resp = requests.get(f"{settings.keycloak_url}/realms/master")
             if hc_resp.ok:
                 print("Keycloak is alive")
                 break
