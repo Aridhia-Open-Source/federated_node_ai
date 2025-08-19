@@ -10,7 +10,7 @@ from common import create_user_with_role, is_response_good, login, health_check
 from settings import settings
 
 
-health_check(settings.keycloak_url)
+health_check()
 
 print(f"Accessing to keycloak {settings.realm} realm")
 
