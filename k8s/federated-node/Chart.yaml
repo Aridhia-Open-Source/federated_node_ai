@@ -1,6 +1,6 @@
 apiVersion: v2
-name: federated-node
-description: A Helm chart for deploying the Federated Node on Kubernetes
+name: federated-node-ai
+description: A Helm chart for deploying the Federated Node on Kubernetes with the AI features
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -29,6 +29,9 @@ dependencies:
     repository: https://aridhia-open-source.github.io/federated-node-task-controller
     version: "1.1.0"
     condition: outboundMode
+  - name: federated-node-slm
+    repository: https://aridhia-open-source.github.io/federated-node-slm
+    version: "0.0.1"
   - name: cert-manager
     version: "v1.17.1"
     repository: https://charts.jetstack.io

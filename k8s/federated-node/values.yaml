@@ -18,7 +18,6 @@ namespaces: &namespaces
   keycloak: keycloak
   tasks: tasks
   controller: fn-controller
-  slm: ollama
 
 global:
   namespaces: *namespaces
@@ -159,3 +158,9 @@ ingress-nginx:
     #   externalTrafficPolicy: Local
     extraArgs:
       default-ssl-certificate: default/tls
+
+### Federated Node AI component
+federated-node-slm:
+  namespace: &ains fn-ai
+  ollama:
+    namespaceOverride: *ains
