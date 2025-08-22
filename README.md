@@ -6,6 +6,10 @@ This version of the contiains an addtional endpoint `/ask`. This allows the Fede
 
 Work is currently paused, but we expect it to resume later in 2025. 
 
+The main Federated Node project can be found here:
+https://github.com/Aridhia-Open-Source/PHEMS_federated_node
+
+
 ## The Federated Node
 
 The Federated Node is based on three existing open source projects:
