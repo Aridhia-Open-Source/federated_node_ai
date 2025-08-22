@@ -1,13 +1,10 @@
 ## The Federated Node AI is a modified version of the Federated Node. It allows the FN to be used as a mechanism for interacting with an offline LLM or SLM. 
 
-![phems_logo](https://github.com/Aridhia-Open-Source/PHEMS_federated_node/blob/main/images/phems_logo_RGB_color_cropped_left%20align.JPG)
-## The PHEMS Project
+This version of the contiains an addtional endpoint `/ask`. This allows the Federated Node to act as a mechanism for sending prompts to a remotely deployed LLM or SLM to perform data analysis. This has been succesfully tested with the results returned to an Aridhia Workspace.
 
-[PHEMS](https://phems.eu/) (short for “Pediatric Hospitals as European drivers for multi-party computation and synthetic data generation capabilities across clinical specialities and data types”) is a Europe-wide consortium of paediatric hospitals that:
+![FN_AI_Diagram](https://github.com/Aridhia-Open-Source/PHEMS_federated_node/blob/main/images/AI%20FN.png)
 
-> ...aims to revolutionize the way health data is managed and utilized across Europe. This project is particularly focused on addressing the challenges posed by privacy concerns and the complexity of data sharing due to varying interpretations of the EU General Data Protection Regulation (GDPR). By developing a decentralized and open health data ecosystem, PHEMS strives to facilitate easier access to health data, thereby advancing federated health data analysis and creating services for generating shareable synthetic datasets.
-
-As a technical partner of the project Aridhia has developed the Federated Node an open source component for running federated tasks. 
+Work is currently paused, but we expect it to resume later in 2025. 
 
 ## The Federated Node
 
