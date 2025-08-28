@@ -154,7 +154,7 @@ jobs:
         with:
           context: webserver
           file: webserver/build/Dockerfile
-          tags: ${{ vars.DOCKER_CR }}/${{ env.OWNER_LC }}/federated_node_run:${{ needs.init.outputs.tag }}
+          tags: ${{ vars.DOCKER_CR }}/${{ env.OWNER_LC }}/federated_node_ai_run:${{ needs.init.outputs.tag }}
           push: true
       - name: Build and push Keycloak image
         uses: docker/build-push-action@v5

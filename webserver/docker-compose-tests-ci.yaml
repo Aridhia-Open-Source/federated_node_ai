@@ -1,4 +1,4 @@
-name: federated_node_tests
+name: federated_node_ai_tests
 services:
   db:
     image: 'postgres:13-alpine'
@@ -76,6 +76,7 @@ services:
       PGUSER:
       PGPASSWORD:
       PYTHONPATH: /app
+      HOST_PATH:
       RESULTS_PATH:
       TASK_POD_RESULTS_PATH:
       KEYCLOAK_ADMIN:
