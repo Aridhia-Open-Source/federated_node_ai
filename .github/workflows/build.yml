@@ -194,7 +194,7 @@ jobs:
       VERSION: ${{ needs.init.outputs.chart_version }}
       APP_VERSION: ${{ needs.init.outputs.tag }}
       PATH_BUILD: k8s/federated-node
-      CHART_NAME: federated-node
+      CHART_NAME: federated-node-ai
       IS_TAG: ${{ needs.init.outputs.is_tag }}
       HAS_SUBCHART: true
   sumamry:
