@@ -43,10 +43,6 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/12/packages-micros
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g "$USER_GID" "$USERNAME" \
-    && useradd --uid "$USER_UID" --gid "$USER_GID" -m "$USERNAME" \
-    && chown -R "$USERNAME":"$USERNAME" /app
-
 COPY app /app
 ENV PATH="/.venv/bin:$PATH"
 USER ${USER_UID}
