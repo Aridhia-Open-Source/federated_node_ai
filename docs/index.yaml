@@ -1,3 +1,31 @@
 apiVersion: v1
-entries: {}
-generated: "2025-08-21T09:01:22.331415588+01:00"
+entries:
+  federated-node-ai:
+  - apiVersion: v2
+    appVersion: 1.3.0-ve76b7c
+    created: "2025-08-28T09:18:12.467436615Z"
+    dependencies:
+    - condition: outboundMode
+      name: fn-task-controller
+      repository: https://aridhia-open-source.github.io/federated-node-task-controller
+      version: 1.1.0
+    - name: federated-node-slm
+      repository: https://aridhia-open-source.github.io/federated-node-slm
+      version: 0.0.1
+    - condition: cert-manager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.17.1
+    - condition: ingress-nginx.enabled
+      name: ingress-nginx
+      repository: https://kubernetes.github.io/ingress-nginx
+      version: 4.12.1
+    description: A Helm chart for deploying the Federated Node on Kubernetes with
+      the AI features
+    digest: c5b041109a36fa48ce9d8653ef330d99dac5d4c737df452ac781b436c180f3ae
+    name: federated-node-ai
+    type: application
+    urls:
+    - federated-node-ai-1.3.0-ve76b7c.tgz
+    version: 1.3.0-ve76b7c
+generated: "2025-08-28T09:18:12.456599985Z"
