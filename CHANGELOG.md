@@ -3,6 +3,8 @@
 ## 1.3.0
 - Upgraded all python images to use `python:3.13-slim`
 - Upgraded alpine image to 3.22
+- Added a `taskReview` flag on the values to enable task results review before being released. Set to `false` by default.
+- Results can also be delivered automatically after bein g triggered by the API call directly. The `/tasks/<id>/results` endpoint will still work.
 
 ## 1.3.0
 - Added the option to setup an initial user to avoid using the backend credentials. To set it up, the following section in the values file has been added:
