@@ -3,8 +3,6 @@
 ## 1.3.0
 - Upgraded all python images to use `python:3.13-slim`
 - Upgraded alpine image to 3.22
-
-## 1.3.0
 - Added a `taskReview` flag on the values to enable task results review before being released. Set to `false` by default.
 - Results can also be delivered automatically after bein g triggered by the API call directly. The `/tasks/<id>/results` endpoint will still work.
 
