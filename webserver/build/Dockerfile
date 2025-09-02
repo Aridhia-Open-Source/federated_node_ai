@@ -13,7 +13,8 @@ COPY pyproject.toml /
 WORKDIR /app
 
 RUN groupadd -g "$USER_GID" "$USERNAME" \
-    && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" \
+    && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" --create-home \
+    && chown -R "$USERNAME":"$USERNAME" "/home/$USERNAME" \
     && chown -R "$USERNAME":"$USERNAME" /app
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
