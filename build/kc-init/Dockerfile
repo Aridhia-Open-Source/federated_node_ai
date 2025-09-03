@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y curl \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && /root/.local/bin/uv init \
-    && /root/.local/bin/uv add requests \
+    && /root/.local/bin/uv add requests kubernetes \
     && groupadd -g "$USER_GID" "$USERNAME" \
     && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" \
     && chown -R "$USERNAME":"$USERNAME" /scripts \

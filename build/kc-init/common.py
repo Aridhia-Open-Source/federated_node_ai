@@ -1,30 +1,40 @@
+import os
 import requests
 import time
+from kubernetes import client, config
 
 
 MAX_RETRIES = 20
 
 
-def health_check(kc_url:str):
+def health_check():
     """
-    Simple kecyloak health check
+    Checks Keycloak's pod ready state, as the normal health_check
+    is not enough, and 1+ replicas can reset progress.
     """
-    print("Health check on keycloak pod before starting")
+    print("Checking on keycloak's pod's ready state")
+    if os.getenv('KUBERNETES_SERVICE_HOST'):
+        # Get configuration for an in-cluster setup
+        config.load_incluster_config()
+    else:
+        # Get config from outside the cluster. Mostly DEV
+        config.load_kube_config()
+
+    k8s = client.CoreV1Api()
     for i in range(1, MAX_RETRIES):
-        print(f"Health check {i}/{MAX_RETRIES}")
-        try:
-            hc_resp = requests.get(f"{kc_url}/realms/master")
-            if hc_resp.ok:
-                print("Keycloak is alive")
-                break
-        except requests.exceptions.ConnectionError:
-            pass
-        print("Health check failed...retrying in 10 seconds")
+        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=os.getenv("KC_NAMESPACE")).items
+        if len([pod.metadata.name for pod in kc_pods if pod.status.container_statuses[0].ready]) < int(os.getenv("KC_REPLICAS")):
+            print("Not all pods ready")
+        else:
+            break
+
+        if i == MAX_RETRIES:
+            print("Max retries reached. Keycloak pods not ready")
+            exit(1)
+
+        print("Retrying status in 10 seconds")
         time.sleep(10)
 
-    if i == MAX_RETRIES:
-        print("Keycloak cannot be reached")
-        exit(1)
 
 def login(kc_url:str, kc_pass:str) -> str:
     """

@@ -25,7 +25,7 @@ def is_response_good(response:Response) -> None:
     exit(1)
 
 
-health_check(KEYCLOAK_URL)
+health_check()
 
 print(f"Accessing to keycloak {REALM} realm")
 
