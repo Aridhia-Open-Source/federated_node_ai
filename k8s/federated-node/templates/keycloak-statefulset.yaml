@@ -32,6 +32,11 @@ spec:
           command: ["keycloak-reset"]
           {{ include "nonRootSC" . }}
           env:
+          - name: KEYCLOAK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: kc-secrets
+                key: KEYCLOAK_GLOBAL_CLIENT_SECRET
           - name: PGPASSWORD
             valueFrom:
               secretKeyRef:

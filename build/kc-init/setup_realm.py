@@ -263,19 +263,5 @@ if is_response_good(update_settings):
   print(update_settings.text)
   exit(1)
 
-# Updating client secret
-print("Updating client secret")
-response_get = requests.get(f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{client_id}", headers=headers)
-body = response_get.json()
-body["secret"] = KEYCLOAK_SECRET
-response_secret = requests.put(
-    f"{KEYCLOAK_URL}/admin/realms/{KEYCLOAK_REALM}/clients/{client_id}",
-    headers=headers,
-    data=json.dumps(body)
-  )
-if not response_secret.ok:
-    print(response.json())
-    exit(1)
-
 print("Done!")
 exit(0)
