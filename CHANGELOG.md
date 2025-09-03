@@ -1,5 +1,12 @@
 # Releases Changelog
 
+## 1.4.0
+
+### Bugfixes
+- Fixed an intermittent issue with authentication post helm upgrades.
+- Removed unnecessary jobs for keycloak credentials reset.
+- Reduced the rate of failures for `keycloak-realm-init` job.
+
 ## 1.3.0
 - Upgraded all python images to use `python:3.13-slim`
 - Upgraded alpine image to 3.22
