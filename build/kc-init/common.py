@@ -16,9 +16,11 @@ def health_check():
     if os.getenv('KUBERNETES_SERVICE_HOST'):
         # Get configuration for an in-cluster setup
         config.load_incluster_config()
-    else:
+    elif os.path.exists(config.KUBE_CONFIG_DEFAULT_LOCATION):
         # Get config from outside the cluster. Mostly DEV
         config.load_kube_config()
+    else:
+        return
 
     k8s = client.CoreV1Api()
     for i in range(1, MAX_RETRIES):
