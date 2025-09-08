@@ -5,7 +5,7 @@
 ### Bugfixes
 - Fixed an intermittent issue with authentication post helm upgrades.
 - Removed unnecessary jobs for keycloak credentials reset.
-- Reduced the rate of failures for `keycloak-realm-init` job.
+- Changed `keycloak-realm-init` to a DaemonSet so it will run automatically at cluster restart.
 
 ## 1.3.0
 - Upgraded all python images to use `python:3.13-slim`

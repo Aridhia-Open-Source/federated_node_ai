@@ -1,20 +1,27 @@
-apiVersion: batch/v1
-kind: Job
+{{- define "kcDaemonName" -}}
+  {{ print "keycloak-realm-init" }}
+{{- end -}}
+apiVersion: apps/v1
+kind: DaemonSet
 metadata:
-  name: keycloak-realm-init
+  name: {{ include "kcDaemonName" . }}
   namespace: {{ include "kc_namespace" . }}
+  labels:
+    name: {{ include "kcDaemonName" . }}
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook-weight: "-1"
     {{ template "defaultAnnotations" . }}
 spec:
-  ttlSecondsAfterFinished: 30
+  selector:
+    matchLabels:
+      name: {{ include "kcDaemonName" . }}
   template:
     metadata:
-      name: "{{.Release.Name}}"
+      labels:
+        name: {{ include "kcDaemonName" . }}
     spec:
-      restartPolicy: Never
       containers:
         - name: post-install-job
           imagePullPolicy: {{ .Values.pullPolicy }}
