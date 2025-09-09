@@ -47,6 +47,7 @@ services:
     build:
       context: ../build/kc-init
       dockerfile: Dockerfile
+    command: ["/bin/sh", "-c", "python3 /scripts/setup_realm.py"]
     links:
       - keycloak
     depends_on:
