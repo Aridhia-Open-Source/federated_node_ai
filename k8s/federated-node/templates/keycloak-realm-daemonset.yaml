@@ -32,7 +32,7 @@ spec:
             - name: KC_NAMESPACE
               value: {{ include "kc_namespace" . }}
             - name: KC_REPLICAS
-              value: {{ .Values.keycloak.replicas | quote }}
+              value: {{ .Values.keycloak.replicas | default 2 | quote }}
           envFrom:
           - configMapRef:
               name: keycloak-config

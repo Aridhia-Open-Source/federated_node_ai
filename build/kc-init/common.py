@@ -5,7 +5,7 @@ from kubernetes import client, config
 
 
 MAX_RETRIES = 20
-
+MAX_REPLICAS = int(os.getenv("KC_NAMESPACE", "2"))
 
 def health_check():
     """
@@ -24,7 +24,7 @@ def health_check():
 
     k8s = client.CoreV1Api()
     for i in range(1, MAX_RETRIES):
-        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=os.getenv("KC_NAMESPACE")).items
+        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=MAX_REPLICAS).items
         if len([pod.metadata.name for pod in kc_pods if pod.status.container_statuses[0].ready]) < int(os.getenv("KC_REPLICAS")):
             print("Not all pods ready")
         else:
