@@ -1,5 +1,10 @@
 # Releases Changelog
 
+## 1.4.0
+
+### Bugfix
+- Fixed an issue with admins not being able to get results regardless of review status
+
 ## 1.3.0
 - Upgraded all python images to use `python:3.13-slim`
 - Upgraded alpine image to 3.22
