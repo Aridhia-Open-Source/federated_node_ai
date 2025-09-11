@@ -24,8 +24,8 @@ def health_check():
 
     k8s = client.CoreV1Api()
     for i in range(1, MAX_RETRIES):
-        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=MAX_REPLICAS).items
-        if len([pod.metadata.name for pod in kc_pods if pod.status.container_statuses[0].ready]) < int(os.getenv("KC_REPLICAS")):
+        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=os.getenv("KC_NAMESPACE")).items
+        if len([pod.metadata.name for pod in kc_pods if pod.status.container_statuses[0].ready]) < MAX_REPLICAS:
             print("Not all pods ready")
         else:
             break
