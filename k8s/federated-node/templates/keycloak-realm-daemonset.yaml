@@ -22,6 +22,7 @@ spec:
       labels:
         name: {{ include "kcDaemonName" . }}
     spec:
+      serviceAccountName: k8s-keycloak-handler
       containers:
         - name: post-install-job
           imagePullPolicy: {{ .Values.pullPolicy }}

@@ -1,6 +1,7 @@
 # Releases Changelog
 
 ## 1.4.0
+- Added a dedicated Cluster Role for keycloak init daemonset
 
 ### Bugfixes
 - Fixed an intermittent issue with authentication post helm upgrades.
