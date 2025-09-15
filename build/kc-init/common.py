@@ -5,7 +5,7 @@ from kubernetes import client, config
 
 
 MAX_RETRIES = 20
-MAX_REPLICAS = int(os.getenv("KC_NAMESPACE", "2"))
+MAX_REPLICAS = int(os.getenv("KC_REPLICAS", "2"))
 
 def health_check():
     """
