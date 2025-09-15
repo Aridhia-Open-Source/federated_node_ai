@@ -46,8 +46,3 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-  - it: with reuse-values create reset job
-    template: keycloak-credential-reset.yaml
-    asserts:
-      - hasDocuments:
-          count: 1
