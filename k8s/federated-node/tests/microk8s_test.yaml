@@ -73,7 +73,7 @@ tests:
           path: provisioner
           value: Local
   - it: simulate reuse-values args
-    template: keycloak-realm-job.yaml
+    template: keycloak-realm-daemonset.yaml
     asserts:
       - hasDocuments:
           count: 1
