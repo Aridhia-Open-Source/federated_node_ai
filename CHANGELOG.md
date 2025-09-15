@@ -1,8 +1,12 @@
 # Releases Changelog
 
 ## 1.4.0
+- Added a dedicated Cluster Role for keycloak init daemonset
 
-### Bugfix
+### Bugfixes
+- Fixed an intermittent issue with authentication post helm upgrades.
+- Removed unnecessary jobs for keycloak credentials reset.
+- Changed `keycloak-realm-init` to a DaemonSet so it will run automatically at cluster restart.
 - Fixed an issue with admins not being able to get results regardless of review status
 
 ## 1.3.0
