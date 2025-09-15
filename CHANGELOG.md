@@ -13,6 +13,9 @@
 Where a secret needs to be created in the helm chart base namespace. The `name` should be the secret name.
 The `passKey` is the secret's key that holds the password for the user. The rest of the fields are optional, but it is advisable to set them.
 
+### Bugfix
+- Fixed an issue with admins not being able to get results regardless of review status
+
 ## 1.3.0
 - Upgraded all python images to use `python:3.13-slim`
 - Upgraded alpine image to 3.22
