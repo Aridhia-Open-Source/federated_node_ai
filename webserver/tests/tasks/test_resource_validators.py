@@ -56,6 +56,8 @@ class TestResourceValidators:
                 "memory": "1M"
             }
         }
+        mocker.patch("app.helpers.keycloak.Keycloak.is_user_admin",
+                     return_value=True)
         mocker.patch("app.helpers.keycloak.Keycloak.get_token_from_headers",
                      return_value="")
         mocker.patch("app.helpers.keycloak.Keycloak.decode_token",

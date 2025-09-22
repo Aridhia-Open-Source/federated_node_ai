@@ -17,7 +17,7 @@ class TestAudits:
         Test that after a simple GET call we have an audit entry
         """
         r = client.get("/datasets/", headers=simple_admin_header)
-        assert r.status_code == 201, r.text
+        assert r.status_code == 200, r.text
         list_audit = db.session.execute(select(Audit)).all()
         assert len(list_audit) > 0
         response = client.get("/audit", headers=simple_admin_header)
@@ -33,7 +33,7 @@ class TestAudits:
             'requested_by': admin_user_uuid,
             'http_method': 'GET',
             'ip_address': '127.0.0.1',
-            'status_code': 201
+            'status_code': 200
         }.items()
 
     def test_get_audit_events_not_by_standard_users(
@@ -57,7 +57,7 @@ class TestAudits:
         won't fail with an empty body
         """
         response = client.get("/datasets", headers=post_json_admin_header)
-        assert response.status_code == 201
+        assert response.status_code == 200
         log = Audit.query.filter(Audit.endpoint == '/datasets').one_or_none()
         assert log.details is None
 

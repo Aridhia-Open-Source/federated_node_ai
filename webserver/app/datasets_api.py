@@ -11,7 +11,6 @@ datasets-related endpoints:
 - POST /datasets/selection/beacon
 """
 from http import HTTPStatus
-import json
 from datetime import datetime
 from flask import Blueprint, request
 from kubernetes.client import ApiException
@@ -44,7 +43,7 @@ def get_datasets():
     """
     GET /datasets/ endpoint. Returns a list of all datasets
     """
-    return Dataset.get_all(), 200
+    return Dataset.get_all(), HTTPStatus.OK
 
 @bp.route('/', methods=['POST'])
 @bp.route('', methods=['POST'])

@@ -74,7 +74,7 @@ class Task(db.Model, BaseModel):
         self.resources = resources
         self.inputs = inputs
         self.outputs = outputs
-        self.is_from_controller = kwargs.get("from_controller")
+        self.is_from_controller = kwargs.get("task_controller", False)
         self.db_query = kwargs.get("db_query", {})
 
     @classmethod
@@ -247,7 +247,7 @@ class Task(db.Model, BaseModel):
         return (datetime.now() + timedelta(days=CLEANUP_AFTER_DAYS)).strftime("%Y%m%d")
 
     def needs_crd(self):
-        return ((not self.is_from_controller) and self.deliver_to)
+        return ((not self.is_from_controller) and TASK_CONTROLLER)
 
     def run(self, validate=False):
         """
@@ -296,7 +296,7 @@ class Task(db.Model, BaseModel):
             logger.error(json.loads(e.body))
             raise InvalidRequest(f"Failed to run pod: {e.reason}") from e
 
-        if self.needs_crd() and not self.is_from_controller:
+        if self.needs_crd():
             # create CRD
             self.create_controller_crd()
 
@@ -505,53 +505,12 @@ class Task(db.Model, BaseModel):
         """
         CRD name is set here for consistency's sake
         """
-        return f"fn-task-{self.id}"
-
-    def create_controller_crd(self):
-        """
-        In case this is a task triggered by users
-        directly through the API, create a CRD
-        so that the task controller can deliver resutls automatically
-        Some info like the idp and source is not actively used
-        by the controller at this stage, so we populate them
-        with default values
-        """
-        crd_client = KubernetesCRDClient()
-        if self.get_task_crd():
-            logging.info(f"CRD {self.crd_name()} already exists, skipping")
-            return
-        try:
-            crd_client.create_cluster_custom_object(
-                CRD_DOMAIN, 'v1', 'analytics',
-                {
-                    "apiVersion": f"{CRD_DOMAIN}/v1",
-                    "kind": "Analytics",
-                    "metadata": {
-                        "annotations": {
-                            f"{CRD_DOMAIN}/user": 'ok',
-                            f"{CRD_DOMAIN}/task_id": str(self.id),
-                            f"{CRD_DOMAIN}/done": 'true'
-                        },
-                        "name": self.crd_name()
-                    },
-                    "spec": {
-                        "dataset": {"name": self.dataset.name},
-                        "image": self.docker_image,
-                        "project": "federated_node",
-                        "source": {
-                            "organization": "Aridhia-Open-Source",
-                            "repository": "Aridhia-Open-Source/PHEMS_federated_node"
-                        },
-                        "results": self.deliver_to,
-                        "user": {
-                            "idpId": self.requested_by,
-                            "username": Keycloak().get_user_by_id(self.requested_by)["username"]
-                        }
-                    }
-                }
-            )
-        except ApiException as apie:
-            raise TaskCRDExecutionException(apie.body, apie.status) from apie
+        v1_crds = KubernetesCRDClient().list_cluster_custom_object(
+            CRD_DOMAIN, "v1", "analytics"
+        )
+        for crd in v1_crds["items"]:
+            if crd["metadata"]["annotations"][f"{CRD_DOMAIN}/task_id"] == str(self.id):
+                return crd["metadata"]["name"]
 
     def get_task_crd(self) -> V1CustomResourceDefinition|None:
         """
@@ -560,7 +519,12 @@ class Task(db.Model, BaseModel):
         """
         crd_client = KubernetesCRDClient()
         try:
-            return crd_client.get_cluster_custom_object(CRD_DOMAIN,"v1","analytics",self.crd_name())
+            return crd_client.get_cluster_custom_object(
+                CRD_DOMAIN,
+                "v1",
+                "analytics",
+                self.crd_name()
+            )
         except ApiException as apie:
             if apie.status == 404:
                 return None
@@ -574,7 +538,7 @@ class Task(db.Model, BaseModel):
         crd_client = KubernetesCRDClient()
         crd_client.api_client.set_default_header('Content-Type', 'application/json-patch+json')
         try:
-            task_crd = self.get_task_crd()
+            task_crd: V1CustomResourceDefinition | None = self.get_task_crd()
             if not task_crd:
                 raise TaskExecutionException("Failed to update result delivery")
 

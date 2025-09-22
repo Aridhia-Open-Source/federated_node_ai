@@ -118,7 +118,7 @@ class TestDatasets(MixinTestDataset):
         Get all dataset is possible for non-admin users
         """
         response = client.get("/datasets/", headers=simple_user_header)
-        assert response.status_code == 201
+        assert response.status_code == 200
 
     def test_get_dataset_by_id_200(
             self,

@@ -24,4 +24,4 @@ def get_audit_logs():
     GET /audit endpoint.
         Returns a list of audit entries
     """
-    return parse_query_params(Audit, request.args.copy()), 200
+    return parse_query_params(Audit, request.args.copy()), HTTPStatus.OK

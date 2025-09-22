@@ -3,7 +3,7 @@ from kubernetes.client.exceptions import ApiException
 
 from tests.fixtures.azure_cr_fixtures import *
 from tests.fixtures.tasks_fixtures import *
-from app.helpers.const import CLEANUP_AFTER_DAYS
+from app.helpers.const import CLEANUP_AFTER_DAYS, CRD_DOMAIN
 
 
 class TestTaskResults:
@@ -73,12 +73,9 @@ class TestTaskResults:
 class TestResultsReview:
     def test_default_review_status(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         client,
         task_mock,
-        results_job_mock,
         set_task_review_env
     ):
         """
@@ -94,30 +91,30 @@ class TestResultsReview:
 
     def test_review_approved(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         simple_user_header,
         client,
         task_mock,
         results_job_mock,
         k8s_client,
-        set_task_review_env
+        set_task_review_env,
+        v1_crd_mock,
+        mocker
     ):
         """
         Test to make sure the approval allows the user
         to retrieve their results
         """
+        mocker.patch(
+            "app.models.task.Task.get_task_crd",
+            return_value=None
+        )
         response = client.post(
             f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
         )
-        assert response.status_code == 202
-        k8s_client["patch_cluster_custom_object"].assert_called_with(
-            'tasks.federatednode.com', 'v1', 'analytics', f'fn-task-{task_mock.id}', [
-                {'op': 'add', 'path': '/metadata/annotations', 'value': {'tasks.federatednode.com/approved': 'True'}}
-            ]
-        )
+        assert response.status_code == 201
+        v1_crd_mock.return_value.patch_cluster_custom_object.assert_not_called()
 
         response = client.get(
             f'/tasks/{task_mock.id}/results',
@@ -125,10 +122,33 @@ class TestResultsReview:
         )
         assert response.status_code == 200
 
+    def test_task_from_controller_review_approved(
+        self,
+        simple_admin_header,
+        client,
+        task_mock,
+        set_task_review_env,
+        set_task_controller_env,
+        v1_crd_mock,
+        mocker
+    ):
+        """
+        Test to make sure the approval allows the task controller CRD
+        to be updated, and the results to be delivered
+        """
+        mocker.patch(
+            "app.models.task.Task.get_task_crd",
+            return_value={"metadata": {"annotations": {}}}
+        )
+        response = client.post(
+            f'/tasks/{task_mock.id}/results/approve',
+            headers=simple_admin_header
+        )
+        assert response.status_code == 201
+        v1_crd_mock.return_value.patch_cluster_custom_object.assert_called()
+
     def test_admin_review_pending(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         client,
         results_job_mock,
@@ -148,11 +168,8 @@ class TestResultsReview:
 
     def test_default_review_pending(
         self,
-        cr_client,
-        registry_client,
         simple_user_header,
         client,
-        results_job_mock,
         task_mock,
         set_task_review_env
     ):
@@ -169,12 +186,9 @@ class TestResultsReview:
 
     def test_review_blocked(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         simple_user_header,
         client,
-        results_job_mock,
         task_mock,
         set_task_review_env
     ):
@@ -186,7 +200,7 @@ class TestResultsReview:
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
-        assert response.status_code == 202
+        assert response.status_code == 201
 
         response = client.get(
             f'/tasks/{task_mock.id}/results',
@@ -197,11 +211,8 @@ class TestResultsReview:
 
     def test_review_task_not_found(
         self,
-        cr_client,
-        registry_client,
         simple_user_header,
         client,
-        results_job_mock,
         task_mock,
         set_task_review_env
     ):
@@ -217,11 +228,8 @@ class TestResultsReview:
 
     def test_review_twice(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         client,
-        results_job_mock,
         task_mock,
         set_task_review_env
     ):
@@ -232,7 +240,7 @@ class TestResultsReview:
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
-        assert response.status_code == 202
+        assert response.status_code == 201
         response = client.post(
             f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
@@ -242,64 +250,59 @@ class TestResultsReview:
 
     def test_review_crd_patch_error(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         client,
-        results_job_mock,
         task_mock,
-        k8s_client,
         k8s_crd_500,
-        set_task_review_env
+        set_task_review_env,
+        v1_crd_mock,
+        mocker
     ):
         """
-        Tests that review can only happen once
+        Tests that review fails when the CRD is not found
         """
-        k8s_client["patch_cluster_custom_object"].side_effect = k8s_crd_500
+        mocker.patch(
+            "app.models.task.Task.get_task_crd",
+            return_value={"metadata": {"annotations": {}}}
+        )
+        v1_crd_mock.return_value.patch_cluster_custom_object.side_effect = k8s_crd_500
 
         response = client.post(
-            f'/tasks/{task_mock.id}/results/block',
+            f'/tasks/{task_mock.id}/results/approve',
             headers=simple_admin_header
         )
         assert response.status_code == 500
-        k8s_client["patch_cluster_custom_object"].assert_called()
+        v1_crd_mock.return_value.patch_cluster_custom_object.assert_called()
 
         assert response.json['error'] == "Could not activate automatic delivery"
 
     def test_review_crd_not_found(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         client,
-        results_job_mock,
         task_mock,
-        k8s_client,
         k8s_crd_404,
-        set_task_review_env
+        set_task_review_env,
+        v1_crd_mock
     ):
         """
         Tests that if a task without a CRD will go through
-        normal process without calling patch_cluster_custom_object
+        normal process without calling patch_cluster_custom_object_mock
         """
-        k8s_client["get_cluster_custom_object"].side_effect = k8s_crd_404
+        v1_crd_mock.return_value.get_cluster_custom_object.side_effect = k8s_crd_404
 
         response = client.post(
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
         )
-        assert response.status_code == 202
-        k8s_client["patch_cluster_custom_object"].assert_not_called()
-        task_mock
+        assert response.status_code == 201
+        v1_crd_mock.return_value.patch_cluster_custom_object.assert_not_called()
 
     def test_review_disabled(
         self,
-        cr_client,
-        registry_client,
         simple_admin_header,
         client,
-        results_job_mock,
-        task_mock,
+        task_mock
     ):
         """
         Tests that review cannot be used when the env var

@@ -177,7 +177,7 @@ def approve_results(task_id):
     if not TASK_REVIEW:
         raise FeatureNotAvailableException()
 
-    task = Task.get_by_id(task_id)
+    task: Task = Task.get_by_id(task_id)
     if task.review_status is not None:
         raise InvalidRequest("Task has been already reviewed")
 
@@ -186,10 +186,11 @@ def approve_results(task_id):
         task.update_task_crd(True)
 
     task.review_status = True
+    session.commit()
 
     return {
         "status": task.get_review_status()
-    }, HTTPStatus.ACCEPTED
+    }, HTTPStatus.CREATED
 
 @bp.route('/<task_id>/results/block', methods=['POST'])
 @audit
@@ -215,4 +216,4 @@ def block_results(task_id):
 
     return {
         "status": task.get_review_status()
-    }, 201
+    }, HTTPStatus.CREATED

@@ -96,93 +96,6 @@ class TestGetTasks:
         )
         assert resp.status_code == 200, resp.json
 
-def test_create_task_with_delivery_missing_fields(
-        cr_client,
-        post_json_admin_header,
-        client,
-        registry_client,
-        task_body,
-        k8s_client,
-        k8s_crd_404
-    ):
-    """
-    Tests task creation returns 201. Should be consistent
-    with or without the task_controller flag
-    """
-    k8s_client["get_cluster_custom_object"].side_effect = k8s_crd_404
-    k8s_client["create_cluster_custom_object"].side_effect = ApiException(
-        http_resp=Mock(
-            status=400,
-            reason="Error",
-            data=json.dumps({
-                "details": {
-                    "causes": [
-                        {
-                            "message": "Required value",
-                            "field": "spec.results.auth_type"
-                        }
-                    ]
-                }
-            })
-        )
-    )
-    task_body["deliver_to"] = {
-        "other": {
-            "url": "something.com"
-        }
-    }
-    response = client.post(
-        '/tasks/',
-        data=json.dumps(task_body),
-        headers=post_json_admin_header
-    )
-    assert response.status_code == 400
-    assert response.json["error"] == {'Missing values': ['deliver_to.auth_type']}
-
-def test_create_task_with_delivery_top_level_only(
-        cr_client,
-        post_json_admin_header,
-        client,
-        registry_client,
-        task_body,
-        k8s_client,
-        k8s_crd_404
-    ):
-    """
-    Tests task creation returns 201. Should be consistent
-    with or without the task_controller flag
-    """
-    error_message = "Unsupported value. Only accepting \"Bearer\", \"AzCopy\" and \"Basic\""
-    k8s_client["get_cluster_custom_object"].side_effect = k8s_crd_404
-    k8s_client["create_cluster_custom_object"].side_effect = ApiException(
-        http_resp=Mock(
-            status=400,
-            reason="Error",
-            data=json.dumps({
-                "details": {
-                    "causes": [
-                        {
-                            "message": error_message
-                        }
-                    ]
-                }
-            })
-        )
-    )
-    task_body["deliver_to"] = {
-        "other": {
-            "url": "something.com",
-            "auth_type": "somethingelse"
-        }
-    }
-    response = client.post(
-        '/tasks/',
-        data=json.dumps(task_body),
-        headers=post_json_admin_header
-    )
-    assert response.status_code == 400
-    assert response.json["error"] == [error_message]
-
     @mock.patch('app.helpers.keycloak.Keycloak.is_user_admin', return_value=False)
     def test_get_task_by_id_non_admin_non_owner(
             self,
@@ -300,23 +213,24 @@ class TestPostTask:
             client,
             reg_k8s_client,
             registry_client,
-            task_body
+            task_body,
+            v1_crd_mock
         ):
         """
         Tests task creation returns 201
         """
         response = client.post(
             '/tasks/',
-            data=json.dumps(task_body),
+            json=task_body,
             headers=post_json_admin_header
         )
         assert response.status_code == 201
         reg_k8s_client["create_namespaced_pod_mock"].assert_called()
-        reg_k8s_client["create_cluster_custom_object"].assert_not_called()
+        v1_crd_mock.return_value.create_cluster_custom_object.assert_not_called()
         pod_body = reg_k8s_client["create_namespaced_pod_mock"].call_args.kwargs["body"]
         # Make sure the two init containers are created
         assert len(pod_body.spec.init_containers) == 2
-        assert [pod.name for pod in pod_body.spec.init_containers] == ["init-1", "fetch-data"]
+        assert [pod.name for pod in pod_body.spec.init_containers] == [f"init-{response.json["task_id"]}", "fetch-data"]
 
     def test_create_task_no_db_query(
             self,
@@ -705,7 +619,8 @@ class TestPostTask:
             client,
             registry_client,
             k8s_client,
-            task_body
+            task_body,
+            v1_crd_mock
         ):
         """
         Tests task creation returns 201. It should not try to
@@ -717,7 +632,7 @@ class TestPostTask:
             headers=post_json_admin_header
         )
         assert response.status_code == 201
-        k8s_client["create_cluster_custom_object"].assert_not_called()
+        v1_crd_mock.return_value.create_cluster_custom_object.assert_not_called()
 
     def test_create_task_controller_deployed_create_crd(
             self,
@@ -727,7 +642,8 @@ class TestPostTask:
             registry_client,
             set_task_controller_env,
             k8s_client,
-            task_body
+            task_body,
+            v1_crd_mock
         ):
         """
         Tests task creation returns 201. It should try to
@@ -739,7 +655,7 @@ class TestPostTask:
             headers=post_json_admin_header
         )
         assert response.status_code == 201
-        k8s_client["create_cluster_custom_object"].assert_called()
+        v1_crd_mock.return_value.create_cluster_custom_object.assert_called()
 
     def test_create_task_from_controller(
             self,
@@ -748,6 +664,7 @@ class TestPostTask:
             client,
             registry_client,
             k8s_client,
+            v1_crd_mock,
             task_body
         ):
         """
@@ -761,7 +678,7 @@ class TestPostTask:
             headers=post_json_admin_header
         )
         assert response.status_code == 201
-        k8s_client["create_cluster_custom_object"].assert_not_called()
+        v1_crd_mock.return_value.create_cluster_custom_object.assert_not_called()
 
     def test_task_connection_string_postgres(
             self,
