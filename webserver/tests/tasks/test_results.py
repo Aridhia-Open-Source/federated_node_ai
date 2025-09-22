@@ -25,7 +25,7 @@ class TestTaskResults:
             headers=simple_admin_header
         )
         assert response.status_code == 200
-        assert response.content_type == "application/x-tar"
+        assert response.content_type == "application/zip"
 
     def test_get_results_job_creation_failure(
         self,
@@ -125,7 +125,28 @@ class TestResultsReview:
         )
         assert response.status_code == 200
 
-    def test_review_pending(
+    def test_admin_review_pending(
+        self,
+        cr_client,
+        registry_client,
+        simple_admin_header,
+        client,
+        results_job_mock,
+        task_mock,
+        set_task_review_env
+    ):
+        """
+        Test to make sure the admin can fetch their results
+        before the review took place
+        """
+        response = client.get(
+            f'/tasks/{task_mock.id}/results',
+            headers=simple_admin_header
+        )
+        assert response.status_code == 200
+        assert response.content_type == "application/zip"
+
+    def test_default_review_pending(
         self,
         cr_client,
         registry_client,
@@ -290,4 +311,4 @@ class TestResultsReview:
                 headers=simple_admin_header
             )
             assert response.status_code == 400
-            assert response.json['error'] == "Task reviews are not enabled on this Federated Node"
+            assert response.json['error'] == "This feature is not available on this Federated Node"

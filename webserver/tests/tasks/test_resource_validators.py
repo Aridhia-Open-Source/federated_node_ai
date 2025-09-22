@@ -13,6 +13,7 @@ class TestResourceValidators:
             user_uuid,
             registry_client,
             cr_client,
+            mocks_kc_tasks,
             task_body
         ):
         """
@@ -67,6 +68,7 @@ class TestResourceValidators:
             user_uuid,
             cr_client,
             registry_client,
+            mocks_kc_tasks,
             task_body
         ):
         """
@@ -99,6 +101,7 @@ class TestResourceValidators:
             user_uuid,
             cr_client,
             registry_client,
+            mocks_kc_tasks,
             task_body
         ):
         """
@@ -132,6 +135,7 @@ class TestResourceValidators:
             user_uuid,
             cr_client,
             registry_client,
+            mocks_kc_tasks,
             task_body
         ):
         """
@@ -162,6 +166,7 @@ class TestResourceValidators:
             user_uuid,
             cr_client,
             registry_client,
+            mocks_kc_tasks,
             task_body
         ):
         """

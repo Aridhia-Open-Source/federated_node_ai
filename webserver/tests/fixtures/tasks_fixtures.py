@@ -11,10 +11,10 @@ from app.models.task import Task
 
 
 @fixture(scope='function')
-def task_body(dataset, container, user_uuid):
+def task_body(dataset, container):
     return deepcopy({
         "name": "Test Task",
-        "requested_by": user_uuid,
+        "requested_by": "das9908-as098080c-9a80s9",
         "executors": [
             {
                 "image": container.full_image_name(),
@@ -25,13 +25,17 @@ def task_body(dataset, container, user_uuid):
                 }
             }
         ],
+        "db_query": {
+            "query": "SELECT * FROM table",
+            "dialect": "postgres"
+        },
         "description": "First task ever!",
         "tags": {
             "dataset_id": dataset.id,
             "test_tag": "some content"
         },
-        "inputs":{},
-        "outputs":{},
+        "inputs": {},
+        "outputs": {},
         "resources": {},
         "volumes": {}
     })
@@ -145,3 +149,8 @@ def k8s_crd_404():
 def set_task_review_env(mocker):
     mocker.patch('app.models.task.TASK_REVIEW', return_value="enabled")
     mocker.patch('app.tasks_api.TASK_REVIEW', return_value="enabled")
+
+@fixture()
+def set_task_controller_env(mocker):
+    mocker.patch('app.models.task.TASK_CONTROLLER', return_value="enabled")
+    mocker.patch('app.tasks_api.TASK_CONTROLLER', return_value="enabled")

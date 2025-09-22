@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from sqlalchemy import select
 
-from app.helpers.db import db
+from app.helpers.base_model import db
 from app.models.audit import Audit
 
 
@@ -11,7 +11,7 @@ class TestAudits:
             self,
             simple_admin_header,
             client,
-            user_uuid
+            admin_user_uuid
         ):
         """
         Test that after a simple GET call we have an audit entry
@@ -26,11 +26,11 @@ class TestAudits:
 
         # Check if the expected result is a subset of the actual response
         # We do not check the entire dict due to the datetime and id
-        assert response.json[0].items() >= {
+        assert response.json["items"][0].items() >= {
             'api_function': 'get_datasets',
             'details': None,
             'endpoint': '/datasets/',
-            'requested_by': user_uuid,
+            'requested_by': admin_user_uuid,
             'http_method': 'GET',
             'ip_address': '127.0.0.1',
             'status_code': 201
@@ -74,7 +74,7 @@ class TestAudits:
         response = client.get(f"/audit?event_time__lte={date_filter}", headers=simple_admin_header)
 
         assert response.status_code == 200, response.json
-        assert len(response.json) == 0
+        assert response.json["total"] == 0
 
     def test_sensitive_data_is_purged(
         self,
@@ -90,14 +90,14 @@ class TestAudits:
         data["dictionaries"][0]["password"] = "2ecr3t!"
         resp = client.post(
             '/datasets/',
-            data=json.dumps(data),
+            json=data,
             headers=post_json_admin_header
         )
 
         # Request will fail as secret is not recognized as dictionaries field
         assert resp.status_code == 201, resp.json
-        audit_list = Audit.get_all()[-1]
-        details = json.loads(audit_list["details"].replace("'", "\""))
+        audit_list = Audit.query.all()[-1]
+        details = json.loads(audit_list.details.replace("'", "\""))
 
         assert details["password"] == '*****'
         assert details["username"] == '*****'

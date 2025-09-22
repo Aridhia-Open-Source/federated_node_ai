@@ -81,7 +81,7 @@ class TestGetContainers(ContainersMixin):
             "/containers"
         )
 
-        assert resp.json == [self.get_container_as_response(container)]
+        assert resp.json["items"] == [self.get_container_as_response(container)]
 
     def test_get_container_by_id(
         self,
@@ -408,3 +408,23 @@ class TestSync:
 
         assert resp.status_code == 201
         assert resp.json == []
+
+    def test_sync_no_action_inactive_registry(
+        self,
+        client,
+        post_json_admin_header,
+        registry
+    ):
+        """
+        Basic test that makes sure that if a registry is inactive
+        nothing is done.
+        """
+        registry.active = False
+        resp = client.post(
+            "/containers/sync",
+            headers=post_json_admin_header
+        )
+
+        assert resp.status_code == 201
+        assert resp.json == []
+        assert Container.query.all() == []

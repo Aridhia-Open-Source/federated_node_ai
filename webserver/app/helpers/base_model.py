@@ -1,8 +1,11 @@
+from datetime import datetime
+from flask import request
 from typing import Self
+from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy.pagination import QueryPagination
 from sqlalchemy import create_engine, Column
 from sqlalchemy.orm import Relationship, declarative_base
-from flask_sqlalchemy import SQLAlchemy
-from app.helpers.exceptions import DBRecordNotFoundError, InvalidDBEntry
+from app.helpers.exceptions import DBRecordNotFoundError, InvalidDBEntry, InvalidRequest
 from app.helpers.const import build_sql_uri
 
 
@@ -10,11 +13,36 @@ engine = create_engine(build_sql_uri())
 Base = declarative_base()
 db = SQLAlchemy(model_class=Base)
 
+
 # Another helper class for common methods
 class BaseModel():
-    def sanitized_dict(self) -> dict[str,str]:
-        jsonized = self.__dict__.copy()
-        jsonized.pop('_sa_instance_state', None)
+    @classmethod
+    def _query(cls) -> QueryPagination:
+        try:
+            page = int(request.values.get("page", '1'))
+            per_page = int(request.values.get("per_page", '25'))
+        except ValueError as ve:
+            raise InvalidRequest("page and per_page parameters should be integers") from ve
+
+        return cls.query.paginate(page=page, per_page=per_page)
+
+    def sanitized_dict(self) -> dict[str, bool|int|str]:
+        """
+        Based on the list of column names, conditionally render the values
+        in a dictionary
+        """
+        jsonized = {}
+        for field in self._get_fields_name():
+            val = getattr(self, field)
+            match val:
+                case int() | bool() | None:
+                    jsonized[field] = val
+                case datetime():
+                    jsonized[field] = val.strftime("%Y-%m-%d %H:%M:%S")
+                case BaseModel():
+                    pass
+                case _:
+                    jsonized[field] = str(val)
         return jsonized
 
     def add(self, commit=True):
@@ -23,13 +51,19 @@ class BaseModel():
         if commit:
             db.session.commit()
 
+    def delete(self, commit=True):
+        db.session.delete(self)
+        db.session.flush()
+        if commit:
+            db.session.commit()
+
     @classmethod
-    def get_all(cls) -> list:
-        obj_list = cls.query.all()
+    def get_all(cls) -> list[dict]:
+        obj_list = cls._query()
         jsonized = []
-        for obj in obj_list:
+        for obj in obj_list.items:
             jsonized.append(obj.sanitized_dict())
-        return jsonized
+        return obj_list
 
     @classmethod
     def _get_fields(cls) -> list[Column]:
