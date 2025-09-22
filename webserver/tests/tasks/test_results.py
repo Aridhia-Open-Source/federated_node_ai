@@ -190,12 +190,27 @@ class TestResultsReview:
         simple_user_header,
         client,
         task_mock,
-        set_task_review_env
+        results_job_mock,
+        k8s_client,
+        set_task_review_env,
+        v1_crd_mock,
+        mocker
     ):
         """
         Test to make sure the user can't fetch their results
         if they have been blocked by an administrator
         """
+        mocker.patch(
+            "app.models.task.Task.get_task_crd",
+            return_value={
+                "metadata": {
+                    "name": "crd_name",
+                    "annotations": {
+                        f"{CRD_DOMAIN}/task_id": str(task_mock.id)
+                    }
+                }
+            }
+        )
         response = client.post(
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
@@ -231,11 +246,25 @@ class TestResultsReview:
         simple_admin_header,
         client,
         task_mock,
-        set_task_review_env
+        k8s_client,
+        set_task_review_env,
+        v1_crd_mock,
+        mocker
     ):
         """
         Tests that review can only happen once
         """
+        mocker.patch(
+            "app.models.task.Task.get_task_crd",
+            return_value={
+                "metadata": {
+                    "name": "crd_name",
+                    "annotations": {
+                        f"{CRD_DOMAIN}/task_id": str(task_mock.id)
+                    }
+                }
+            }
+        )
         response = client.post(
             f'/tasks/{task_mock.id}/results/block',
             headers=simple_admin_header
