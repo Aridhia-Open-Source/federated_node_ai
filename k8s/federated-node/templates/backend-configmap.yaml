@@ -19,6 +19,7 @@ data:
   TASK_POD_RESULTS_PATH: {{ .Values.federatedNode.volumes.task_pod_results_path }}
   IMAGE_TAG: {{ include "image-tag" . }}
   CLAIM_CAPACITY: {{ .Values.storage.capacity }}
+  STORAGE_CLASS: {{ include "storageClassName" . }}
 {{- if .Values.storage.aws }}
   AWS_STORAGE_ENABLED: "true"
   AWS_STORAGE_DRIVER: "efs.csi.aws.com"
