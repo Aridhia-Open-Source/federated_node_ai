@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: backend-role
+  name: {{ .Release.Name }}-backend-role
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
@@ -21,14 +21,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: backend-role
+  name: {{ .Release.Name }}-backend-role-binding
 subjects:
   - kind: ServiceAccount
     namespace: {{ .Release.Namespace }}
     name: secret-backend-handler
 roleRef:
   kind: ClusterRole
-  name: backend-role
+  name: {{ .Release.Name }}-backend-role
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
