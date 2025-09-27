@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 1.5.0
+- Prefixed cluster-wide resources with the release name (unique by helm standards). Moved unnecessarily cluster-wide resources to namespaced ones
+
 ## 1.4.0
 - Added a dedicated Cluster Role for keycloak init daemonset
 
