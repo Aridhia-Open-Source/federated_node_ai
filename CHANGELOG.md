@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 1.5.0
+- Prefixed cluster-wide resources with the release name (unique by helm standards). Moved unnecessarily cluster-wide resources to namespaced ones
+
 ## 1.4.0
 - Added the option to setup an initial user to avoid using the backend credentials. To set it up, the following section in the values file has been added:
     ```yaml
