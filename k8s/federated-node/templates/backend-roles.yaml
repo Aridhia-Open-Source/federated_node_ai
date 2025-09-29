@@ -13,7 +13,7 @@ rules:
   resources: ["pods"]
   verbs: ["get", "watch", "list", "create"]
 {{- if .Values.outboundMode }}
-- apiGroups: ["tasks.federatednode.com"]
+- apiGroups: [{{ include "controllerCrdGroup" . | quote }}]
   resources: ["analytics"]
   verbs: ["*"]
 {{- end }}

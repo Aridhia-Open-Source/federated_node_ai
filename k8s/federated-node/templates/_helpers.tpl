@@ -190,3 +190,6 @@ http://backend.{{ .Release.Namespace }}.svc:{{ .Values.federatedNode.port }}
   {{- end }}
 {{- end }}
 {{- end -}}
+{{- define "controllerCrdGroup" -}}
+tasks.{{ .Release.Name }}.com
+{{- end -}}
