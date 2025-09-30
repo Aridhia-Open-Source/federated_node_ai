@@ -45,6 +45,8 @@ spec:
               value: {{ .Values.firstUserSecret.firstName }}
             - name: FIRST_USER_LAST_NAME
               value: {{ .Values.firstUserSecret.lastName }}
+            - name: KEYCLOAK_URL
+              value: http://keycloak.{{ include "kc_namespace" . }}.svc.cluster.local
             {{- end }}
           envFrom:
           - configMapRef:
