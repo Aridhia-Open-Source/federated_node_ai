@@ -126,7 +126,8 @@ def create_user_with_role(
     is_response_good(response_create_user)
 
     response_user_id = requests.get(
-        f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}/users?username={email}",
+        f"{settings.keycloak_url}/admin/realms/{settings.keycloak_realm}/users",
+        params={"username": email},
         headers=headers
     )
     is_response_good(response_user_id)
