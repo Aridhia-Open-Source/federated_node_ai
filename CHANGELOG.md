@@ -4,6 +4,17 @@
 - Prefixed cluster-wide resources with the release name (unique by helm standards). Moved unnecessarily cluster-wide resources to namespaced ones
 
 ## 1.4.0
+- Added the option to setup an initial user to avoid using the backend credentials. To set it up, the following section in the values file has been added:
+    ```yaml
+    firstUserSecret:
+        name:
+        passKey:
+        firstName:
+        lastName:
+        email:
+    ```
+    Where a secret needs to be created in the helm chart base namespace. The `name` should be the secret name.
+    The `passKey` is the secret's key that holds the password for the user. The rest of the fields are optional, but it is advisable to set them.
 - Added a dedicated Cluster Role for keycloak init daemonset
 
 ### Bugfixes
