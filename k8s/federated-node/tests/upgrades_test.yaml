@@ -39,6 +39,14 @@ kubernetesProvider:
       type: Opaque
       data:
         password: dGVzdA==
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: first-user
+        namespace: federatednode
+      type: Opaque
+      data:
+        pass: dGVzdA==
 tests:
   # Mostly to make sure is created
   - it: simulate reuse-values args
@@ -46,3 +54,23 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
+
+  - it: set new user
+    template: copy-secrets.yaml
+    set:
+      firstUserSecret:
+        name: first-user
+        userKey: user
+        passKey: pass
+        firstName: User
+        lastName: Last
+        email: user.last@email.com
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: don't set new user
+    template: copy-secrets.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
