@@ -36,7 +36,7 @@ data:
 {{- end }}
 {{- if .Values.outboundMode }}
   TASK_CONTROLLER: enabled
-  {{- with index .Values "fn-task-controller" delivery -}}
+  {{- with index .Values "fn-task-controller" "delivery" -}}
   {{- if .github }}
   GITHUB_DELIVERY: {{ .github.repository }}
   {{- else if .other }}
