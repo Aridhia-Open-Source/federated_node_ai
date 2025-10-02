@@ -107,7 +107,7 @@ certs:
   azure: {}
     # secretName:
     # configmap:
-  aws: {}
+  aws:
 
 # Enables full smoketests when running `helm test`.
 # This will actively try to add new database and keycloak entries
