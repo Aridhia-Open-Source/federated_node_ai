@@ -1,6 +1,5 @@
 import os
 import requests
-from requests import Response
 import time
 from requests import Response
 from kubernetes import client, config
