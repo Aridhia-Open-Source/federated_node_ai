@@ -3,7 +3,7 @@ kind: PersistentVolume
 metadata:
   name: {{ include "pvName" . }}
 spec:
-  storageClassName: shared-results
+  storageClassName: {{ include "storageClassName" . }}
   accessModes:
     - ReadWriteMany
     - ReadOnlyMany
@@ -42,7 +42,7 @@ metadata:
   name: {{ include "pvcName" . }}
   namespace: {{ .Release.namespace }}
 spec:
-  storageClassName: shared-results
+  storageClassName: {{ include "storageClassName" . }}
   volumeName: {{ include "pvName" . }}
   resources:
     requests:
