@@ -50,6 +50,13 @@ firstUserSecret:
   lastName:
   email:
 
+firstUserSecret:
+  name:
+  passKey:
+  firstName:
+  lastName:
+  email:
+
 federatedNode:
   port: 5000
   volumes:

@@ -2,12 +2,11 @@ import os
 import requests
 from requests import Response
 import time
+from requests import Response
 from kubernetes import client, config
 
 from settings import settings
 
-MAX_RETRIES = 20
-MAX_REPLICAS = int(os.getenv("KC_REPLICAS", "2"))
 
 def health_check():
     """
@@ -25,14 +24,14 @@ def health_check():
         return
 
     k8s = client.CoreV1Api()
-    for i in range(1, MAX_RETRIES):
-        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=os.getenv("KC_NAMESPACE")).items
-        if len([pod.metadata.name for pod in kc_pods if pod.status.container_statuses[0].ready]) < MAX_REPLICAS:
+    for i in range(1, settings.max_retries):
+        kc_pods = k8s.list_namespaced_pod(label_selector="app=keycloak", namespace=settings.kc_namespace).items
+        if len([pod.metadata.name for pod in kc_pods if pod.status.container_statuses[0].ready]) < settings.max_replicas:
             print("Not all pods ready")
         else:
             break
 
-        if i == MAX_RETRIES:
+        if i == settings.max_retries:
             print("Max retries reached. Keycloak pods not ready")
             exit(1)
 
