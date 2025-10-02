@@ -28,6 +28,26 @@ class TestUpdateDeliverySecret:
             'url.delivery.com', "fn-controller", secret_body
         )
 
+    def test_other_delivery_secret_403_non_admin(
+        self,
+        client,
+        set_task_other_delivery_env,
+        post_json_user_header,
+        k8s_client
+    ):
+        """
+        Test that when the other delivery is chosen
+        at deployment time, 403 is returned for non-admins
+        """
+        resp = client.patch(
+            "/delivery-secret",
+            json={"auth": "test"},
+            headers=post_json_user_header
+        )
+
+        assert resp.status_code == 403
+        k8s_client["patch_namespaced_secret_mock"].assert_not_called()
+
     def test_other_delivery_secret_missing_mandatory_field(
         self,
         client,
