@@ -1,5 +1,6 @@
 import os
 import string
+from urllib.parse import quote
 
 def build_sql_uri(
         username=os.getenv('PGUSER'),
@@ -8,7 +9,7 @@ def build_sql_uri(
         port=os.getenv('PGPORT'),
         database=os.getenv('PGDATABASE')
         ):
-    return f"postgresql://{username}:{password}@{host}:{port}/{database}"
+    return f"postgresql://{username}:{quote(password)}@{host}:{port}/{database}".replace("%", "%%")
 
 PASS_GENERATOR_SET = string.ascii_letters + string.digits + "!$@#.-_"
 PUBLIC_URL = os.getenv("PUBLIC_URL")
