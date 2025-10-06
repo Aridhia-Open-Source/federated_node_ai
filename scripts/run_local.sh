@@ -3,16 +3,20 @@
 set -e
 
 LOCAL_CLUSTER=$1
-if [[ "$LOCAL_CLUSTER" == "minikube" ]]; then
-    export CLUSTER_NAME=federatednode
-    echo "Starting MK"
-    minikube start -p $CLUSTER_NAME --driver=docker
-    echo "Switching context"
-    kubectl config use-context $CLUSTER_NAME
-else
-    echo "Switching context"
-    kubectl config use-context microk8s
+if [[ ! microk8s ]]; then
+    echo "Micork8s is not installed"
+    exit 1
 fi
+
+if [[ ! jq ]]; then
+    echo "jq is not installed"
+    echo "apt-get install jq"
+    echo "or"
+    echo "sudo apt-get install jq"
+    exit 1
+fi
+
+kubectl config use-context microk8s
 
 echo "applying definitions"
 
@@ -38,15 +42,12 @@ else
 fi
 
 echo "Creating a separate test db"
-kubectl apply -f dev.k8s/deployments
+kubectl apply -f dev.k8s/deployments/db.yaml
 
 echo "If new images are needed, load them up with:"
-if [[ "$LOCAL_CLUSTER" == "minikube" ]]; then
-    echo "minikube -p $CLUSTER_NAME image load <image_name>"
-else
-    echo "docker save <image_name> > fn.tar"
-    echo "microk8s ctr image import fn.tar"
-fi
+echo "docker save <image_name> > fn.tar"
+echo "microk8s ctr image import fn.tar"
+
 NGINX_NAMESPACE=$(grep -oP '(?<=nginx:\s).*' k8s/federated-node/dev.values.yaml)
 
 if [[ -z $NGINX_NAMESPACE ]]; then
