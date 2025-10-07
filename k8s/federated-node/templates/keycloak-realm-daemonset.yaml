@@ -33,6 +33,8 @@ spec:
               value: {{ include "kc_namespace" . }}
             - name: KC_REPLICAS
               value: {{ .Values.keycloak.replicas | default 2 | quote }}
+            - name: KEYCLOAK_URL
+              value: http://keycloak.{{ include "kc_namespace" . }}.svc.cluster.local
             {{- if (.Values.firstUserSecret).name }}
             - name: FIRST_USER_PASS
               valueFrom:
@@ -45,8 +47,6 @@ spec:
               value: {{ .Values.firstUserSecret.firstName }}
             - name: FIRST_USER_LAST_NAME
               value: {{ .Values.firstUserSecret.lastName }}
-            - name: KEYCLOAK_URL
-              value: http://keycloak.{{ include "kc_namespace" . }}.svc.cluster.local
             {{- end }}
           envFrom:
           - configMapRef:
