@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 1.6.0
+- Docker images' sha/digest supported on top of tags for a more precise snapshot in history.
+
 ## 1.5.0
 - Prefixed cluster-wide resources with the release name (unique by helm standards). Moved unnecessarily cluster-wide resources to namespaced ones
 - Added the option to setup an initial user to avoid using the backend credentials. To set it up, the following section in the values file has been added:

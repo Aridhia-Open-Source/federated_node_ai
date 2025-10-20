@@ -145,7 +145,7 @@ class AzureRegistry(BaseRegistry):
         self.request_args["headers"] = {"Authorization": f"Basic {self.auth}"}
         self._token = self.login()
 
-    def get_image_digest(self, image:str, tag:str):
+    def get_image_digest(self, image:str, tag:str) -> dict[str, str]:
         token = self.login(image)
 
         try:
@@ -168,7 +168,7 @@ class AzureRegistry(BaseRegistry):
                 500
             ) from ce
 
-    def get_image_tags(self, image:str) -> bool:
+    def get_image_tags(self, image:str) -> dict[str, str|List[str]]:
         tags_list = super().get_image_tags(image)
         full_tags = {"tag": [], "sha": []}
 
@@ -180,7 +180,7 @@ class AzureRegistry(BaseRegistry):
 
         return full_tags
 
-    def list_repos(self):
+    def list_repos(self) -> List[dict[str, str | List[str]]]:
         list_images = super().list_repos()
         images = []
         for image in list_images["repositories"]:
@@ -215,7 +215,7 @@ class DockerRegistry(BaseRegistry):
 
         return metadata
 
-    def list_repos(self):
+    def list_repos(self) -> List[dict[str, str | List[str]]]:
         list_images = super().list_repos()
         return [self.get_image_tags(image["name"]) for image in list_images["results"]]
 
@@ -246,12 +246,9 @@ class GitHubRegistry(BaseRegistry):
         logging.info("Auth on github skipped, an organization name is needed")
         return self._token
 
-    def get_image_tags(self, image:str) -> bool:
+    def get_image_tags(self, image:str) -> dict[str, str|List[str]]:
         """
-        Works as an existence check. If the tag for the image
-        has the requested tag in the list of available tags
-        return True.
-        This should work on any docker Registry v2 as it's a standard
+        Works as a list of available tags/sha
         """
         token = self.login(image)
         page = 1
@@ -295,7 +292,7 @@ class GitHubRegistry(BaseRegistry):
 
         return {"tag": t_list,"sha": s_list}
 
-    def list_repos(self):
+    def list_repos(self) -> List[dict[str, str | List[str]]]:
         list_images = super().list_repos()
         images = []
         for img in list_images:
