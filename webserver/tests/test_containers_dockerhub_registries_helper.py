@@ -9,12 +9,12 @@ class TestDockerRegistry:
         This addressed the DockerHub case
     """
     login_url = "https://hub.docker.com/v2/users/login/"
-    tags_url = "https://hub.docker.com/v2/repositories/%s/tags"
+    tags_url = "https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags"
 
     def test_cr_login_failed(
             self,
-            cr_class,
-            container
+            k8s_client,
+            image_name
     ):
         """
         Test that the Container registry helper behaves as expected when the login fails.
@@ -26,17 +26,18 @@ class TestDockerRegistry:
                 status=401
             )
             with pytest.raises(ContainerRegistryException) as cre:
-                cr_class.login(container.name)
+                DockerRegistry("registry", {"user": "", "token": ""}).login(image_name)
             assert cre.value.description == "Could not authenticate against the registry"
 
     def test_cr_metadata_empty(
             self,
             cr_class,
+            registry,
             container
     ):
         """
         Test that the Container registry helper behaves as expected when the
-            metadata response is empty. Which is a `False`
+            metadata response is empty. Which is an empty dictionary
         """
         with responses.RequestsMock() as rsps:
             rsps.add(
@@ -47,15 +48,16 @@ class TestDockerRegistry:
             )
             rsps.add(
                 responses.GET,
-                self.tags_url % container.name,
+                self.tags_url % (registry.url, container.name),
                 json={"results": []},
                 status=200
             )
-            assert not cr_class.get_image_tags(container.name)
+            assert {"name": container.name, "tag": [], "sha": []} == cr_class.get_image_tags(container.name)
 
     def test_cr_metadata_tag_not_in_api_response(
             self,
             cr_class,
+            registry,
             container
     ):
         """
@@ -71,9 +73,9 @@ class TestDockerRegistry:
             )
             rsps.add(
                 responses.GET,
-                self.tags_url % container.name,
-                json={"results": [{"name": ["1.2.3", "dev"]}]},
+                self.tags_url % (registry.url ,container.name),
+                json={"results": [{"name": ["1.2.3", "dev"], "digest": "sha256:123ae123df"}]},
                 status=200
             )
-            assert not cr_class.get_image_tags(container.name, "latest")
+            assert not cr_class.has_image_tag_or_sha(container.name, "latest")
 

@@ -21,6 +21,7 @@ from app.helpers.exceptions import DBError, InvalidRequest, TaskCRDExecutionExce
 from app.helpers.task_pod import TaskPod
 from app.models.dataset import Dataset
 from app.models.container import Container
+from app.models.registry import Registry
 from app.models.request import Request
 
 logger = logging.getLogger('task_model')
@@ -106,10 +107,7 @@ class Task(db.Model, BaseModel):
             ).dataset
 
         # Docker image validation
-        if not re.match(r'^((\w+|-|\.)\/?+)+:(\w+(\.|-)?)+$', data["docker_image"]):
-            raise InvalidRequest(
-                f"{data["docker_image"]} does not have a tag. Please provide one in the format <image>:<tag>"
-            )
+        Container.validate_image_format(data["docker_image"], data["docker_image"])
         data["docker_image"] = cls.get_image_with_repo(data["docker_image"])
 
         # Output volumes validation
@@ -213,14 +211,25 @@ class Task(db.Model, BaseModel):
         Looks through the CRs for the image and if exists,
         returns the full image name with the repo prefixing the image.
         """
+        registry = docker_image.split('/')[0]
         image_name = "/".join(docker_image.split('/')[1:])
-        image_name, tag = image_name.split(':')
-        image = Container.query.filter(Container.name==image_name, Container.tag==tag).one_or_none()
+        tag = None
+        sha = None
+        if '@' in image_name:
+            image_name, sha = image_name.split('@')
+        else:
+            image_name, tag = image_name.split(':')
+        image: Container = Container.query.filter(
+            Container.name==image_name,
+            Registry.url == registry,
+        ).filter(
+            (((Container.tag==tag) & (Container.tag != None)) | ((Container.sha==sha) & (Container.sha != None)))
+        ).join(Registry).one_or_none()
         if image is None:
             raise TaskExecutionException(f"Image {docker_image} could not be found")
 
         registry_client = image.registry.get_registry_class()
-        if not registry_client.get_image_tags(image.name):
+        if not registry_client.has_image_tag_or_sha(image.name, image.tag, image.sha):
             raise TaskImageException(f"Image {docker_image} not found on our repository")
 
         return image.full_image_name()

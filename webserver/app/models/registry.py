@@ -95,8 +95,13 @@ class Registry(db.Model, BaseModel):
                 ) from kae
 
         dockerjson = json.loads(v1.decode_secret_value(regcred.data['.dockerconfigjson']))
+
+        key = self.url
+        if isinstance(self.get_registry_class(), DockerRegistry):
+            key = "https://index.docker.io/v1/"
+
         dockerjson['auths'].update({
-            self.url: {
+            key: {
                 "username": self.username,
                 "password": self.password,
                 "email": "",
@@ -156,7 +161,11 @@ class Registry(db.Model, BaseModel):
         try:
             regcred = v1.read_namespaced_secret(TASK_PULL_SECRET_NAME, TASK_NAMESPACE)
             dockerjson = json.loads(v1.decode_secret_value(regcred.data['.dockerconfigjson']))
-            dockerjson['auths'].pop(self.url, None)
+            key = self.url
+            if isinstance(self.get_registry_class(), DockerRegistry):
+                key = "https://index.docker.io/v1/"
+
+            dockerjson['auths'].pop(key, None)
             regcred.data['.dockerconfigjson'] = v1.encode_secret_value(json.dumps(dockerjson))
             v1.patch_namespaced_secret(namespace=TASK_NAMESPACE, name=TASK_PULL_SECRET_NAME, body=regcred)
 
@@ -186,12 +195,15 @@ class Registry(db.Model, BaseModel):
 
         # Get the credentials from the pull docker secret
         v1 = KubernetesClient()
+        key = self.url
+        if isinstance(self.get_registry_class(), DockerRegistry):
+            key = "https://index.docker.io/v1/"
         try:
             secret = v1.read_namespaced_secret(self.slugify_name(), namespace=DEFAULT_NAMESPACE)
             regcred = v1.read_namespaced_secret(TASK_PULL_SECRET_NAME, TASK_NAMESPACE)
             dockerjson = json.loads(v1.decode_secret_value(regcred.data['.dockerconfigjson']))
-            self.username = dockerjson['auths'][self.url]["username"]
-            self.password = dockerjson['auths'][self.url]["password"]
+            self.username = dockerjson['auths'][key]["username"]
+            self.password = dockerjson['auths'][key]["password"]
 
             if kwargs.get("username"):
                 self.username = kwargs.get("username")
