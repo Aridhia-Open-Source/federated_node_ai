@@ -1,3 +1,5 @@
+import base64
+import json
 import pytest
 import responses
 from unittest.mock import Mock
@@ -109,9 +111,22 @@ def cr_class(mocker, cr_name):
         return AzureRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
-def registry(client, reg_k8s_client, k8s_client, cr_name, azure_login_request) -> Registry:
+def registry(client, mocker, reg_k8s_client, k8s_client, cr_name, azure_login_request) -> Registry:
     reg = Registry(cr_name, '', '')
     reg.add()
+    auths = json.dumps({
+        "auths": {reg.url: {
+            "username": "test",
+            "password": "test",
+        }}
+    })
+    # mocker.patch(
+    #     "app.models.registry.KubernetesClient.read_namespaced_secret",
+    #     return_value=Mock(data={
+    #         ".dockerconfigjson": base64.b64encode(auths.encode()).decode()
+    #         }
+    #     )
+    # )
     return reg
 
 @pytest.fixture

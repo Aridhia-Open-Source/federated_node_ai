@@ -1,4 +1,5 @@
 from base64 import b64encode
+import json
 from typing import List
 import requests
 import logging
@@ -6,7 +7,7 @@ from requests.exceptions import ConnectionError
 
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.exceptions import ContainerRegistryException
-from app.helpers.const import DEFAULT_NAMESPACE
+from app.helpers.const import TASK_NAMESPACE
 
 
 logger = logging.getLogger('registries_handler')
@@ -35,10 +36,13 @@ class BaseRegistry:
         Get the registry-related secret
         """
         v1 = KubernetesClient()
-        secret = v1.read_namespaced_secret(self.secret_name, DEFAULT_NAMESPACE, pretty='pretty')
+        regcred = v1.read_namespaced_secret(self.secret_name, TASK_NAMESPACE, pretty='pretty')
+
+        dockerjson = json.loads(v1.decode_secret_value(regcred.data['.dockerconfigjson']))
+        key = list(dockerjson["auths"].keys())[0]
         return {
-            "user": KubernetesClient.decode_secret_value(secret.data['USER']),
-            "token": KubernetesClient.decode_secret_value(secret.data['TOKEN'])
+            "user": dockerjson['auths'][key]["username"],
+            "token": dockerjson['auths'][key]["password"]
         }
 
     def list_repos(self) -> list[str]:

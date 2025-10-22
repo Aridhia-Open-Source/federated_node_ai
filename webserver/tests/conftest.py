@@ -43,7 +43,7 @@ sample_ds_body = {
 
 @pytest.fixture
 def image_name():
-    return "example:latest"
+    return "acr.azurecr.io/example:latest"
 
 @pytest.fixture
 def user_token(basic_user):
@@ -302,14 +302,14 @@ def dictionary(dataset) -> List[Dictionary]:
     return [cat1, cat2]
 
 @pytest.fixture
-def task(user_uuid, image_name, dataset) -> Task:
+def task(user_uuid, image_name, dataset, container) -> Task:
     task = Task(
         dataset=dataset,
-        docker_image=image_name,
+        docker_image=container.full_image_name(),
         name="testTask",
         executors=[
             {
-                "image": image_name
+                "image": container.full_image_name()
             }
         ],
         requested_by=user_uuid
