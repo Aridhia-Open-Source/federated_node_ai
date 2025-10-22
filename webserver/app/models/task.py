@@ -209,14 +209,25 @@ class Task(db.Model, BaseModel):
         return int(base) * MEMORY_UNITS[unit]
 
     @classmethod
+    def split_registry_from_image(cls, docker_image:str) -> tuple[str, str]:
+        """
+        Find the registry
+        """
+        for i in range(len(docker_image.split('/'))):
+            registry = "/".join(docker_image.split('/')[0:i])
+            if Registry.query.filter_by(url=registry).count() == 1:
+                return registry, "/".join(docker_image.split('/')[i:])
+
+        raise InvalidRequest("Could not find the image in the mapped registries. Check the image has the full name")
+
+    @classmethod
     def get_image_with_repo(cls, docker_image):
         """
         Looks through the CRs for the image and if exists,
         returns the full image name with the repo prefixing the image.
         """
-        registry = docker_image.split('/')[0]
-        image_name = "/".join(docker_image.split('/')[1:])
-        image_name, tag = image_name.split(':')
+        registry, image = cls.split_registry_from_image(docker_image)
+        image_name, tag = image.split(':')
         image: Container = Container.query.filter(
             Container.name==image_name,
             Container.tag==tag,
