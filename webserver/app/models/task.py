@@ -21,6 +21,7 @@ from app.helpers.exceptions import DBError, InvalidRequest, TaskCRDExecutionExce
 from app.helpers.task_pod import TaskPod
 from app.models.dataset import Dataset
 from app.models.container import Container
+from app.models.registry import Registry
 from app.models.request import Request
 
 logger = logging.getLogger('task_model')
@@ -132,6 +133,9 @@ class Task(db.Model, BaseModel):
                 data["resources"].get("limits", {}).get("memory"),
                 data["resources"].get("requests", {}).get("memory")
             )
+        if data.get("db_query") is not None and "query" not in data["db_query"]:
+            raise InvalidRequest("`db_query` field must include a `query`")
+
         data["db_query"] = data.pop("db_query", {})
         return data
 
@@ -208,14 +212,31 @@ class Task(db.Model, BaseModel):
         return int(base) * MEMORY_UNITS[unit]
 
     @classmethod
+    def split_registry_from_image(cls, docker_image:str) -> tuple[str, str]:
+        """
+        Find the registry
+        """
+        for i in range(len(docker_image.split('/'))):
+            registry = "/".join(docker_image.split('/')[0:i])
+            if Registry.query.filter_by(url=registry).count() == 1:
+                return registry, "/".join(docker_image.split('/')[i:])
+
+        raise InvalidRequest("Could not find the image in the mapped registries. Check the image has the full name")
+
+    @classmethod
     def get_image_with_repo(cls, docker_image):
         """
         Looks through the CRs for the image and if exists,
         returns the full image name with the repo prefixing the image.
         """
-        image_name = "/".join(docker_image.split('/')[1:])
-        image_name, tag = image_name.split(':')
-        image = Container.query.filter(Container.name==image_name, Container.tag==tag).one_or_none()
+        registry, image = cls.split_registry_from_image(docker_image)
+        image_name, tag = image.split(':')
+        image: Container = Container.query.filter(
+            Container.name==image_name,
+            Container.tag==tag,
+            Registry.url == registry
+        ).join(Registry).one_or_none()
+
         if image is None:
             raise TaskExecutionException(f"Image {docker_image} could not be found")
 
