@@ -314,14 +314,14 @@ def dictionary(dataset) -> List[Dictionary]:
     return [cat1, cat2]
 
 @fixture
-def task(user_uuid, image_name, dataset) -> Task:
+def task(user_uuid, image_name, dataset, container) -> Task:
     task = Task(
         dataset=dataset,
-        docker_image=image_name,
+        docker_image=container.full_image_name(),
         name="testTask",
         executors=[
             {
-                "image": image_name
+                "image": container.full_image_name()
             }
         ],
         requested_by=user_uuid
