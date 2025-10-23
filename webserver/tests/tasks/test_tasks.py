@@ -264,6 +264,28 @@ class TestPostTask:
         assert "CONNECTION_STRING" in envs
         assert set(envs).intersection({"QUERY", "FROM_DIALECT", "TO_DIALECT"}) == set()
 
+    def test_create_task_incomplete_db_query(
+            self,
+            post_json_admin_header,
+            client,
+            reg_k8s_client,
+            registry_client,
+            task_body
+        ):
+        """
+        Tests task creation returns an error if the db_query is
+        missing the mandatory field "query".
+        """
+        task_body["db_query"] = {}
+        response = client.post(
+            '/tasks/',
+            json=task_body,
+            headers=post_json_admin_header
+        )
+        assert response.status_code == 400
+        assert response.json["error"] == "`db_query` field must include a `query`"
+        reg_k8s_client["create_namespaced_pod_mock"].assert_not_called()
+
     def test_create_task_invalid_output_field(
             self,
             cr_client,

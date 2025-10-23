@@ -133,6 +133,9 @@ class Task(db.Model, BaseModel):
                 data["resources"].get("limits", {}).get("memory"),
                 data["resources"].get("requests", {}).get("memory")
             )
+        if data.get("db_query") is not None and "query" not in data["db_query"]:
+            raise InvalidRequest("`db_query` field must include a `query`")
+
         data["db_query"] = data.pop("db_query", {})
         return data
 
