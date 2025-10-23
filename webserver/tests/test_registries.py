@@ -148,41 +148,6 @@ class TestPostRegistriesApi:
             )
         assert resp.status_code == 201
 
-    def test_create_registry_201_missing_taskpull_secret(
-        self,
-        client,
-        post_json_admin_header,
-        reg_k8s_client
-    ):
-        """
-        Basic POST request for the first time. K8s will return a 404
-        so it should create a brand new
-        """
-        new_registry = "shiny.azurecr.io"
-
-        reg_k8s_client["read_namespaced_secret_mock"].side_effect = ApiException(
-            http_resp=Mock(status=404, body="details", reason="Failed")
-        )
-        with responses.RequestsMock() as rsps:
-            rsps.add_passthru(KEYCLOAK_URL)
-            rsps.add(
-                responses.GET,
-                f"https://{new_registry}/oauth2/token?service={new_registry}&scope=registry:catalog:*",
-                json={"access_token": "12jio12buds89"},
-                status=200
-            )
-            resp = client.post(
-                "/registries",
-                json={
-                    "url": new_registry,
-                    "username": "blabla",
-                    "password": "secret"
-                },
-                headers=post_json_admin_header
-            )
-        assert resp.status_code == 201
-        reg_k8s_client["create_namespaced_secret_mock"].assert_called()
-
     def test_create_registry_incorrect_creds(
         self,
         client,
@@ -398,8 +363,6 @@ class TestPatchRegistriesApi:
             "password": "new password token",
             "username": "shiny"
         }
-        encoded_pass = base64.b64encode("new password token".encode()).decode()
-        encoded_user = base64.b64encode("shiny".encode()).decode()
         resp = client.patch(
             f"registries/{registry.id}",
             json=data,

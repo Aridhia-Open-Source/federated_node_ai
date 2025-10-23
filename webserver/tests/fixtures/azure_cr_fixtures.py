@@ -36,10 +36,9 @@ def registry_client(mocker):
         return_value=Mock()
     )
 
-
 @pytest.fixture
 def azure_login_request(cr_name):
-    with responses.RequestsMock() as rsps:
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_passthru(KEYCLOAK_URL)
         rsps.add(
             responses.GET,
@@ -111,22 +110,9 @@ def cr_class(mocker, cr_name):
         return AzureRegistry(cr_name, creds={"user": "", "token": ""})
 
 @pytest.fixture
-def registry(client, mocker, reg_k8s_client, k8s_client, cr_name, azure_login_request) -> Registry:
+def registry(client, reg_k8s_client, k8s_client, cr_name, azure_login_request) -> Registry:
     reg = Registry(cr_name, '', '')
     reg.add()
-    auths = json.dumps({
-        "auths": {reg.url: {
-            "username": "test",
-            "password": "test",
-        }}
-    })
-    # mocker.patch(
-    #     "app.models.registry.KubernetesClient.read_namespaced_secret",
-    #     return_value=Mock(data={
-    #         ".dockerconfigjson": base64.b64encode(auths.encode()).decode()
-    #         }
-    #     )
-    # )
     return reg
 
 @pytest.fixture

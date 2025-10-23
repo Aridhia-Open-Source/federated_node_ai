@@ -496,8 +496,8 @@ class TestPostTask:
 
     def test_create_task_image_same_name_different_registry(
             self,
-            k8s_client,
             cr_client,
+            reg_k8s_client,
             registry_client,
             post_json_admin_header,
             client,
@@ -508,7 +508,7 @@ class TestPostTask:
         Tests task creation is successful if two images are mapped with the
         same name, but different registry
         """
-        registry = Registry(url="another.azureacr.io", username="user", password="pass")
+        registry = Registry(url="another.azurecr.io", username="user", password="pass")
         registry.add()
         Container(registry=registry, name=container.name, tag=container.tag).add()
         response = client.post(

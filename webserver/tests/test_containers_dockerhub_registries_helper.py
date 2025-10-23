@@ -1,3 +1,5 @@
+import base64
+import json
 import responses
 from tests.fixtures.dockerhub_cr_fixtures import *
 from app.helpers.exceptions import ContainerRegistryException
@@ -14,11 +16,22 @@ class TestDockerRegistry:
     def test_cr_login_failed(
             self,
             k8s_client,
+            reg_k8s_client,
+            registry,
             image_name
     ):
         """
         Test that the Container registry helper behaves as expected when the login fails.
         """
+        auths = json.dumps({
+            "auths": {registry.url: {
+                "username": "test",
+                "password": "test",
+            }}
+        })
+        reg_k8s_client["read_namespaced_secret_mock"].return_value.data.update({
+            ".dockerconfigjson": base64.b64encode(auths.encode()).decode()
+        })
         with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.GET,
