@@ -35,20 +35,19 @@ See the [DEPLOYMENT](./DEPLOYMENT.md) document.
 
 
 # Run locally
-Minikube or microk8s is required.
+microk8s is required.
 ```sh
-./scripts/run_local.sh minikube
-# or
-./scripts/run_local.sh micro
+./scripts/run_local.sh
 ```
-
-In case of `minikube:
-
-This will launch a Minikube cluster called `federatednode` (if using minikube), and apply the helm chart with the default `values.yaml`.
 
 Open the nginx port with
 ```sh
 kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 443
+```
+or the backend directly
+```sh
+NAMESPACE=$(helm list -A -o json | jq -r '.[] | select(.name=="federatednode") | .namespace')
+kubectl port-forward -n $NAMESPACE svc/backend 5000
 ```
 Also add the custom host url to the hosts list
 On Windows: `C:\WINDOWS\System32\drivers\etc\hosts`
