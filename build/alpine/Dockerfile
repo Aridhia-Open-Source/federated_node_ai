@@ -20,3 +20,4 @@ COPY --chmod=755 sync-cron.sh /usr/bin/sync-registry
 COPY --chmod=755 cleanup.sh /usr/bin/cleanup
 COPY --chmod=755 dbinit.sh /usr/bin/dbinit
 COPY --chmod=755 keycloak-reset.sh /usr/bin/keycloak-reset
+COPY --chmod=755 migrate-docker-secret.py /usr/bin/migrate-docker-secret
