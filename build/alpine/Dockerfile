@@ -10,7 +10,7 @@ RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
 RUN apk add --no-cache \
     'postgresql16-client=~16' && \
     python3 -m venv /venv && \
-    /venv/bin/python3 -m pip install kubernetes
+    /venv/bin/python3 -m pip install kubernetes requests
 
 ENV PATH=/venv/bin:$PATH
 
