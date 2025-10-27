@@ -8,8 +8,8 @@ RUN addgroup -S "${USERNAME}" --gid "${USER_GID}" \
     && adduser -S "${USERNAME}" -G "${USERNAME}" -u "${USER_UID}"
 
 RUN apk add --no-cache \
-    'postgresql16-client=~16' \
-    python3 -m venv /venv \
+    'postgresql16-client=~16' && \
+    python3 -m venv /venv && \
     /venv/bin/python3 -m pip install kubernetes
 
 ENV PATH=/venv/bin:$PATH
