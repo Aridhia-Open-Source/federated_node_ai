@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 ###
 # Migrates the single dockerconfig secret to individual
 # ones for better isolation/security
