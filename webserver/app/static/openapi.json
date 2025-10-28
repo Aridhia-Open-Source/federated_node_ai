@@ -1856,10 +1856,19 @@
         "content": {
           "application/json":{
             "schema":{
-              "type": "array",
-              "items": {
-                "type": "string",
-                "example": "repo.azurecr.io/beautiful_image:1.2.0"
+              "type": "object",
+              "properties": {
+                "info": {
+                  "type": "string",
+                  "default": "The sync considers only the latest 100 tag per image. If an older one is needed, add it manually via the POST /images endpoint"
+                },
+                "images": {
+                  "type": "array",
+                    "items": {
+                      "type": "string",
+                      "example": "repo.azurecr.io/beautiful_image:1.2.0"
+                    }
+                  }
               }
             }
           }
