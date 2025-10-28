@@ -23,6 +23,7 @@ class BaseRegistry:
     organization = ''
     request_args = {}
     api_login = True
+    list_req_params = {"page": 1, "page_size": 100}
 
     def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
         self.registry = registry
@@ -109,6 +110,7 @@ class BaseRegistry:
         try:
             response_metadata = requests.get(
                 self.tags_url % self.get_url_string_params(image_name=image),
+                params=self.list_req_params,
                 headers={"Authorization": f"Bearer {token}"}
             )
             if not response_metadata.ok:
@@ -141,6 +143,7 @@ class AzureRegistry(BaseRegistry):
     digest_url = "https://%(service)s/v2/%(image)s/manifests/"
     list_repo_url = "https://%(service)s/v2/_catalog"
     token_field = "access_token"
+    list_req_params = {"n": 100}
 
     def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
         super().__init__(registry, secret_name, creds)
@@ -229,6 +232,7 @@ class GitHubRegistry(BaseRegistry):
     api_login = False
     tags_url = "https://api.github.com/orgs/%(organization)s/packages/container/%(image)s/versions"
     list_repo_url = "https://api.github.com/orgs/%(organization)s/packages?package_type=container"
+    list_req_params = {"page": 1, "per_page": 100}
 
     def __init__(self, registry:str, secret_name:str=None, creds:dict={}):
         destruct_reg = registry.split('/', maxsplit=1)
@@ -252,38 +256,29 @@ class GitHubRegistry(BaseRegistry):
 
     def get_image_tags(self, image:str) -> dict[str, str|List[str]]:
         """
-        Works as a list of available tags/sha
+        Works as a list of available tags/sha. Limiting to only 100 tags per
+        image
         """
         token = self.login(image)
-        page = 1
-        per_page = 50
         tags_list = []
 
-        while True:
-            try:
-                response_metadata = requests.get(
-                    self.tags_url % self.get_url_string_params(image_name=image),
-                    params={"page": page, "per_page": per_page},
-                    headers={"Authorization": f"Bearer {token}"}
-                )
-                if not response_metadata.ok:
-                    logger.info(response_metadata.text)
-                    raise ContainerRegistryException(f"Failed to fetch the list of tags for {image}")
+        try:
+            response_metadata = requests.get(
+                self.tags_url % self.get_url_string_params(image_name=image),
+                params=self.list_req_params,
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if not response_metadata.ok:
+                logger.info(response_metadata.text)
+                raise ContainerRegistryException(f"Failed to fetch the list of tags for {image}")
 
-                if 0 == len(response_metadata.json()):
-                    break
+            tags_list += response_metadata.json()
 
-                page += 1
-                tags_list += response_metadata.json()
-
-                if len(response_metadata.json()) < per_page:
-                    break
-
-            except ConnectionError as ce:
-                raise ContainerRegistryException(
-                    f"Failed to fetch the list of tags from {self.registry}/{image}",
-                    500
-                ) from ce
+        except ConnectionError as ce:
+            raise ContainerRegistryException(
+                f"Failed to fetch the list of tags from {self.registry}/{image}",
+                500
+            ) from ce
 
         t_list = []
         s_list = []

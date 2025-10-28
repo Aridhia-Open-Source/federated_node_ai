@@ -141,4 +141,8 @@ def sync():
                     cont.add(commit=False)
                     synched.append(cont.full_image_name())
     session.commit()
-    return synched, HTTPStatus.CREATED
+    return {
+        "info": "The sync considers only the latest 100 tag per image. If an older one is needed,"
+                " add it manually via the POST /images endpoint",
+        "images": synched
+        }, HTTPStatus.CREATED

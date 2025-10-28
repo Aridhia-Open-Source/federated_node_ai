@@ -366,7 +366,7 @@ class TestSync:
         expected_resp = [f"{registry.url}/{im}:{t}" for im in expected_image_names for t in expected_tags_list]
         expected_resp += [f"{registry.url}/{im}@{expected_digest_list}" for im in expected_image_names]
         assert resp.status_code == 201
-        assert sorted(resp.json) == sorted(expected_resp)
+        assert sorted(resp.json["images"]) == sorted(expected_resp)
 
     def test_sync_failure(
         self,
@@ -404,7 +404,6 @@ class TestSync:
         container,
         container_with_sha,
         azure_login_request,
-        expected_digest_list,
         cr_name
     ):
         """
@@ -442,7 +441,7 @@ class TestSync:
         )
 
         assert resp.status_code == 201, resp.json
-        assert resp.json == []
+        assert resp.json["images"] == []
 
     def test_sync_no_action_inactive_registry(
         self,
@@ -461,5 +460,5 @@ class TestSync:
         )
 
         assert resp.status_code == 201
-        assert resp.json == []
+        assert resp.json["images"] == []
         assert Container.query.all() == []
