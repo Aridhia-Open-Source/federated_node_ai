@@ -10,6 +10,8 @@ import logging
 from flask import Blueprint, request
 from http import HTTPStatus
 
+from .helpers.query_filters import parse_query_params
+
 from .helpers.base_model import db
 from .helpers.exceptions import InvalidRequest
 from .helpers.wrappers import audit, auth
@@ -31,7 +33,7 @@ def get_all_containers():
     GET /containers endpoint.
         Returns the list of allowed containers
     """
-    return Container.get_all(), HTTPStatus.OK
+    return parse_query_params(Container, request.args.copy()), HTTPStatus.OK
 
 
 @bp.route('/', methods=['POST'])
