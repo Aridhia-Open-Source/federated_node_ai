@@ -1,5 +1,8 @@
 # Releases Changelog
 
+## 1.6.0
+- Added a `/refresh-token` endpoint so that a token can be renewed. This is successful only with tokens that are not expired. Ideally, every 29 days (default expiration is 30) this endpoint is pinged either manually, or automated. This response body is the same as `/login`.
+
 ## 1.5.0
 - Prefixed cluster-wide resources with the release name (unique by helm standards). Moved unnecessarily cluster-wide resources to namespaced ones
 - Added the option to setup an initial user to avoid using the backend credentials. To set it up, the following section in the values file has been added:
