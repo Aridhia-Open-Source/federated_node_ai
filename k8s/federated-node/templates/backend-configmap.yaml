@@ -35,6 +35,7 @@ data:
   TASK_REVIEW: enabled
 {{- end }}
 {{- if .Values.outboundMode }}
+  CONTROLLER_NAMESPACE: {{ include "controller_namespace" . }}
   TASK_CONTROLLER: enabled
   {{- with index .Values "fn-task-controller" "delivery" -}}
   {{- if .github }}
