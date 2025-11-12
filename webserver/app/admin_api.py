@@ -74,7 +74,7 @@ def update_delivery_secret():
                 raise InvalidRequest("Could not find a secret to update")
 
         # Update secret
-        secret.data["auth"] = request.json.get("auth")
+        secret.data["auth"] = KubernetesClient.encode_secret_value(request.json.get("auth"))
         v1_client.patch_namespaced_secret(
             secret.metadata.name, CONTROLLER_NAMESPACE, secret
         )
