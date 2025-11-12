@@ -23,10 +23,11 @@ class TestUpdateDeliverySecret:
 
         assert resp.status_code == 204
         secret_body = k8s_client["list_namespaced_secret_mock"].return_value.items[0]
-        secret_body.data["auth"] = "test"
         k8s_client["patch_namespaced_secret_mock"].assert_called_with(
             'url.delivery.com', "fn-controller", secret_body
         )
+        # Check that the provided secret is base64 encoded
+        assert k8s_client["patch_namespaced_secret_mock"].call_args[0][-1].data["auth"] == "dGVzdA=="
 
     def test_other_delivery_secret_403_non_admin(
         self,
