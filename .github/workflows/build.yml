@@ -134,10 +134,6 @@ jobs:
       - init
       - tests
     if: needs.init.outputs.is_tag == 'false'
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
@@ -152,10 +148,6 @@ jobs:
       - init
       - tests
     if: needs.init.outputs.is_tag == 'false'
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
@@ -170,10 +162,6 @@ jobs:
       - init
       - tests
     if: needs.init.outputs.is_tag == 'false'
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
@@ -188,10 +176,6 @@ jobs:
       - init
       - tests
     if: needs.init.outputs.is_tag == 'false'
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
@@ -206,10 +190,6 @@ jobs:
       - init
       - tests
     if: needs.init.outputs.is_tag == 'false'
-    defaults:
-      run:
-        shell: bash
-    runs-on: ubuntu-latest
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
