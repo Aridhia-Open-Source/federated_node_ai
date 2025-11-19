@@ -138,7 +138,7 @@ jobs:
     with:
       TAG: ${{ needs.init.outputs.tag }}
       IMAGE: federated_node_run
-      BUILD_PATH: webserver/build
+      BUILD_PATH: webserver
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
     secrets:
