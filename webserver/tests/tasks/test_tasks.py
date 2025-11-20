@@ -264,6 +264,28 @@ class TestPostTask:
         assert "CONNECTION_STRING" in envs
         assert set(envs).intersection({"QUERY", "FROM_DIALECT", "TO_DIALECT"}) == set()
 
+    def test_create_task_incomplete_db_query(
+            self,
+            post_json_admin_header,
+            client,
+            reg_k8s_client,
+            registry_client,
+            task_body
+        ):
+        """
+        Tests task creation returns an error if the db_query is
+        missing the mandatory field "query".
+        """
+        task_body["db_query"] = {}
+        response = client.post(
+            '/tasks/',
+            json=task_body,
+            headers=post_json_admin_header
+        )
+        assert response.status_code == 400
+        assert response.json["error"] == "`db_query` field must include a `query`"
+        reg_k8s_client["create_namespaced_pod_mock"].assert_not_called()
+
     def test_create_task_invalid_output_field(
             self,
             cr_client,
@@ -446,6 +468,55 @@ class TestPostTask:
             headers=post_json_user_header
         )
         assert response.status_code == 403
+
+    def test_create_task_image_with_digest(
+            self,
+            cr_client,
+            post_json_admin_header,
+            client,
+            reg_k8s_client,
+            registry_client,
+            container_with_sha,
+            task_body,
+            v1_crd_mock
+        ):
+        """
+        Tests task creation returns 201 with the image sha rather than
+        an image tag
+        """
+        task_body["executors"][0]["image"] = container_with_sha.full_image_name()
+        response = client.post(
+            '/tasks/',
+            json=task_body,
+            headers=post_json_admin_header
+        )
+        assert response.status_code == 201
+        reg_k8s_client["create_namespaced_pod_mock"].assert_called()
+        v1_crd_mock.return_value.create_cluster_custom_object.assert_not_called()
+
+    def test_create_task_image_same_name_different_registry(
+            self,
+            cr_client,
+            reg_k8s_client,
+            registry_client,
+            post_json_admin_header,
+            client,
+            container,
+            task_body
+        ):
+        """
+        Tests task creation is successful if two images are mapped with the
+        same name, but different registry
+        """
+        registry = Registry(url="another.azurecr.io", username="user", password="pass")
+        registry.add()
+        Container(registry=registry, name=container.name, tag=container.tag).add()
+        response = client.post(
+            '/tasks/',
+            json=task_body,
+            headers=post_json_admin_header
+        )
+        assert response.status_code == 201
 
     def test_create_task_image_not_found(
             self,
