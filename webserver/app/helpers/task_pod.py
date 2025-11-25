@@ -10,7 +10,7 @@ from kubernetes.client import (
     V1PersistentVolumeClaimSpec, V1VolumeResourceRequirements,
     V1CSIPersistentVolumeSource
 )
-from app.helpers.const import RESULTS_PATH, TASK_NAMESPACE, TASK_PULL_SECRET_NAME
+from app.helpers.const import RESULTS_PATH, STORAGE_CLASS, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.models.dataset import Dataset
 from app.helpers.fetch_data_container import FetchDataContainer
@@ -34,7 +34,8 @@ class TaskPod:
             input_path:dict,
             resources:dict,
             env_from:list,
-            db_query:dict
+            db_query:dict,
+            regcred_secret:str
         ):
         self.name = name
         self.image = image
@@ -47,6 +48,7 @@ class TaskPod:
         self.resources = resources
         self.env_from = env_from
         self.db_query = db_query
+        self.regcred_secret = regcred_secret
         self.env = []
         self.env_init = []
         self.create_env_from_dict(environment)
@@ -68,7 +70,7 @@ class TaskPod:
         pv_spec = V1PersistentVolumeSpec(
             access_modes=['ReadWriteMany'],
             capacity={"storage": os.getenv("CLAIM_CAPACITY")},
-            storage_class_name="shared-results"
+            storage_class_name=STORAGE_CLASS
         )
         if os.getenv("AZURE_STORAGE_ENABLED"):
             pv_spec.azure_file=V1AzureFilePersistentVolumeSource(
@@ -100,7 +102,7 @@ class TaskPod:
             spec=V1PersistentVolumeClaimSpec(
                 access_modes=['ReadWriteMany'],
                 volume_name=self.name,
-                storage_class_name="shared-results",
+                storage_class_name=STORAGE_CLASS,
                 resources=V1VolumeResourceRequirements(requests={"storage": "100Mi"})
             )
         )
@@ -200,7 +202,7 @@ class TaskPod:
         if self.command:
             container.command = self.command
 
-        secrets: list[V1LocalObjectReference] = [V1LocalObjectReference(name=TASK_PULL_SECRET_NAME)]
+        secrets = [V1LocalObjectReference(name=self.regcred_secret)]
 
         specs = V1PodSpec(
             termination_grace_period_seconds=300,

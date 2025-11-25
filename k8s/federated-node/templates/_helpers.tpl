@@ -43,7 +43,6 @@ ghcr.io/aridhia-open-source/alpine:{{ include "image-tag" . }}
 {{ (.Values.backend).tag | default .Chart.AppVersion }}
 {{- end }}
 
-
 {{/*
 Common labels
 */}}
@@ -69,27 +68,27 @@ Common db initializer, to use as element of initContainer
 Just need to append the NEW_DB env var
 */}}
 {{- define "createDBInitContainer" -}}
-        - image: {{ include "fn-alpine" . }}
-          name: dbinit
-          command: [ "dbinit" ]
-          imagePullPolicy: Always
-          {{ include "nonRootSC" . }}
-          env:
-          - name: PGUSER
-            valueFrom:
-              configMapKeyRef:
-                name: keycloak-config
-                key: KC_DB_USERNAME
-          - name: PGHOST
-            valueFrom:
-              configMapKeyRef:
-                name: keycloak-config
-                key: KC_DB_URL_HOST
-          - name: PGPASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{.Values.db.secret.name}}
-                key: {{.Values.db.secret.key}}
+- image: {{ include "fn-alpine" . }}
+  name: dbinit
+  command: [ "dbinit" ]
+  imagePullPolicy: {{ .Values.pullPolicy }}
+  {{- include "nonRootSC" . | nindent 2 }}
+  env:
+  - name: PGUSER
+    valueFrom:
+      configMapKeyRef:
+        name: keycloak-config
+        key: KC_DB_USERNAME
+  - name: PGHOST
+    valueFrom:
+      configMapKeyRef:
+        name: keycloak-config
+        key: KC_DB_URL_HOST
+  - name: PGPASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{.Values.db.secret.name}}
+        key: {{.Values.db.secret.key}}
 {{- end -}}
 
 {{- define "dbPort" -}}
@@ -129,13 +128,13 @@ Just need to append the NEW_DB env var
 {{- end -}}
 
 {{- define "nonRootSC" -}}
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-            capabilities:
-              drop: [ "ALL" ]
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: [ "ALL" ]
 {{- end -}}
 
 # In case of updating existing entities in hooks, use these default labels/annotations
@@ -174,20 +173,26 @@ http://backend.{{ .Release.Namespace }}.svc:{{ .Values.federatedNode.port }}
 {{- end }}
 
 {{- define "pvcName" -}}
-{{ printf "flask-results-%s-pv-vc" (.Values.storage.capacity | default "10Gi") | lower }}
+{{ printf "backend-results-%s-pv-vc" (.Values.storage.capacity | default "10Gi") | lower }}
 {{- end }}
 {{- define "pvName" -}}
-{{ printf "flask-results-%s-pv" (.Values.storage.capacity | default "10Gi") | lower }}
+{{- printf "%s-backend-results-%s-pv" .Release.Name (.Values.storage.capacity | default "10Gi") | lower }}
+{{- end }}
+{{- define "storageClassName" -}}
+{{- printf "%s-shared-results" .Release.Name | lower }}
 {{- end }}
 
 {{- define "awsStorageAccount" -}}
 {{- if .Values.storage.aws }}
   {{- with .Values.storage.aws }}
     {{- if .accessPointId }}
-      {{- printf  "%s::%s" .fileSystemId .accessPointId | quote }}
+      {{- printf "%s::%s" .fileSystemId .accessPointId | quote }}
     {{- else }}
       {{- .fileSystemId | quote }}
     {{- end }}
   {{- end }}
 {{- end }}
+{{- end -}}
+{{- define "controllerCrdGroup" -}}
+tasks.{{ .Release.Name }}.com
 {{- end -}}

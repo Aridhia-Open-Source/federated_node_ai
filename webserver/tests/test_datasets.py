@@ -696,7 +696,7 @@ class TestPatchDataset(MixinTestDataset):
             json=data_body,
             headers=post_json_admin_header
         )
-        assert response.status_code == 204
+        assert response.status_code == 202
         ds = Dataset.query.filter(Dataset.id == dataset.id).one_or_none()
         assert ds.name == "new_name"
 
@@ -748,7 +748,7 @@ class TestPatchDataset(MixinTestDataset):
             json=data_body,
             headers=post_json_admin_header
         )
-        assert response.status_code == 204
+        assert response.status_code == 202
         ds = Dataset.query.filter(Dataset.id == dataset.id).one_or_none()
         assert ds.name == "new_name"
 
@@ -785,7 +785,7 @@ class TestPatchDataset(MixinTestDataset):
             json=data_body,
             headers=post_json_admin_header
         )
-        assert response.status_code == 204
+        assert response.status_code == 202
 
         expected_body = k8s_client["read_namespaced_secret_mock"].return_value
         for ns in self.expected_namespaces:
@@ -935,7 +935,7 @@ class TestBeacon:
             },
             headers=post_json_admin_header
         )
-        assert response.status_code == 500
+        assert response.status_code == 400
         assert response.json['result'] == 'Invalid'
 
     def test_beacon_connection_failed(
@@ -1075,3 +1075,21 @@ class TestDeleteDataset(MixinTestDataset):
         assert response.status_code == 204
         assert Catalogue.query.filter_by(dataset_id=ds_id).count() == 0
         assert Dictionary.query.filter_by(dataset_id=ds_id).count() == 0
+
+    @mock.patch('app.helpers.wrappers.Keycloak.is_token_valid', return_value=False)
+    def test_delete_dataset_unauthorized(
+            self,
+            token_valid_mock,
+            client,
+            dataset,
+            post_json_user_header
+    ):
+        """
+        Tests that a non admin cannot delete a dataset
+        """
+        ds_id = dataset.id
+        response = client.delete(
+            f"/datasets/{ds_id}",
+            headers=post_json_user_header
+        )
+        assert response.status_code == 403

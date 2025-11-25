@@ -4,17 +4,18 @@ These won't have any restrictions and won't go through
     Keycloak for token validation.
 """
 import json
+from http import HTTPStatus
 import logging
 import requests
 from flask import Blueprint, redirect, url_for, request
-from kubernetes.client import ApiException, V1PodList
+from kubernetes.client import ApiException
 from kubernetes.watch import Watch
 
 from app.helpers.backround_task import BackgroundTasks
-from app.helpers.const import RESULTS_PATH, TASK_NAMESPACE
+from app.helpers.const import TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
-from app.helpers.exceptions import InvalidRequest
+from app.helpers.exceptions import InvalidRequest, AuthenticationError
 from app.helpers.fetch_data_container import FetchDataContainer
 from app.models.dataset import Dataset
 from app.models.request import Request
@@ -40,7 +41,7 @@ def ready_check():
     GET /ready_check endpoint
         Mostly to tell k8s Flask has started
     """
-    return {"status": "ready"}, 200
+    return {"status": "ready"}, HTTPStatus.OK
 
 @bp.route("/health_check")
 def health_check():
@@ -52,11 +53,11 @@ def health_check():
         kc_request = requests.get(URLS["health_check"], timeout=30)
         kc_status = kc_request.ok
         status_text = "ok" if kc_request.ok else "non operational"
-        code = 200 if kc_request.ok else 500
+        code = HTTPStatus.OK if kc_request.ok else HTTPStatus.BAD_GATEWAY
     except requests.exceptions.ConnectionError:
         kc_status = False
         status_text = "non operational"
-        code = 500
+        code = HTTPStatus.BAD_GATEWAY
 
     return {
         "status": status_text,
@@ -72,7 +73,7 @@ def login():
     credentials = request.form.to_dict()
     return {
         "token": Keycloak().get_token(**credentials)
-    }, 200
+    }, HTTPStatus.OK
 
 @bp.route("/ask", methods=["POST"])
 @async_audit
@@ -142,6 +143,24 @@ async def ask():
                         "user_id": user_id
                     }).start()
                     fdc.cleanup()
-                    return {"message": "Request submitted successfully. Results will be delivered back automatically"}, 200
+                    return {
+                        "message": "Request submitted successfully. Results will be delivered back automatically"
+                    }, HTTPStatus.OK
                 case _:
                     pass
+
+@bp.route("/refresh_token", methods=['POST'])
+def refresh_token():
+    """
+    POST /refresh_token endpoint.
+        Given a token, exchanges it for a new one. Returns the same
+        response as /login
+    """
+    token = Keycloak.get_token_from_headers()
+    kc_client = Keycloak()
+    if not kc_client.is_token_valid(token, resource=None, scope=None, with_permissions=False):
+        raise AuthenticationError()
+
+    return {
+        "token": kc_client.exchange_global_token(token, "refresh_token")
+    }, HTTPStatus.OK
