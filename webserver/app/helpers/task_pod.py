@@ -174,7 +174,7 @@ class TaskPod:
         if self.db_query:
             data_init = V1Container(
                 name="fetch-data",
-                image=f"ghcr.io/aridhia-open-source/db_connector:{IMAGE_TAG}",
+                image=f"ghcr.io/aridhia-open-source/db_connector_slm:{IMAGE_TAG}",
                 volume_mounts=[vol_mount],
                 image_pull_policy="Always",
                 env=self.env_init,
