@@ -7,7 +7,7 @@ data:
   FLASK_APP: "/app"
   PGHOST: {{ .Values.db.host | quote }}
   PGPORT: {{ include "dbPort" . }}
-  PGDATABASE: {{ .Values.db.name | quote }}
+  PGDATABASE: {{ .Values.db.name | default "fndb" | quote }}
   PGUSER: {{ include "dbUser" . }}
   KEYCLOAK_URL: "http://keycloak.{{ include "kc_namespace" . }}.svc.cluster.local"
   DEFAULT_NAMESPACE: {{ .Release.Namespace }}
@@ -19,6 +19,8 @@ data:
   TASK_POD_RESULTS_PATH: {{ .Values.federatedNode.volumes.task_pod_results_path }}
   IMAGE_TAG: {{ include "image-tag" . }}
   CLAIM_CAPACITY: {{ .Values.storage.capacity }}
+  STORAGE_CLASS: {{ include "storageClassName" . }}
+  CRD_DOMAIN: {{ include "controllerCrdGroup" . }}
 {{- if .Values.storage.aws }}
   AWS_STORAGE_ENABLED: "true"
   AWS_STORAGE_DRIVER: "efs.csi.aws.com"
@@ -28,4 +30,18 @@ data:
   AZURE_STORAGE_ENABLED: "true"
   AZURE_SHARE_NAME: {{ .Values.storage.azure.shareName }}/results
   AZURE_SECRET_NAME: {{ .Values.storage.azure.secretName | default "azure-storage-secret" }}
+{{- end }}
+{{- if .Values.taskReview }}
+  TASK_REVIEW: enabled
+{{- end }}
+{{- if .Values.outboundMode }}
+  CONTROLLER_NAMESPACE: {{ include "controller_namespace" . }}
+  TASK_CONTROLLER: enabled
+  {{- with index .Values "fn-task-controller" "delivery" -}}
+  {{- if .github }}
+  GITHUB_DELIVERY: {{ .github.repository }}
+  {{- else if .other }}
+  OTHER_DELIVERY: {{ .other.url }}
+  {{- end }}
+  {{- end }}
 {{- end }}

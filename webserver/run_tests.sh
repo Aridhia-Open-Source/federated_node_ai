@@ -8,10 +8,10 @@ export PGUSER=admin
 export PGPASSWORD=test_app
 export KEYCLOAK_URL=http://keycloak:8080
 export KEYCLOAK_REALM=FederatedNode
-export KEYCLOAK_SECRET=asdf12ad89123ocasASD129
 export KEYCLOAK_CLIENT=global
 export KEYCLOAK_ADMIN=admin
 export KEYCLOAK_ADMIN_PASSWORD=password1
+export KEYCLOAK_GLOBAL_CLIENT_SECRET=qwtirtvJJ4PW4skOlW6Oifk2
 export PYTHONPATH=/app
 export RESULTS_PATH=/tmp/results
 export TASK_POD_RESULTS_PATH=/mnt/data
@@ -21,6 +21,7 @@ export KEYCLOAK_NAMESPACE=keycloak
 export CLEANUP_AFTER_DAYS=1
 export PUBLIC_URL=localhost:5000
 export CLAIM_CAPACITY=100Mi
+export CONTROLLER_NAMESPACE=fn-controller
 
 is_ci=$1
 

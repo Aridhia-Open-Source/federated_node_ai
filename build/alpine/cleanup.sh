@@ -1,5 +1,7 @@
 #!/bin/sh
 
+### Cleanup old tasks storage, depending on CLEANUP_AFTER_DAYS env var
+
 deleteEntity(){
     echo "Checking for $1"
     kubectl get "$1" -n "$2" -o json | jq -r --arg date "$date" \
@@ -11,4 +13,4 @@ date=$(python3 -c "from datetime import datetime, timedelta;print((datetime.now(
 deleteEntity pods "${NAMESPACE}"
 deleteEntity pvc "${NAMESPACE}"
 deleteEntity pv "${NAMESPACE}"
-find "${RESULTS_PATH}/" -type d -mtime "+${CLEANUP_AFTER_DAYS}" -name '*' -print0 | xargs -r0 rm -r --
+find "${RESULTS_PATH}/" -type d -mtime "+${CLEANUP_AFTER_DAYS}" -name '[0-9]*' -print0 | xargs -r0 rm -r --
