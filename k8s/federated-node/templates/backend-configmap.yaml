@@ -51,3 +51,6 @@ data:
   {{- end }}
   {{- end }}
 {{- end }}
+  RABBIT_HOST: rabbit.{{ include "slm_namespace" . }}.svc
+  RABBIT_PORT: 5743
+  RABBIT_QUEUE: prompts

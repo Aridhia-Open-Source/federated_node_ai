@@ -90,6 +90,16 @@ spec:
             - configMapRef:
                 name: keycloak-config
           env:
+          - name: RABBIT_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ index .Values "federated-node-slm" "rabbitmq" "existingPasswordSecret" }}
+                key: username
+          - name: RABBIT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ index .Values "federated-node-slm" "rabbitmq" "existingPasswordSecret" }}
+                key: {{ index .Values "federated-node-slm" "rabbitmq" "existingPasswordSecretKey" }}
           - name: PGPASSWORD
             valueFrom:
               secretKeyRef:

@@ -1,16 +1,16 @@
 import logging
 import re
 import requests
-from kubernetes.client import V1EnvVar, V1EnvVarSource, V1Secret, V1SecretKeySelector
-from kubernetes.client.exceptions import ApiException
 from sqlalchemy import Column, Integer, String
-
 from app.helpers.base_model import BaseModel, db
-from app.helpers.connection_string import Mssql, Postgres, Mysql, Oracle, MariaDB
 from app.helpers.const import DEFAULT_NAMESPACE, TASK_NAMESPACE, PUBLIC_URL
 from app.helpers.exceptions import DBRecordNotFoundError, InvalidRequest
 from app.helpers.keycloak import Keycloak
 from app.helpers.kubernetes import KubernetesClient
+from kubernetes.client import V1EnvVar, V1EnvVarSource, V1Secret, V1SecretKeySelector
+from kubernetes.client.exceptions import ApiException
+
+from app.helpers.connection_string import Mssql, Postgres, Mysql, Oracle, MariaDB
 
 logger = logging.getLogger("dataset_model")
 logger.setLevel(logging.INFO)
@@ -135,7 +135,6 @@ class Dataset(db.Model, BaseModel):
         admin_ds_scope.append(kc_client.get_scope('can_admin_dataset'))
         admin_ds_scope.append(kc_client.get_scope('can_access_dataset'))
         admin_ds_scope.append(kc_client.get_scope('can_exec_task'))
-        admin_ds_scope.append(kc_client.get_scope('can_send_nlq'))
         admin_ds_scope.append(kc_client.get_scope('can_admin_task'))
         admin_ds_scope.append(kc_client.get_scope('can_send_request'))
         admin_ds_scope.append(kc_client.get_scope('can_admin_request'))
@@ -189,7 +188,7 @@ class Dataset(db.Model, BaseModel):
         if new_pass:
             secret.data["PGPASSWORD"] = KubernetesClient.encode_secret_value(new_pass)
 
-        secret.metadata["labels"] = {
+        secret.metadata.labels = {
             "type": "database",
             "host": secret_name
         }
@@ -199,7 +198,7 @@ class Dataset(db.Model, BaseModel):
         try:
             # Create new secret if name is different
             if (new_host != self.host and new_host) or (new_name != self.name and new_name):
-                secret.metadata['name'] = self.get_creds_secret_name(new_host, new_name)
+                secret.metadata.name = self.get_creds_secret_name(new_host, new_name)
                 secret_task.metadata = secret.metadata
                 v1.create_namespaced_secret(DEFAULT_NAMESPACE, body=secret, pretty='true')
                 v1.create_namespaced_secret(TASK_NAMESPACE, body=secret_task, pretty='true')

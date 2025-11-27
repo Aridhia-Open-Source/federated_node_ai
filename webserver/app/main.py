@@ -11,11 +11,11 @@ from flask import Blueprint, redirect, url_for, request
 from kubernetes.client import ApiException
 from kubernetes.watch import Watch
 
-from app.helpers.backround_task import BackgroundTasks
 from app.helpers.const import TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.helpers.keycloak import Keycloak, URLS
 from app.helpers.exceptions import InvalidRequest, AuthenticationError
+from app.helpers.rabbit import send_json_message
 from app.helpers.fetch_data_container import FetchDataContainer
 from app.models.dataset import Dataset
 from app.models.request import Request
@@ -77,7 +77,8 @@ def login():
 
 @bp.route("/ask", methods=["POST"])
 @async_audit
-@async_auth(scope='can_send_nlq')
+@async_auth(scope='can_do_admin')
+# @async_auth(scope='can_send_nlq')
 async def ask():
     """
     POST /ask endpoint
@@ -135,14 +136,13 @@ async def ask():
                     ).splitlines())
                     raise InvalidRequest("Failed to fetch data", 500)
                 case "Succeeded":
-                    # get the dataset csv and send it to slm
-                    BackgroundTasks(kwargs={
+                    # Send to queue
+                    send_json_message({
                         "query": query,
                         "file_name": dataset.get_creds_secret_name(),
                         "dataset_name": dataset.name,
                         "user_id": user_id
-                    }).start()
-                    fdc.cleanup()
+                    })
                     return {
                         "message": "Request submitted successfully. Results will be delivered back automatically"
                     }, HTTPStatus.OK
