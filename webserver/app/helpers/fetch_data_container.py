@@ -45,7 +45,7 @@ class FetchDataContainer():
             name=name,
             image=f"ghcr.io/aridhia-open-source/db_connector:{IMAGE_TAG}",
             volume_mounts=[vol_mount],
-            image_pull_policy="Always",
+            image_pull_policy="IfNotPresent",
             env=env,
             env_from=env_from
         )
