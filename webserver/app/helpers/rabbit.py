@@ -2,7 +2,7 @@ import json
 import struct
 import pika
 
-from helpers.const import (
+from app.helpers.const import (
     RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD,
     RABBIT_QUEUE, HOST_PATH
 )
