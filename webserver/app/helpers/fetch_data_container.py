@@ -12,7 +12,7 @@ from app.models.dataset import Dataset
 
 
 class FetchDataContainer():
-    image=f"ghcr.io/aridhia-open-source/db_connector:{IMAGE_TAG}"
+    image=f"ghcr.io/aridhia-open-source/db-connector-slm:{IMAGE_TAG}"
 
     def __init__(
             self,

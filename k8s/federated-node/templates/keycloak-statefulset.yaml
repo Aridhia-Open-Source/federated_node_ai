@@ -50,7 +50,7 @@ spec:
               name: keycloak-config
 
       containers:
-        - image: ghcr.io/aridhia-open-source/federated_keycloak:{{ .Values.keycloak.tag | default .Chart.AppVersion }}
+        - image: ghcr.io/aridhia-open-source/federated_keycloak_slm:{{ .Values.keycloak.tag | default .Chart.AppVersion }}
           args: [
             "start",
             "--cache=ispn",
