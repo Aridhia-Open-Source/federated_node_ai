@@ -3,7 +3,7 @@ entries:
   federated-node:
   - apiVersion: v2
     appVersion: 1.6.0
-    created: "2025-11-25T12:43:22.295147122Z"
+    created: "2025-12-03T08:48:16.09686965Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -26,8 +26,35 @@ entries:
     version: 1.6.0
   federated-node-ai:
   - apiVersion: v2
+    appVersion: 1.6.0-vcd69d2
+    created: "2025-12-03T08:48:16.118668651Z"
+    dependencies:
+    - condition: outboundMode
+      name: fn-task-controller
+      repository: https://aridhia-open-source.github.io/federated-node-task-controller
+      version: 1.5.0
+    - name: federated-node-slm
+      repository: https://aridhia-open-source.github.io/federated-node-slm
+      version: 0.1.0-vba5f40
+    - condition: cert-manager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.17.1
+    - condition: ingress-nginx.enabled
+      name: ingress-nginx
+      repository: https://kubernetes.github.io/ingress-nginx
+      version: 4.12.1
+    description: A Helm chart for deploying the Federated Node on Kubernetes with
+      the AI features
+    digest: 5cada68e215f4414d060c56ce2e1de5d8479dfff6f8b0a55c95c1c954c926cdf
+    name: federated-node-ai
+    type: application
+    urls:
+    - federated-node-ai-1.6.0-vcd69d2.tgz
+    version: 1.6.0-vcd69d2
+  - apiVersion: v2
     appVersion: 1.3.0-ve76b7c
-    created: "2025-11-25T12:43:22.305184665Z"
+    created: "2025-12-03T08:48:16.107713209Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -52,4 +79,4 @@ entries:
     urls:
     - federated-node-ai-1.3.0-ve76b7c.tgz
     version: 1.3.0-ve76b7c
-generated: "2025-11-25T12:43:22.284250693Z"
+generated: "2025-12-03T08:48:16.086953663Z"
