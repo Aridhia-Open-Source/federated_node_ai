@@ -90,7 +90,7 @@ spec:
             - configMapRef:
                 name: keycloak-config
           env:
-          - name: RABBIT_HOST
+          - name: RABBIT_USER
             valueFrom:
               secretKeyRef:
                 name: {{ index .Values "federated-node-slm" "rabbitmq" "existingPasswordSecret" }}

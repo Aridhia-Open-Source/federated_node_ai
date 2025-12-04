@@ -3,8 +3,8 @@ import struct
 import pika
 
 from app.helpers.const import (
-    RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD,
-    RABBIT_QUEUE, HOST_PATH
+    PV_MOUNT_POINT, RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD,
+    RABBIT_QUEUE
 )
 
 
@@ -19,7 +19,7 @@ def send_json_message(message:dict) -> None:
 
     channel = connection.channel()
     channel.queue_declare(queue=RABBIT_QUEUE, durable=True)
-    dataset_file = f"{HOST_PATH}/fetched-data/{message.pop("file_name")}.csv"
+    dataset_file = f"{PV_MOUNT_POINT}/fetched-data/{message.pop("file_name")}.csv"
 
     message["message"] = message.pop("query")
 
