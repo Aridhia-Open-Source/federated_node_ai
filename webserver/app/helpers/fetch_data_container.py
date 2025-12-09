@@ -1,4 +1,5 @@
 import os
+import logging
 import uuid
 from kubernetes.client import (
     V1VolumeMount, V1Container,
@@ -6,9 +7,14 @@ from kubernetes.client import (
     V1ObjectMeta, V1PodSpec, V1Volume,
     V1PersistentVolumeClaimVolumeSource,
 )
+from sqlalchemy import text
 from app.helpers.const import IMAGE_TAG, PV_MOUNT_POINT, TASK_POD_RESULTS_PATH, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.models.dataset import Dataset
+
+
+logger = logging.getLogger("fetch-data-container")
+logger.setLevel(logging.INFO)
 
 
 class FetchDataContainer():
@@ -32,9 +38,12 @@ class FetchDataContainer():
             sub_path="fetched-data"
         )
         if not env:
+            stmt = text("SELECT * FROM :tbl").bindparams(tbl=table)
+            compiled = str(stmt.compile(compile_kwargs={"literal_binds": True}))
+            logging.info("Submitting query %s", compiled)
             env += dataset.create_db_env_vars()
             env+= [
-                V1EnvVar(name="QUERY", value=f"SELECT * FROM {table};"),
+                V1EnvVar(name="QUERY", value=compiled),
                 V1EnvVar(name="FROM_DIALECT", value="postgres"),
                 V1EnvVar(name="TO_DIALECT", value=dataset.type),
                 V1EnvVar(name="INPUT_MOUNT", value=base_mount_path),
