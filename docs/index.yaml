@@ -3,7 +3,7 @@ entries:
   federated-node:
   - apiVersion: v2
     appVersion: 1.6.0
-    created: "2025-12-03T08:48:16.09686965Z"
+    created: "2025-12-09T09:38:45.695007696Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -27,7 +27,7 @@ entries:
   federated-node-ai:
   - apiVersion: v2
     appVersion: 1.6.0-vcd69d2
-    created: "2025-12-03T08:48:16.118668651Z"
+    created: "2025-12-09T09:38:45.727692593Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -53,8 +53,35 @@ entries:
     - federated-node-ai-1.6.0-vcd69d2.tgz
     version: 1.6.0-vcd69d2
   - apiVersion: v2
+    appVersion: 1.6.0-va47008
+    created: "2025-12-09T09:38:45.716197905Z"
+    dependencies:
+    - condition: outboundMode
+      name: fn-task-controller
+      repository: https://aridhia-open-source.github.io/federated-node-task-controller
+      version: 1.5.0
+    - name: federated-node-slm
+      repository: https://aridhia-open-source.github.io/federated-node-slm
+      version: 0.1.0-vba5f40
+    - condition: cert-manager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.17.1
+    - condition: ingress-nginx.enabled
+      name: ingress-nginx
+      repository: https://kubernetes.github.io/ingress-nginx
+      version: 4.12.1
+    description: A Helm chart for deploying the Federated Node on Kubernetes with
+      the AI features
+    digest: 788342014d41723daa0295e4e2eac036d3851fd52c85ad2b3831e43e4f8cd921
+    name: federated-node-ai
+    type: application
+    urls:
+    - federated-node-ai-1.6.0-va47008.tgz
+    version: 1.6.0-va47008
+  - apiVersion: v2
     appVersion: 1.3.0-ve76b7c
-    created: "2025-12-03T08:48:16.107713209Z"
+    created: "2025-12-09T09:38:45.705767936Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -79,4 +106,4 @@ entries:
     urls:
     - federated-node-ai-1.3.0-ve76b7c.tgz
     version: 1.3.0-ve76b7c
-generated: "2025-12-03T08:48:16.086953663Z"
+generated: "2025-12-09T09:38:45.684331826Z"
