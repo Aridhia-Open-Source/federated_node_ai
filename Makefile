@@ -23,7 +23,7 @@ build_keycloak:
 	docker build build/keycloak -t ghcr.io/aridhia-open-source/federated_keycloak_slm:${TAG}
 
 build_connector:
-	docker build build/db-connector -t ghcr.io/aridhia-open-source/db_connector_slm:${TAG}
+	docker build build/db-connector -t ghcr.io/aridhia-open-source/db-connector-slm:${TAG}
 
 build_alpine:
 	docker build build/alpine -t ghcr.io/aridhia-open-source/alpine_slm:${TAG}

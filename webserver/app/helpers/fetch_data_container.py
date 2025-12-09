@@ -43,7 +43,7 @@ class FetchDataContainer():
 
         self.container = V1Container(
             name=name,
-            image=f"ghcr.io/aridhia-open-source/db_connector:{IMAGE_TAG}",
+            image=f"ghcr.io/aridhia-open-source/db-connector-slm:{IMAGE_TAG}",
             volume_mounts=[vol_mount],
             image_pull_policy="IfNotPresent",
             env=env,
