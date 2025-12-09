@@ -2,8 +2,31 @@ apiVersion: v1
 entries:
   federated-node:
   - apiVersion: v2
+    appVersion: 1.7.0
+    created: "2025-12-09T11:32:37.647010479Z"
+    dependencies:
+    - condition: outboundMode
+      name: fn-task-controller
+      repository: https://aridhia-open-source.github.io/federated-node-task-controller
+      version: 1.6.0
+    - condition: cert-manager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.17.1
+    - condition: ingress-nginx.enabled
+      name: ingress-nginx
+      repository: https://kubernetes.github.io/ingress-nginx
+      version: 4.12.1
+    description: A Helm chart for deploying the Federated Node on Kubernetes
+    digest: 3eaf0fe7d9c72743b8c54eee71e538722129fe5a11f78f82eed81c8d0e0213ae
+    name: federated-node
+    type: application
+    urls:
+    - federated-node-1.7.0.tgz
+    version: 1.7.0
+  - apiVersion: v2
     appVersion: 1.6.0
-    created: "2025-12-09T09:38:45.695007696Z"
+    created: "2025-12-09T11:32:37.637499369Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -27,7 +50,7 @@ entries:
   federated-node-ai:
   - apiVersion: v2
     appVersion: 1.6.0-vcd69d2
-    created: "2025-12-09T09:38:45.727692593Z"
+    created: "2025-12-09T11:32:37.680264998Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -54,7 +77,7 @@ entries:
     version: 1.6.0-vcd69d2
   - apiVersion: v2
     appVersion: 1.6.0-va47008
-    created: "2025-12-09T09:38:45.716197905Z"
+    created: "2025-12-09T11:32:37.66808989Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -81,7 +104,7 @@ entries:
     version: 1.6.0-va47008
   - apiVersion: v2
     appVersion: 1.3.0-ve76b7c
-    created: "2025-12-09T09:38:45.705767936Z"
+    created: "2025-12-09T11:32:37.657491815Z"
     dependencies:
     - condition: outboundMode
       name: fn-task-controller
@@ -106,4 +129,4 @@ entries:
     urls:
     - federated-node-ai-1.3.0-ve76b7c.tgz
     version: 1.3.0-ve76b7c
-generated: "2025-12-09T09:38:45.684331826Z"
+generated: "2025-12-09T11:32:37.627465034Z"
