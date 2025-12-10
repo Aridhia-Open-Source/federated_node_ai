@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-TAG := $(or $(TAG), 1.3.0)
+TAG := $(or $(TAG), 1.3.0)-slm
 
 env:
 	set -o allexport && source dev.env && set +o allexport

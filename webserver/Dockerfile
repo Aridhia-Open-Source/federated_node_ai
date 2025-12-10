@@ -5,7 +5,7 @@ ARG USERNAME=fednode
 ARG USER_UID=1001
 ARG USER_GID=1001
 
-COPY app /app
+COPY app/Pipfile* /app/
 COPY migrations /migrations
 COPY alembic.ini /
 COPY pyproject.toml /
@@ -13,7 +13,8 @@ COPY pyproject.toml /
 WORKDIR /app
 
 RUN groupadd -g "$USER_GID" "$USERNAME" \
-    && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" \
+    && useradd --uid "$USER_UID" --gid "$USER_GID" "$USERNAME" --create-home \
+    && chown -R "$USERNAME":"$USERNAME" "/home/$USERNAME" \
     && chown -R "$USERNAME":"$USERNAME" /app
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -32,6 +33,18 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# hadolint ignore=DL3013,DL3008
+RUN curl -sSL -O https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install --no-install-recommends -y azcopy \
+    && echo "Checking installed azcopy version:" \
+    && azcopy --version \
+    && rm packages-microsoft-prod.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY app /app
 ENV PATH="/.venv/bin:$PATH"
 USER ${USER_UID}
 EXPOSE 5000

@@ -23,6 +23,9 @@ export KEYCLOAK_NAMESPACE=keycloak
 export CLEANUP_AFTER_DAYS=1
 export PUBLIC_URL=localhost:5000
 export CLAIM_CAPACITY=100Mi
+export DELIVERY_URL="riccardo-dev.uksouth.atdev.aridhiadev.net"
+export PV_MOUNT_POINT=/data/flask
+export HOST_PATH=/data/flask
 export CONTROLLER_NAMESPACE=fn-controller
 
 is_ci=$1

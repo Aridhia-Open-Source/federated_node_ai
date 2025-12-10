@@ -21,6 +21,7 @@ namespaces: &namespaces
 
 global:
   namespaces: *namespaces
+  delivery_url:
 
 token:
   life: 2592000
@@ -162,3 +163,9 @@ ingress-nginx:
     #   externalTrafficPolicy: Local
     extraArgs:
       default-ssl-certificate: default/tls
+
+### Federated Node AI component
+federated-node-slm:
+  namespace: &ains fn-ai
+  ollama:
+    namespaceOverride: *ains

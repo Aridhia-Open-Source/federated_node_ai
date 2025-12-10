@@ -97,7 +97,13 @@ class Request(db.Model, BaseModel):
             logger.info("%s - Token exchange", new_client_name)
             kc_client.enable_token_exchange()
 
-            scopes = ["can_admin_dataset","can_exec_task", "can_admin_task", "can_access_dataset"]
+            scopes = [
+                "can_admin_dataset",
+                "can_exec_task",
+                "can_admin_task",
+                "can_access_dataset",
+                "can_send_nlq"
+            ]
 
             logger.info("%s - Creating scopes", new_client_name)
             created_scopes = []

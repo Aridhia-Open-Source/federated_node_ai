@@ -7,13 +7,13 @@ from kubernetes.client import (
     V1AzureFilePersistentVolumeSource,
     V1HostPathVolumeSource, V1EnvVar,
     V1PersistentVolume, V1PersistentVolumeClaim,
-    V1EnvVarSource, V1SecretKeySelector,
     V1PersistentVolumeClaimSpec, V1VolumeResourceRequirements,
     V1CSIPersistentVolumeSource
 )
 from app.helpers.const import RESULTS_PATH, STORAGE_CLASS, TASK_NAMESPACE
 from app.helpers.kubernetes import KubernetesClient
 from app.models.dataset import Dataset
+from app.helpers.fetch_data_container import FetchDataContainer
 
 IMAGE_TAG = os.getenv("IMAGE_TAG")
 
@@ -61,40 +61,6 @@ class TaskPod:
         for k, v in env.items():
             self.env.append(V1EnvVar(name=k, value=str(v)))
 
-    def create_db_env_vars(self):
-        """
-        From a secret name, setup a base env list with db credentials.
-        It will map PG_* for backwards compatibility
-        """
-        secret_name = self.dataset.get_creds_secret_name()
-        self.env_init += [
-            V1EnvVar(
-                name="DB_PSW",
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        name=secret_name,
-                        key="PGPASSWORD",
-                        optional=True
-                    )
-                )
-            ),
-            V1EnvVar(
-                name="DB_USER",
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        name=secret_name,
-                        key="PGUSER",
-                        optional=True
-                    )
-                )
-            ),
-            V1EnvVar(name="DB_PORT", value=str(self.dataset.port)),
-            V1EnvVar(name="DB_NAME", value=self.dataset.name),
-            V1EnvVar(name="DB_SCHEMA", value=self.dataset.schema),
-            V1EnvVar(name="DB_ARGS", value=self.dataset.extra_connection_args),
-            V1EnvVar(name="DB_HOST", value=self.dataset.host)
-        ]
-
     def create_storage_specs(self):
         """
         Function to dynamically create (if doesn't already exist)
@@ -141,14 +107,14 @@ class TaskPod:
             )
         )
 
-    def get_task_pod_init_container(self, task_id:str):
+    def get_task_pod_init_container(self, task_id:str) -> list[V1Container]:
         """
         This will return a common spec for initContainer
         fot analytics tasks.
         The aim is to prepare the PV task-dedicated folder
         so the whole volume is not exposed
         """
-        self.create_db_env_vars()
+        self.env_init += self.dataset.create_db_env_vars()
         self.env_init.append(V1EnvVar(name="INPUT_MOUNT", value=f"{self.base_mount_path}/{task_id}/input"))
         if self.input_path:
             self.env_init.append(V1EnvVar(name="INPUT_FILE", value=list(self.input_path.keys())[0]))
@@ -169,28 +135,27 @@ class TaskPod:
                 f"ls -la {self.base_mount_path}/{task_id}"
             ]
         )
-        init_containers = [dir_init]
+        init_containers: list[V1Container] = [dir_init]
 
         if self.db_query:
-            data_init = V1Container(
-                name="fetch-data",
-                image=f"ghcr.io/aridhia-open-source/db_connector_slm:{IMAGE_TAG}",
-                volume_mounts=[vol_mount],
-                image_pull_policy="Always",
+            init_containers.append(FetchDataContainer(
+                base_mount_path=self.base_mount_path,
                 env=self.env_init,
                 env_from=self.env_from
-            )
-            init_containers.append(data_init)
+            ).container)
         return init_containers
 
-    def create_pod_spec(self):
+    def create_pod_spec(self) -> V1Pod:
         """
         Given a dictionary with a pod config deconstruct it
         and assemble it with the different sdk objects
         """
         # Create a dedicated VPC for each task so that we can keep results indefinitely
-        self.create_storage_specs()
-        KubernetesClient().create_persistent_storage(self.pv, self.pvc)
+        # self.create_storage_specs()
+        k8s = KubernetesClient()
+        self.pv, self.pvc = k8s.create_pv_pvc_specs(self.name, self.labels)
+        k8s.create_persistent_storage(self.pv, self.pvc)
+
         pvc_name = f"{self.name}-volclaim"
         pvc = V1PersistentVolumeClaimVolumeSource(claim_name=pvc_name)
 
@@ -217,6 +182,7 @@ class TaskPod:
                 name="data"
             ))
 
+        # If the node needs to fetch data on behalf of the user
         if self.db_query:
             self.env_init.append(V1EnvVar(name="QUERY", value=self.db_query["query"]))
             self.env_init.append(V1EnvVar(name="FROM_DIALECT", value=self.db_query["dialect"]))
