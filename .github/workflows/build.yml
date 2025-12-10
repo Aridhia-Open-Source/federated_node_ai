@@ -137,7 +137,7 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
-      IMAGE: federated_node_ai_run
+      IMAGE: federated_node_run_slm
       BUILD_PATH: webserver
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
@@ -151,7 +151,7 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
-      IMAGE: federated_keycloak
+      IMAGE: federated_keycloak_slm
       BUILD_PATH: build/keycloak/
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
@@ -165,7 +165,7 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
-      IMAGE: alpine
+      IMAGE: alpine_slm
       BUILD_PATH: build/alpine/
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
@@ -179,7 +179,7 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
-      IMAGE: keycloak_initializer
+      IMAGE: keycloak_initializer_slm
       BUILD_PATH: build/kc-init/
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}
@@ -193,7 +193,7 @@ jobs:
     uses: Aridhia-Open-Source/pipelines/.github/workflows/build-docker.yml@main
     with:
       TAG: ${{ needs.init.outputs.tag }}
-      IMAGE: db-connector
+      IMAGE: db-connector-slm
       BUILD_PATH: build/db-connector/
       HASH_SUFFIX: false
       DOCKER_ACR: ${{ vars.DOCKER_CR }}

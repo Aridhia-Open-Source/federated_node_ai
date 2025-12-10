@@ -20,13 +20,13 @@ helm_tests:
 	./scripts/run_helm_tests.sh
 
 build_keycloak:
-	docker build build/keycloak -t ghcr.io/aridhia-open-source/federated_keycloak:${TAG}
+	docker build build/keycloak -t ghcr.io/aridhia-open-source/federated_keycloak_slm:${TAG}
 
 build_connector:
-	docker build build/db-connector -t ghcr.io/aridhia-open-source/db_connector:${TAG}
+	docker build build/db-connector -t ghcr.io/aridhia-open-source/db_connector_slm:${TAG}
 
 build_alpine:
-	docker build build/alpine -t ghcr.io/aridhia-open-source/alpine:${TAG}
+	docker build build/alpine -t ghcr.io/aridhia-open-source/alpine_slm:${TAG}
 
 build_kc_init:
-	docker build build/kc-init -t ghcr.io/aridhia-open-source/keycloak_initializer:${TAG}
+	docker build build/kc-init -t ghcr.io/aridhia-open-source/keycloak_initializer_slm:${TAG}
